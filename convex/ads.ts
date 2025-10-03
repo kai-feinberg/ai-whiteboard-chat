@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 // Get all ads for the current user
 export const getByUser = query({
@@ -8,14 +9,14 @@ export const getByUser = query({
     subscriptionId: v.optional(v.id("subscriptions")),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
     let adsQuery = ctx.db
       .query("ads")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject));
+      .withIndex("by_user", (q) => q.eq("userId", userId));
 
     const ads = await adsQuery.collect();
 
@@ -40,8 +41,8 @@ export const getByUser = query({
 export const getById = query({
   args: { id: v.id("ads") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
@@ -52,7 +53,7 @@ export const getById = query({
     }
 
     // Verify ownership
-    if (ad.userId !== identity.subject) {
+    if (ad.userId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -64,8 +65,8 @@ export const getById = query({
 export const getBySubscription = query({
   args: { subscriptionId: v.id("subscriptions") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
@@ -78,7 +79,7 @@ export const getBySubscription = query({
 
     // Verify ownership of subscription
     const subscription = await ctx.db.get(args.subscriptionId);
-    if (!subscription || subscription.userId !== identity.subject) {
+    if (!subscription || subscription.userId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -93,20 +94,20 @@ export const getBySubscription = query({
 export const createExamples = mutation({
   args: { subscriptionId: v.id("subscriptions") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
     // Verify subscription ownership
     const subscription = await ctx.db.get(args.subscriptionId);
-    if (!subscription || subscription.userId !== identity.subject) {
+    if (!subscription || subscription.userId !== userId) {
       throw new Error("Unauthorized");
     }
 
     const examples = [
       {
-        userId: identity.subject,
+        userId,
         subscriptionId: args.subscriptionId,
         platform: subscription.platform,
         adId: `ad_${Date.now()}_1`,
@@ -120,7 +121,7 @@ export const createExamples = mutation({
         rawData: undefined,
       },
       {
-        userId: identity.subject,
+        userId,
         subscriptionId: args.subscriptionId,
         platform: subscription.platform,
         adId: `ad_${Date.now()}_2`,
@@ -136,7 +137,7 @@ export const createExamples = mutation({
         rawData: undefined,
       },
       {
-        userId: identity.subject,
+        userId,
         subscriptionId: args.subscriptionId,
         platform: subscription.platform,
         adId: `ad_${Date.now()}_3`,
@@ -166,8 +167,8 @@ export const createExamples = mutation({
 export const remove = mutation({
   args: { id: v.id("ads") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
@@ -177,7 +178,7 @@ export const remove = mutation({
     }
 
     // Verify ownership
-    if (ad.userId !== identity.subject) {
+    if (ad.userId !== userId) {
       throw new Error("Unauthorized");
     }
 

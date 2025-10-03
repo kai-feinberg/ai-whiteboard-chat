@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 import { Separator } from '@/components/ui/separator'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
@@ -58,19 +59,21 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <RootDocument>
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <span className="font-semibold">AdScout</span>
-          </header>
-          <main className="flex-1">
-            <Outlet />
-          </main>
-        </SidebarInset>
-      </SidebarProvider>
+      <ProtectedRoute>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset>
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <span className="font-semibold">AdScout</span>
+            </header>
+            <main className="flex-1">
+              <Outlet />
+            </main>
+          </SidebarInset>
+        </SidebarProvider>
+      </ProtectedRoute>
       <Toaster />
     </RootDocument>
   )

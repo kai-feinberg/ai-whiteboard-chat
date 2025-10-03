@@ -1,18 +1,19 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 // Get all subscriptions for the current user
 export const getByUser = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
     const subscriptions = await ctx.db
       .query("subscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
 
     return subscriptions;
@@ -23,8 +24,8 @@ export const getByUser = query({
 export const getById = query({
   args: { id: v.id("subscriptions") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
@@ -35,7 +36,7 @@ export const getById = query({
     }
 
     // Verify ownership
-    if (subscription.userId !== identity.subject) {
+    if (subscription.userId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -52,8 +53,8 @@ export const create = mutation({
     frequency: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
@@ -63,7 +64,7 @@ export const create = mutation({
     }
 
     const subscriptionId = await ctx.db.insert("subscriptions", {
-      userId: identity.subject,
+      userId,
       searchTerm: args.searchTerm,
       company: args.company,
       platform: args.platform,
@@ -87,8 +88,8 @@ export const update = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
@@ -98,7 +99,7 @@ export const update = mutation({
     }
 
     // Verify ownership
-    if (subscription.userId !== identity.subject) {
+    if (subscription.userId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -113,8 +114,8 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("subscriptions") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
@@ -124,7 +125,7 @@ export const remove = mutation({
     }
 
     // Verify ownership
-    if (subscription.userId !== identity.subject) {
+    if (subscription.userId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -137,14 +138,14 @@ export const remove = mutation({
 export const createExamples = mutation({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
       throw new Error("Not authenticated");
     }
 
     const examples = [
       {
-        userId: identity.subject,
+        userId,
         searchTerm: "SaaS software",
         company: undefined,
         platform: "facebook",
@@ -152,7 +153,7 @@ export const createExamples = mutation({
         isActive: true,
       },
       {
-        userId: identity.subject,
+        userId,
         searchTerm: undefined,
         company: "Shopify",
         platform: "facebook",
@@ -160,7 +161,7 @@ export const createExamples = mutation({
         isActive: true,
       },
       {
-        userId: identity.subject,
+        userId,
         searchTerm: "AI tools",
         company: undefined,
         platform: "google",

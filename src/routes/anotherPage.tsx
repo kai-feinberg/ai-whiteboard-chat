@@ -3,7 +3,6 @@ import { api } from '../../convex/_generated/api'
 import { useAction } from 'convex/react'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
-import { ProtectedRoute } from '../components/ProtectedRoute'
 import { SignOutButton } from '../components/SignOutButton'
 
 export const Route = createFileRoute('/anotherPage')({
@@ -18,8 +17,7 @@ function AnotherPage() {
   )
 
   return (
-    <ProtectedRoute>
-      <main className="p-8 flex flex-col gap-16">
+    <main className="p-8 flex flex-col gap-16">
       <h1 className="text-4xl font-bold text-center">
         Convex + Tanstack Start
       </h1>
@@ -46,6 +44,5 @@ function AnotherPage() {
         </Link>
       </div>
     </main>
-    </ProtectedRoute>
   )
 }

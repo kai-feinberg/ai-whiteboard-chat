@@ -3,7 +3,6 @@ import { api } from "../../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
-import { ProtectedRoute } from "../components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/table/data-table";
@@ -63,89 +62,87 @@ function Home() {
     : ads.filter((ad: any) => ad.subscriptionId === selectedSubscription);
 
   return (
-    <ProtectedRoute>
-      <div className="p-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Ad Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              {ads.length} ads tracked across {subscriptions.length} subscriptions
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {subscriptions.length > 0 && (
-              <Button onClick={handleCreateExampleAds} variant="outline">
-                Add Example Ads
-              </Button>
-            )}
-            <div className="flex gap-1 border rounded-md p-1">
-              <Button
-                variant={viewMode === "table" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => handleViewModeChange("table")}
-              >
-                <Table className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "card" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => handleViewModeChange("card")}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-            </div>
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Ad Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            {ads.length} ads tracked across {subscriptions.length} subscriptions
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {subscriptions.length > 0 && (
+            <Button onClick={handleCreateExampleAds} variant="outline">
+              Add Example Ads
+            </Button>
+          )}
+          <div className="flex gap-1 border rounded-md p-1">
+            <Button
+              variant={viewMode === "table" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => handleViewModeChange("table")}
+            >
+              <Table className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "card" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => handleViewModeChange("card")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-
-        {subscriptions.length > 0 && (
-          <div className="mb-4">
-            <Select value={selectedSubscription} onValueChange={setSelectedSubscription}>
-              <SelectTrigger className="w-[250px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Subscriptions</SelectItem>
-                {subscriptions.map((sub: any) => (
-                  <SelectItem key={sub._id} value={sub._id}>
-                    {sub.searchTerm || sub.company}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {ads.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">
-                  {subscriptions.length === 0
-                    ? "No subscriptions yet. Create your first subscription to start tracking ads!"
-                    : "No ads found. Ads will appear here once scraping starts (Phase 2)."}
-                </p>
-                <Link to="/subscriptions">
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    {subscriptions.length === 0
-                      ? "Create Subscription"
-                      : "View Subscriptions"}
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        ) : viewMode === "table" ? (
-          <DataTable
-            columns={adColumns}
-            data={filteredAds}
-            searchKey="title"
-            searchPlaceholder="Search ads by title..."
-          />
-        ) : (
-          <AdCardView ads={filteredAds} />
-        )}
       </div>
-    </ProtectedRoute>
+
+      {subscriptions.length > 0 && (
+        <div className="mb-4">
+          <Select value={selectedSubscription} onValueChange={setSelectedSubscription}>
+            <SelectTrigger className="w-[250px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Subscriptions</SelectItem>
+              {subscriptions.map((sub: any) => (
+                <SelectItem key={sub._id} value={sub._id}>
+                  {sub.searchTerm || sub.company}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {ads.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">
+                {subscriptions.length === 0
+                  ? "No subscriptions yet. Create your first subscription to start tracking ads!"
+                  : "No ads found. Ads will appear here once scraping starts (Phase 2)."}
+              </p>
+              <Link to="/subscriptions">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {subscriptions.length === 0
+                    ? "Create Subscription"
+                    : "View Subscriptions"}
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      ) : viewMode === "table" ? (
+        <DataTable
+          columns={adColumns}
+          data={filteredAds}
+          searchKey="title"
+          searchPlaceholder="Search ads by title..."
+        />
+      ) : (
+        <AdCardView ads={filteredAds} />
+      )}
+    </div>
   );
 }
