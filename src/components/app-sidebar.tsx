@@ -1,6 +1,6 @@
 import * as React from "react"
-import { GalleryVerticalEnd } from "lucide-react"
-import Link from "next/link"
+import { Search, BookmarkCheck, User } from "lucide-react"
+import { Link } from "@tanstack/react-router"
 
 import {
   Sidebar,
@@ -16,34 +16,26 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-// Navigation data for Exodus app
+// Navigation data for AdScout app
 const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/dashboard",
+      url: "/",
       items: [
         {
-          title: "Overview",
-          url: "/dashboard",
+          title: "All Ads",
+          url: "/",
         },
       ],
     },
     {
-      title: "Content",
-      url: "/content",
+      title: "Subscriptions",
+      url: "/subscriptions",
       items: [
         {
-          title: "All Content",
-          url: "/content",
-        },
-        {
-          title: "Sources",
-          url: "/sources",
-        },
-        {
-          title: "Questions",
-          url: "/sources/questions",
+          title: "Manage Subscriptions",
+          url: "/subscriptions",
         },
       ],
     },
@@ -54,10 +46,6 @@ const data = {
         {
           title: "Profile",
           url: "/profile",
-        },
-        {
-          title: "Admin",
-          url: "/admin",
         },
       ],
     },
@@ -71,13 +59,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/dashboard">
+              <Link to="/">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <GalleryVerticalEnd className="size-4" />
+                  <Search className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">Exodus</span>
-                  <span className="">Content Engine</span>
+                  <span className="font-medium">AdScout</span>
+                  <span className="">Ad Intelligence</span>
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -90,7 +78,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {data.navMain.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
-                  <Link href={item.url} className="font-medium">
+                  <Link to={item.url} className="font-medium">
                     {item.title}
                   </Link>
                 </SidebarMenuButton>
@@ -99,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild>
-                          <Link href={subItem.url}>{subItem.title}</Link>
+                          <Link to={subItem.url}>{subItem.title}</Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

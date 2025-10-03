@@ -7,6 +7,10 @@ import {
 import { QueryClient } from '@tanstack/react-query'
 import * as React from 'react'
 import appCss from '~/styles/app.css?url'
+import { Toaster } from '@/components/ui/sonner'
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { AppSidebar } from '@/components/app-sidebar'
+import { Separator } from '@/components/ui/separator'
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient
@@ -21,7 +25,7 @@ export const Route = createRootRouteWithContext<{
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'AdScout - Ad Intelligence Platform',
       },
     ],
     links: [
@@ -54,7 +58,20 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <RootDocument>
-      <Outlet />
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <span className="font-semibold">AdScout</span>
+          </header>
+          <main className="flex-1">
+            <Outlet />
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+      <Toaster />
     </RootDocument>
   )
 }
