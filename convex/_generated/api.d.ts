@@ -13,11 +13,11 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as ads from "../ads.js";
+import type * as ads_functions from "../ads/functions.js";
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
-import type * as myFunctions from "../myFunctions.js";
-import type * as subscriptions from "../subscriptions.js";
+import type * as profile_functions from "../profile/functions.js";
+import type * as subscriptions_functions from "../subscriptions/functions.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -28,11 +28,11 @@ import type * as subscriptions from "../subscriptions.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  ads: typeof ads;
+  "ads/functions": typeof ads_functions;
   auth: typeof auth;
   http: typeof http;
-  myFunctions: typeof myFunctions;
-  subscriptions: typeof subscriptions;
+  "profile/functions": typeof profile_functions;
+  "subscriptions/functions": typeof subscriptions_functions;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { api } from "../../convex/_generated/api";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
-import { SignOutButton } from "../components/SignOutButton";
+import { SignOutButton } from "@/features/auth/components/SignOutButton";
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/profile")({
 function ProfilePage() {
   const {
     data: { viewer, email },
-  } = useSuspenseQuery(convexQuery(api.myFunctions.listNumbers, { count: 1 }));
+  } = useSuspenseQuery(convexQuery(api.profile.functions.getCurrentUser, {}));
 
   const initials = viewer
     ? viewer

@@ -11,7 +11,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 import { Separator } from '@/components/ui/separator'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute'
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient

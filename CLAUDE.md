@@ -56,6 +56,115 @@ Chat - AI-powered ad analysis and variation generation
 RAG System - Vector embeddings for semantic search
 
 
+Authentication System 🔐
+Authentication Setup
+
+We use Convex Auth with Resend for passwordless magic link authentication
+Auth tables (users, authSessions, etc.) are automatically created via authTables import
+User data (email, name, etc.) is stored in the users table, NOT in JWT tokens
+
+Critical: Getting the Authenticated User
+
+✅ CORRECT WAY - Use getAuthUserId():
+```typescript
+import { getAuthUserId } from "@convex-dev/auth/server";
+
+export const myQuery = query({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    // userId is the document ID from the users table
+    // Use this to query data or store as foreign key
+    const data = await ctx.db
+      .query("myTable")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+  },
+});
+```
+
+❌ WRONG WAY - Don't use getUserIdentity().subject:
+```typescript
+// DON'T DO THIS - identity.subject doesn't match the users table ID!
+const identity = await ctx.auth.getUserIdentity();
+const userId = identity.subject; // ❌ This is wrong!
+```
+
+Accessing User Information
+
+To get user details (email, name, etc.), query the users table:
+```typescript
+import { getAuthUserId } from "@convex-dev/auth/server";
+
+export const getCurrentUser = query({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      return null;
+    }
+
+    // Get full user document from users table
+    const user = await ctx.db.get(userId);
+    // user has: email, name, image, emailVerificationTime, etc.
+
+    return {
+      name: user?.name ?? null,
+      email: user?.email ?? null,
+    };
+  },
+});
+```
+
+Users Table Structure (from authTables)
+
+The users table includes:
+- `email: v.optional(v.string())` - User's email address
+- `name: v.optional(v.string())` - User's display name
+- `image: v.optional(v.string())` - Profile image URL
+- `emailVerificationTime: v.optional(v.number())` - When email was verified
+- `phone: v.optional(v.string())` - Phone number (if using phone auth)
+- `phoneVerificationTime: v.optional(v.number())` - When phone was verified
+- `isAnonymous: v.optional(v.boolean())` - If user is anonymous
+
+Indexes: `["email"]`, `["phone"]`
+
+Storing User-Related Data
+
+Always use the userId from getAuthUserId() as foreign keys:
+```typescript
+export const createSubscription = mutation({
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    await ctx.db.insert("subscriptions", {
+      userId, // ✅ Use this as the foreign key
+      // ... other fields
+    });
+  },
+});
+```
+
+Authentication Best Practices
+
+1. **Always use `getAuthUserId()`** - Never use `getUserIdentity().subject` for user IDs
+2. **Check for null** - `getAuthUserId()` returns `null` if not authenticated
+3. **Query users table** - Get user details (email, name) from the users table
+4. **Consistent userId** - Use the same userId from `getAuthUserId()` everywhere for data consistency
+5. **Ownership checks** - Always verify the user owns the data they're accessing:
+```typescript
+const subscription = await ctx.db.get(args.id);
+if (subscription.userId !== userId) {
+  throw new Error("Unauthorized");
+}
+```
+
+
 Ad Scraping & Analysis System
 Scraping Flow (Automated)
 
@@ -120,6 +229,7 @@ Actions - Interact with external APIs (ad platforms, AI services)
 
 ❌ Code Organization Mistakes
 
+Using getUserIdentity().subject for userId → Always use getAuthUserId() from @convex-dev/auth/server
 Cross-feature component imports → Features must be self-contained
 Manual auth in components → Use smart hooks
 Splitting functions prematurely → Keep related functions together
@@ -179,7 +289,39 @@ Media files load correctly
 Critical Gotchas & Fixes
 
 🚨 Update This Section When You Encounter Issues
-This section will be populated as issues are discovered during development. When you encounter a significant problem, document it here for future reference.
+
+### Authentication: getUserIdentity().subject vs getAuthUserId()
+
+**Problem**: Using `getUserIdentity().subject` as the userId causes data to not persist across login sessions and email data not to display.
+
+**Root Cause**:
+- `getUserIdentity().subject` returns a JWT subject identifier that doesn't match the document ID in the users table
+- User data (email, name) is stored in the users table, not in JWT tokens
+- When using `identity.subject` as a foreign key, it creates a mismatch with the actual user document ID
+
+**Solution**: Always use `getAuthUserId()` from `@convex-dev/auth/server`
+```typescript
+import { getAuthUserId } from "@convex-dev/auth/server";
+
+// ✅ CORRECT
+const userId = await getAuthUserId(ctx);
+if (userId === null) {
+  throw new Error("Not authenticated");
+}
+
+// ❌ WRONG
+const identity = await ctx.auth.getUserIdentity();
+const userId = identity.subject; // Don't do this!
+```
+
+**Files to Check**:
+- All queries and mutations should use `getAuthUserId()` consistently
+- Check subscriptions, ads, and any other user-related data tables
+- Profile queries should get user data from `ctx.db.get(userId)` on the users table
+
+**Impact**:
+- ❌ Using wrong method: Data disappears after logout/login, email doesn't display
+- ✅ Using correct method: Data persists properly, user info displays correctly
 
 When You Get Stuck
 

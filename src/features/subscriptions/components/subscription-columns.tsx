@@ -4,19 +4,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { DataTableColumnHeader } from "../table/data-table-column-header";
-
-export type Subscription = {
-  _id: string;
-  _creationTime: number;
-  userId: string;
-  searchTerm?: string;
-  company?: string;
-  platform: string;
-  frequency: string;
-  isActive: boolean;
-  lastScrapedAt?: number;
-};
+import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
+import { Subscription } from "../types";
 
 export const createSubscriptionColumns = (
   onDelete: (id: string) => void

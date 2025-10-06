@@ -4,23 +4,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
-import { DataTableColumnHeader } from "../table/data-table-column-header";
-
-export type Ad = {
-  _id: string;
-  _creationTime: number;
-  userId: string;
-  subscriptionId: string;
-  platform: string;
-  adId: string;
-  title: string;
-  description: string;
-  link?: string;
-  mediaUrls: string[];
-  thumbnailUrl?: string;
-  scrapedAt: number;
-  rawData?: any;
-};
+import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
+import { Ad } from "../types";
 
 export const adColumns: ColumnDef<Ad>[] = [
   {

@@ -6,8 +6,8 @@ import { convexQuery } from "@convex-dev/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/table/data-table";
-import { adColumns } from "@/components/ads/ad-columns";
-import { AdCardView } from "@/components/ads/ad-card-view";
+import { adColumns } from "@/features/ad-feed/components/ad-columns";
+import { AdCardView } from "@/features/ad-feed/components/ad-card-view";
 import { LayoutGrid, Table, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,10 +25,10 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { data: ads } = useSuspenseQuery(
-    convexQuery(api.ads.getByUser, {})
+    convexQuery(api.ads.functions.getByUser, {})
   );
   const { data: subscriptions } = useSuspenseQuery(
-    convexQuery(api.subscriptions.getByUser, {})
+    convexQuery(api.subscriptions.functions.getByUser, {})
   );
 
   const [viewMode, setViewMode] = useState<"table" | "card">(
@@ -36,7 +36,7 @@ function Home() {
   );
   const [selectedSubscription, setSelectedSubscription] = useState<string>("all");
 
-  const createExampleAds = useMutation(api.ads.createExamples);
+  const createExampleAds = useMutation(api.ads.functions.createExamples);
 
   const handleViewModeChange = (mode: "table" | "card") => {
     setViewMode(mode);

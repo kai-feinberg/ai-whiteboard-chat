@@ -3,7 +3,7 @@ import { api } from "../../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
-import { ProtectedRoute } from "../components/ProtectedRoute";
+import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/table/data-table";
-import { createSubscriptionColumns } from "@/components/subscriptions/subscription-columns";
+import { createSubscriptionColumns } from "@/features/subscriptions/components/subscription-columns";
 import { useState } from "react";
 import { Trash2, Plus, LayoutGrid, Table } from "lucide-react";
 import { toast } from "sonner";
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/subscriptions")({
 
 function SubscriptionsPage() {
   const { data: subscriptions } = useSuspenseQuery(
-    convexQuery(api.subscriptions.getByUser, {})
+    convexQuery(api.subscriptions.functions.getByUser, {})
   );
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -55,9 +55,9 @@ function SubscriptionsPage() {
     (localStorage.getItem("subscriptionViewMode") as "table" | "card") || "table"
   );
 
-  const createSubscription = useMutation(api.subscriptions.create);
-  const removeSubscription = useMutation(api.subscriptions.remove);
-  const createExamples = useMutation(api.subscriptions.createExamples);
+  const createSubscription = useMutation(api.subscriptions.functions.create);
+  const removeSubscription = useMutation(api.subscriptions.functions.remove);
+  const createExamples = useMutation(api.subscriptions.functions.createExamples);
 
   const handleCreate = async () => {
     if (!searchTerm && !company) {
