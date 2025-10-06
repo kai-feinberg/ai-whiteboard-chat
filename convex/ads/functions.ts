@@ -1,6 +1,8 @@
 import { v } from "convex/values";
-import { query, mutation } from "../_generated/server";
+import { query, mutation, action, internalQuery, internalMutation } from "../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "../_generated/api";
+import type { Doc, Id } from "../_generated/dataModel";
 
 // Get all ads for the current user
 export const getByUser = query({
@@ -184,5 +186,162 @@ export const remove = mutation({
 
     await ctx.db.delete(args.id);
     return args.id;
+  },
+});
+
+// Helper mutation to insert ads from action
+export const insertAd = internalMutation({
+  args: {
+    userId: v.string(),
+    subscriptionId: v.id("subscriptions"),
+    platform: v.string(),
+    adId: v.string(),
+    title: v.string(),
+    description: v.string(),
+    link: v.optional(v.string()),
+    mediaUrls: v.array(v.string()),
+    thumbnailUrl: v.optional(v.string()),
+    scrapedAt: v.number(),
+    rawData: v.optional(v.any()),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.insert("ads", args);
+  },
+});
+
+// Scrape ads from Facebook Ad Library API
+export const scrapeFromFacebookAdLibrary = action({
+  args: {
+    subscriptionId: v.id("subscriptions"),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; count: number; message?: string; error?: string }> => {
+    // Get user ID and verify subscription ownership
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) {
+      throw new Error("Not authenticated");
+    }
+
+    // Verify subscription exists and user owns it
+    const subscription: Doc<"subscriptions"> | null = await ctx.runQuery(
+      (internal as any)["ads/functions"].getSubscriptionForAction,
+      {
+        subscriptionId: args.subscriptionId,
+        userId,
+      }
+    );
+
+    if (!subscription) {
+      throw new Error("Subscription not found or unauthorized");
+    }
+
+    // Get API key from environment
+    const apiKey = process.env.SCRAPE_CREATORS_API_KEY;
+    if (!apiKey) {
+      throw new Error("SCRAPE_CREATORS_API_KEY not configured");
+    }
+
+    // Hardcoded query for MVP
+    const searchQuery = "n8n";
+
+    try {
+      // Make API request
+      const response = await fetch(
+        `https://api.scrapecreators.com/v1/facebook/adLibrary/search/ads?query=${encodeURIComponent(searchQuery)}&trim=true&search_type=keyword_exact_phrase&country=US`,
+        {
+          headers: {
+            "x-api-key": apiKey,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.searchResults || !Array.isArray(data.searchResults)) {
+        throw new Error("Invalid API response format");
+      }
+
+      // Take first 5 results
+      const results = data.searchResults.slice(0, 5);
+      const insertedIds = [];
+
+      // Process each ad result
+      for (const result of results) {
+        try {
+          // Extract data from Facebook Ad Library response
+          const archiveId = result.ad_archive_id || result.collation_id || `fb_${Date.now()}_${Math.random()}`;
+          const pageName = result.page_name || "Unknown Page";
+          const bodyText = result.snapshot?.body?.text || "";
+
+          // Extract images
+          const images = result.snapshot?.images || [];
+          const mediaUrls = images.map((img: any) => img.resized_image_url || img.original_image_url).filter(Boolean);
+          const thumbnailUrl = images[0]?.resized_image_url || images[0]?.original_image_url;
+
+          // Extract link
+          const linkUrl = result.snapshot?.link_url;
+
+          // Extract publisher platforms
+          const platforms = result.publisher_platform || ["FACEBOOK"];
+          const platformStr = platforms.join(", ");
+
+          // Create ad record
+          const adId: Id<"ads"> = await ctx.runMutation(
+            (internal as any)["ads/functions"].insertAd,
+            {
+              userId,
+              subscriptionId: args.subscriptionId,
+              platform: "facebook", // Always facebook for Facebook Ad Library scraper
+              adId: archiveId,
+              title: pageName,
+              description: bodyText || `Ad from ${pageName}`,
+              link: linkUrl ?? undefined,
+              mediaUrls,
+              thumbnailUrl,
+              scrapedAt: Date.now(),
+              rawData: result, // Store full API response for debugging
+            }
+          );
+
+          insertedIds.push(adId);
+        } catch (error) {
+          console.error("Failed to insert ad:", error);
+          // Continue processing other ads even if one fails
+        }
+      }
+
+      return {
+        success: true,
+        count: insertedIds.length,
+        message: `Successfully scraped ${insertedIds.length} ads from Facebook Ad Library`,
+      };
+    } catch (error: any) {
+      console.error("Facebook Ad Library scrape failed:", error);
+      return {
+        success: false,
+        count: 0,
+        error: error.message || "Failed to scrape ads",
+      };
+    }
+  },
+});
+
+// Internal query to get subscription for action
+export const getSubscriptionForAction = internalQuery({
+  args: {
+    subscriptionId: v.id("subscriptions"),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const subscription = await ctx.db.get(args.subscriptionId);
+
+    if (!subscription || subscription.userId !== args.userId) {
+      return null;
+    }
+
+    return subscription;
   },
 });

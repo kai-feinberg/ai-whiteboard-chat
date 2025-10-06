@@ -6,6 +6,44 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/table/data-table-column-header";
 import { Ad } from "../types";
+import { useState } from "react";
+
+function AdTitleCell({ ad }: { ad: Ad }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="flex items-center gap-3">
+      {ad.thumbnailUrl && (
+        <img
+          src={ad.thumbnailUrl}
+          alt={ad.title}
+          className="w-12 h-12 rounded object-cover"
+        />
+      )}
+      <div className="flex flex-col">
+        <span className="font-medium max-w-[400px] truncate">
+          {ad.title}
+        </span>
+        <span
+          className={`text-xs text-muted-foreground max-w-[400px] ${
+            isExpanded ? "" : "truncate cursor-pointer"
+          }`}
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {ad.description}
+        </span>
+        {ad.description.length > 60 && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs text-primary hover:underline text-left w-fit"
+          >
+            {isExpanded ? "Show less" : "Show more"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export const adColumns: ColumnDef<Ad>[] = [
   {
@@ -15,25 +53,7 @@ export const adColumns: ColumnDef<Ad>[] = [
     ),
     cell: ({ row }) => {
       const ad = row.original;
-      return (
-        <div className="flex items-center gap-3">
-          {ad.thumbnailUrl && (
-            <img
-              src={ad.thumbnailUrl}
-              alt={ad.title}
-              className="w-12 h-12 rounded object-cover"
-            />
-          )}
-          <div className="flex flex-col">
-            <span className="font-medium max-w-[400px] truncate">
-              {ad.title}
-            </span>
-            <span className="text-xs text-muted-foreground max-w-[400px] truncate">
-              {ad.description}
-            </span>
-          </div>
-        </div>
-      );
+      return <AdTitleCell ad={ad} />;
     },
   },
   {

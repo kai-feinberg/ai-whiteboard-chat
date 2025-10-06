@@ -8,6 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { useState } from "react";
 import type { Ad } from "./ad-columns";
 
 interface AdCardViewProps {
@@ -15,6 +16,7 @@ interface AdCardViewProps {
 }
 
 export function AdCardView({ ads }: AdCardViewProps) {
+  const [expandedAds, setExpandedAds] = useState<Set<string>>(new Set());
   if (ads.length === 0) {
     return (
       <Card>
@@ -53,9 +55,36 @@ export function AdCardView({ ads }: AdCardViewProps) {
                 </Button>
               )}
             </div>
-            <CardDescription className="line-clamp-3">
+            <CardDescription
+              className={expandedAds.has(ad._id) ? "" : "line-clamp-3 cursor-pointer"}
+              onClick={() => {
+                const newExpanded = new Set(expandedAds);
+                if (newExpanded.has(ad._id)) {
+                  newExpanded.delete(ad._id);
+                } else {
+                  newExpanded.add(ad._id);
+                }
+                setExpandedAds(newExpanded);
+              }}
+            >
               {ad.description}
             </CardDescription>
+            {ad.description.length > 150 && (
+              <button
+                onClick={() => {
+                  const newExpanded = new Set(expandedAds);
+                  if (newExpanded.has(ad._id)) {
+                    newExpanded.delete(ad._id);
+                  } else {
+                    newExpanded.add(ad._id);
+                  }
+                  setExpandedAds(newExpanded);
+                }}
+                className="text-xs text-primary hover:underline mt-1"
+              >
+                {expandedAds.has(ad._id) ? "Show less" : "Show more"}
+              </button>
+            )}
           </CardHeader>
           <CardContent>
             <div className="flex gap-2 items-center justify-between">

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { api } from "../../convex/_generated/api";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/table/data-table";
 import { adColumns } from "@/features/ad-feed/components/ad-columns";
 import { AdCardView } from "@/features/ad-feed/components/ad-card-view";
-import { LayoutGrid, Table, Plus } from "lucide-react";
+import { LayoutGrid, Table, Plus, Download } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -35,8 +35,10 @@ function Home() {
     (localStorage.getItem("adViewMode") as "table" | "card") || "table"
   );
   const [selectedSubscription, setSelectedSubscription] = useState<string>("all");
+  const [isScraping, setIsScraping] = useState(false);
 
   const createExampleAds = useMutation(api.ads.functions.createExamples);
+  const scrapeFacebookAds = useAction(api.ads.functions.scrapeFromFacebookAdLibrary);
 
   const handleViewModeChange = (mode: "table" | "card") => {
     setViewMode(mode);
@@ -57,6 +59,27 @@ function Home() {
     }
   };
 
+  const handleScrapeFacebookAds = async () => {
+    if (subscriptions.length === 0) {
+      toast.error("Please create a subscription first");
+      return;
+    }
+
+    setIsScraping(true);
+    try {
+      const result = await scrapeFacebookAds({ subscriptionId: subscriptions[0]._id });
+      if (result.success) {
+        toast.success(result.message || `Scraped ${result.count} ads from Facebook`);
+      } else {
+        toast.error(result.error || "Failed to scrape ads");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to scrape Facebook ads");
+    } finally {
+      setIsScraping(false);
+    }
+  };
+
   const filteredAds = selectedSubscription === "all"
     ? ads
     : ads.filter((ad: any) => ad.subscriptionId === selectedSubscription);
@@ -72,9 +95,25 @@ function Home() {
         </div>
         <div className="flex gap-2">
           {subscriptions.length > 0 && (
-            <Button onClick={handleCreateExampleAds} variant="outline">
-              Add Example Ads
-            </Button>
+            <>
+              <Button onClick={handleCreateExampleAds} variant="outline">
+                Add Example Ads
+              </Button>
+              <Button
+                onClick={handleScrapeFacebookAds}
+                variant="default"
+                disabled={isScraping}
+              >
+                {isScraping ? (
+                  <>Scraping...</>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Scrape Facebook Ads
+                  </>
+                )}
+              </Button>
+            </>
           )}
           <div className="flex gap-1 border rounded-md p-1">
             <Button
