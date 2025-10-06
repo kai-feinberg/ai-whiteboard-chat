@@ -37,5 +37,6 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_subscription", ["subscriptionId"])
-    .index("by_scraped_at", ["scrapedAt"]),
+    .index("by_scraped_at", ["scrapedAt"])
+    .index("by_platform_and_ad_id", ["platform", "adId"]),
 });

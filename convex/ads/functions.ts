@@ -267,6 +267,7 @@ export const scrapeFromFacebookAdLibrary = action({
       // Take first 5 results
       const results = data.searchResults.slice(0, 5);
       const insertedIds = [];
+      let skippedCount = 0;
 
       // Process each ad result
       for (const result of results) {
@@ -284,9 +285,19 @@ export const scrapeFromFacebookAdLibrary = action({
           // Extract link
           const linkUrl = result.snapshot?.link_url;
 
-          // Extract publisher platforms
-          const platforms = result.publisher_platform || ["FACEBOOK"];
-          const platformStr = platforms.join(", ");
+          // Check if ad already exists
+          const exists = await ctx.runQuery(
+            (internal as any)["ads/functions"].checkAdExists,
+            {
+              platform: "facebook",
+              adId: archiveId,
+            }
+          );
+
+          if (exists) {
+            skippedCount++;
+            continue; // Skip this ad, it already exists
+          }
 
           // Create ad record
           const adId: Id<"ads"> = await ctx.runMutation(
@@ -313,10 +324,14 @@ export const scrapeFromFacebookAdLibrary = action({
         }
       }
 
+      const message = skippedCount > 0
+        ? `Successfully scraped ${insertedIds.length} new ads (${skippedCount} duplicates skipped)`
+        : `Successfully scraped ${insertedIds.length} ads from Facebook Ad Library`;
+
       return {
         success: true,
         count: insertedIds.length,
-        message: `Successfully scraped ${insertedIds.length} ads from Facebook Ad Library`,
+        message,
       };
     } catch (error: any) {
       console.error("Facebook Ad Library scrape failed:", error);
@@ -343,5 +358,23 @@ export const getSubscriptionForAction = internalQuery({
     }
 
     return subscription;
+  },
+});
+
+// Internal query to check if ad already exists
+export const checkAdExists = internalQuery({
+  args: {
+    platform: v.string(),
+    adId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existingAd = await ctx.db
+      .query("ads")
+      .withIndex("by_platform_and_ad_id", (q) =>
+        q.eq("platform", args.platform).eq("adId", args.adId)
+      )
+      .first();
+
+    return existingAd !== null;
   },
 });
