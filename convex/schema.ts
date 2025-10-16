@@ -21,6 +21,21 @@ export default defineSchema({
     lastScrapedAt: v.optional(v.number()),
   }).index("by_user", ["userId"]),
 
+  // Advertisers - Deduplicated advertiser/page data
+  advertisers: defineTable({
+    pageId: v.string(), // Platform's unique page/advertiser ID
+    platform: v.string(), // "facebook", "google", "linkedin", etc.
+    pageName: v.string(),
+    pageLikeCount: v.number(),
+    pageCategories: v.array(v.string()),
+    pageProfilePictureUrl: v.optional(v.string()), // Meta-hosted URL (backward compatibility)
+    pageProfilePictureStorageId: v.optional(v.id("_storage")), // Convex storage ID
+    pageProfileUri: v.optional(v.string()), // e.g., https://www.facebook.com/username/
+    lastScrapedAt: v.number(), // Track when we last saw this advertiser
+  })
+    .index("by_page_id_and_platform", ["pageId", "platform"])
+    .index("by_platform", ["platform"]),
+
   // Ads - Scraped ad data
   ads: defineTable({
     userId: v.string(), // Auth identity subject
@@ -30,13 +45,74 @@ export default defineSchema({
     title: v.string(),
     description: v.string(),
     link: v.optional(v.string()),
-    mediaUrls: v.array(v.string()),
-    thumbnailUrl: v.optional(v.string()),
+    mediaUrls: v.array(v.string()), // Meta-hosted URLs (backward compatibility)
+    thumbnailUrl: v.optional(v.string()), // Meta-hosted URL (backward compatibility)
+    thumbnailStorageId: v.optional(v.id("_storage")), // Convex storage ID for thumbnail
+    mediaStorageIds: v.optional(v.array(v.id("_storage"))), // Array of Convex storage IDs
+    mediaMetadata: v.optional(
+      v.array(
+        v.object({
+          type: v.string(), // "image" | "video"
+          storageId: v.id("_storage"),
+          originalUrl: v.string(), // Original Meta URL for reference
+        })
+      )
+    ),
     scrapedAt: v.number(),
     rawData: v.optional(v.any()), // Store full platform response
+
+    // Foreign key to advertiser (optional for backward compatibility)
+    pageId: v.optional(v.string()), // Links to advertisers.pageId
+
+    // Campaign timeline (optional for backward compatibility)
+    startDate: v.optional(v.number()), // Unix timestamp (milliseconds)
+    endDate: v.optional(v.number()), // Unix timestamp, undefined if still active
+    isActive: v.optional(v.boolean()),
+    totalActiveTime: v.optional(v.number()), // Duration in seconds ad has been running
+
+    // Ad format & creative (optional for backward compatibility)
+    displayFormat: v.optional(v.string()), // "MULTI_IMAGES", "DCO", "VIDEO", "SINGLE_IMAGE", etc.
+    ctaText: v.optional(v.string()), // "Subscribe", "Learn More", "No button", etc.
+    ctaType: v.optional(v.string()), // "SUBSCRIBE", "LEARN_MORE", "NO_BUTTON", etc.
+    collationCount: v.optional(v.number()), // Number of ad variations in collection
+    caption: v.optional(v.string()), // Link caption text
+
+    // Distribution (optional for backward compatibility)
+    publisherPlatforms: v.optional(v.array(v.string())), // ["FACEBOOK", "INSTAGRAM", "MESSENGER", ...]
+    reachEstimate: v.optional(
+      v.object({
+        lower: v.number(),
+        upper: v.number(),
+      })
+    ),
+    spend: v.optional(
+      v.object({
+        lower: v.number(),
+        upper: v.number(),
+        currency: v.string(),
+      })
+    ),
+
+    // Content structure (for carousel/DCO ads - optional for backward compatibility)
+    cards: v.optional(
+      v.array(
+        v.object({
+          title: v.optional(v.string()),
+          body: v.optional(v.string()),
+          caption: v.optional(v.string()),
+          linkUrl: v.optional(v.string()),
+          imageUrl: v.optional(v.string()),
+          videoUrl: v.optional(v.string()),
+        })
+      )
+    ),
+    hasVideo: v.optional(v.boolean()),
+    videoCount: v.optional(v.number()),
+    imageCount: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
     .index("by_subscription", ["subscriptionId"])
     .index("by_scraped_at", ["scrapedAt"])
-    .index("by_platform_and_ad_id", ["platform", "adId"]),
+    .index("by_platform_and_ad_id", ["platform", "adId"])
+    .index("by_page_id", ["pageId"]),
 });
