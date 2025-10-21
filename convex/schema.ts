@@ -2,10 +2,6 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
-  // Legacy example table
-  numbers: defineTable({
-    value: v.number(),
-  }),
 
   // Ad Subscriptions - User's tracked search terms and companies
   subscriptions: defineTable({

@@ -4,6 +4,7 @@ import { useMutation } from "convex/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -50,9 +51,15 @@ function SubscriptionsPage() {
   const [company, setCompany] = useState("");
   const [platform, setPlatform] = useState("facebook");
   const [frequency, setFrequency] = useState("daily");
-  const [viewMode, setViewMode] = useState<"table" | "card">(
-    (localStorage.getItem("subscriptionViewMode") as "table" | "card") || "table"
-  );
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
+
+  // Initialize viewMode from localStorage after mount (client-side only)
+  useEffect(() => {
+    const stored = localStorage.getItem("subscriptionViewMode") as "table" | "card";
+    if (stored) {
+      setViewMode(stored);
+    }
+  }, []);
 
   const createSubscription = useMutation(api.subscriptions.functions.create);
   const removeSubscription = useMutation(api.subscriptions.functions.remove);

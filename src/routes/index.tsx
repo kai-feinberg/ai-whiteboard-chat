@@ -9,7 +9,7 @@ import { DataTable } from "@/components/table/data-table";
 import { adColumns } from "@/features/ad-feed/components/ad-columns";
 import { AdCardView } from "@/features/ad-feed/components/ad-card-view";
 import { LayoutGrid, Table, Plus, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Select,
@@ -31,11 +31,17 @@ function Home() {
     convexQuery(api.subscriptions.functions.getByUser, {})
   );
 
-  const [viewMode, setViewMode] = useState<"table" | "card">(
-    (localStorage.getItem("adViewMode") as "table" | "card") || "table"
-  );
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [selectedSubscription, setSelectedSubscription] = useState<string>("all");
   const [isScraping, setIsScraping] = useState(false);
+
+  // Initialize viewMode from localStorage after mount (client-side only)
+  useEffect(() => {
+    const stored = localStorage.getItem("adViewMode") as "table" | "card";
+    if (stored) {
+      setViewMode(stored);
+    }
+  }, []);
 
   const createExampleAds = useMutation(api.ads.functions.createExamples);
   const scrapeFacebookAds = useAction(api.ads.functions.scrapeFromFacebookAdLibrary);
@@ -46,14 +52,12 @@ function Home() {
   };
 
   const handleCreateExampleAds = async () => {
-    if (subscriptions.length === 0) {
-      toast.error("Please create a subscription first");
-      return;
-    }
-
     try {
-      await createExampleAds({ subscriptionId: subscriptions[0]._id });
-      toast.success("Example ads created!");
+      // Pass the first subscription if available, otherwise let the backend create subscriptions
+      await createExampleAds({
+        subscriptionId: subscriptions.length > 0 ? subscriptions[0]._id : undefined
+      });
+      toast.success("Example ads and subscriptions created!");
     } catch (error) {
       toast.error("Failed to create example ads");
     }
@@ -94,26 +98,24 @@ function Home() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={handleCreateExampleAds} variant="outline">
+            Add Example Ads
+          </Button>
           {subscriptions.length > 0 && (
-            <>
-              <Button onClick={handleCreateExampleAds} variant="outline">
-                Add Example Ads
-              </Button>
-              <Button
-                onClick={handleScrapeFacebookAds}
-                variant="default"
-                disabled={isScraping}
-              >
-                {isScraping ? (
-                  <>Scraping...</>
-                ) : (
-                  <>
-                    <Download className="mr-2 h-4 w-4" />
-                    Scrape Facebook Ads
-                  </>
-                )}
-              </Button>
-            </>
+            <Button
+              onClick={handleScrapeFacebookAds}
+              variant="default"
+              disabled={isScraping}
+            >
+              {isScraping ? (
+                <>Scraping...</>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Scrape Facebook Ads
+                </>
+              )}
+            </Button>
           )}
           <div className="flex gap-1 border rounded-md p-1">
             <Button

@@ -103,27 +103,46 @@ function RootComponent() {
     <ClerkProvider>
       <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
         <RootDocument>
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-              <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-                <span className="font-semibold">AdScout</span>
-                <div className="ml-auto">
-                  <SignedIn>
+          <SignedIn>
+            <SidebarProvider>
+              <AppSidebar />
+              <SidebarInset>
+                <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                  <SidebarTrigger className="-ml-1" />
+                  <Separator orientation="vertical" className="mr-2 h-4" />
+                  <span className="font-semibold">AdScout</span>
+                  <div className="ml-auto">
                     <UserButton />
-                  </SignedIn>
-                  <SignedOut>
-                    <SignInButton mode="modal" />
-                  </SignedOut>
+                  </div>
+                </header>
+                <main className="flex-1">
+                  <Outlet />
+                </main>
+              </SidebarInset>
+            </SidebarProvider>
+          </SignedIn>
+          <SignedOut>
+            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+              <div className="w-full max-w-md space-y-8 p-8">
+                <div className="text-center">
+                  <h1 className="text-4xl font-bold tracking-tight">AdScout</h1>
+                  <p className="mt-2 text-lg text-muted-foreground">
+                    Ad Intelligence Platform
+                  </p>
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    Sign in to track, analyze, and discover winning ad campaigns
+                  </p>
                 </div>
-              </header>
-              <main className="flex-1">
-                <Outlet />
-              </main>
-            </SidebarInset>
-          </SidebarProvider>
+                <div className="mt-8 flex justify-center">
+                  <SignInButton mode="modal">
+                    <button className="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                      Sign In
+                    </button>
+                  </SignInButton>
+                </div>
+              </div>
+            </div>
+          </SignedOut>
           <Toaster />
         </RootDocument>
       </ConvexProviderWithClerk>

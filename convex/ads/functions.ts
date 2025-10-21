@@ -244,7 +244,7 @@ export const getBySubscription = query({
 
 // Create example ads for testing
 export const createExamples = mutation({
-  args: { subscriptionId: v.id("subscriptions") },
+  args: { subscriptionId: v.optional(v.id("subscriptions")) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (identity === null) {
@@ -252,17 +252,75 @@ export const createExamples = mutation({
     }
     const userId = identity.subject;
 
-    // Verify subscription ownership
-    const subscription = await ctx.db.get(args.subscriptionId);
-    if (!subscription || subscription.userId !== userId) {
-      throw new Error("Unauthorized");
+    // Get or create subscription
+    let subscriptionId = args.subscriptionId;
+    let subscription;
+
+    if (subscriptionId) {
+      // Verify subscription ownership if provided
+      subscription = await ctx.db.get(subscriptionId);
+      if (!subscription || subscription.userId !== userId) {
+        throw new Error("Unauthorized");
+      }
+    } else {
+      // Check if user has any subscriptions
+      const existingSubs = await ctx.db
+        .query("subscriptions")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect();
+
+      if (existingSubs.length > 0) {
+        // Use first subscription
+        subscription = existingSubs[0];
+        subscriptionId = subscription._id;
+      } else {
+        // Create example subscriptions first
+        const exampleSubs = [
+          {
+            userId,
+            searchTerm: "SaaS software",
+            company: undefined,
+            platform: "facebook",
+            frequency: "daily",
+            isActive: true,
+          },
+          {
+            userId,
+            searchTerm: undefined,
+            company: "Shopify",
+            platform: "facebook",
+            frequency: "weekly",
+            isActive: true,
+          },
+          {
+            userId,
+            searchTerm: "AI tools",
+            company: undefined,
+            platform: "google",
+            frequency: "daily",
+            isActive: true,
+          },
+        ];
+
+        const newSubIds = await Promise.all(
+          exampleSubs.map((example) => ctx.db.insert("subscriptions", example))
+        );
+
+        // Use the first created subscription
+        subscriptionId = newSubIds[0];
+        subscription = await ctx.db.get(subscriptionId);
+      }
+    }
+
+    if (!subscription) {
+      throw new Error("Failed to get or create subscription");
     }
 
     const now = Date.now();
     const examples = [
       {
         userId,
-        subscriptionId: args.subscriptionId,
+        subscriptionId,
         platform: subscription.platform,
         adId: `ad_${now}_1`,
         title: "Transform Your Business with AI",
@@ -294,7 +352,7 @@ export const createExamples = mutation({
       },
       {
         userId,
-        subscriptionId: args.subscriptionId,
+        subscriptionId,
         platform: subscription.platform,
         adId: `ad_${now}_2`,
         title: "Limited Time Offer - 50% Off",
@@ -328,7 +386,7 @@ export const createExamples = mutation({
       },
       {
         userId,
-        subscriptionId: args.subscriptionId,
+        subscriptionId,
         platform: subscription.platform,
         adId: `ad_${now}_3`,
         title: "See What Our Customers Are Saying",
@@ -521,13 +579,15 @@ export const scrapeFromFacebookAdLibrary = action({
     subscriptionId: v.id("subscriptions"),
   },
   handler: async (ctx, args): Promise<{ success: boolean; count: number; message?: string; error?: string }> => {
-    // Get user ID and verify subscription ownership
-    // TODO: Replace with Clerk auth
-    // const userId = await getAuthUserId(ctx);
-    // if (userId === null) {
-    //   throw new Error("Not authenticated");
-    // }
-    const userId = "temp-user-id"; // Temporary until Clerk is set up
+    // Get user ID from Clerk authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      console.error("[scrapeFromFacebookAdLibrary] User not authenticated");
+      throw new Error("Not authenticated");
+    }
+    const userId = identity.subject;
+    console.log("[scrapeFromFacebookAdLibrary] User ID:", userId);
+    console.log("[scrapeFromFacebookAdLibrary] Subscription ID:", args.subscriptionId);
 
     // Verify subscription exists and user owns it
     const subscription: Doc<"subscriptions"> | null = await ctx.runQuery(
@@ -538,7 +598,15 @@ export const scrapeFromFacebookAdLibrary = action({
       }
     );
 
+    console.log("[scrapeFromFacebookAdLibrary] Subscription found:", subscription !== null);
+    if (subscription) {
+      console.log("[scrapeFromFacebookAdLibrary] Subscription userId:", subscription.userId);
+      console.log("[scrapeFromFacebookAdLibrary] Requesting userId:", userId);
+      console.log("[scrapeFromFacebookAdLibrary] UserIds match:", subscription.userId === userId);
+    }
+
     if (!subscription) {
+      console.error("[scrapeFromFacebookAdLibrary] Subscription not found or unauthorized");
       throw new Error("Subscription not found or unauthorized");
     }
 
