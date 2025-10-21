@@ -1,24 +1,21 @@
 import { query } from "../_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
 
 // Get current user profile information
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const identity = await ctx.auth.getUserIdentity();
 
-    if (userId === null) {
+    if (identity === null) {
       return {
         viewer: null,
         email: null,
       };
     }
 
-    const user = await ctx.db.get(userId);
-
     return {
-      viewer: user?.name ?? null,
-      email: user?.email ?? null,
+      viewer: identity.name ?? identity.email ?? null,
+      email: identity.email ?? null,
     };
   },
 });

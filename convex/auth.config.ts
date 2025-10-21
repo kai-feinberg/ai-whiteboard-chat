@@ -1,8 +1,11 @@
 export default {
   providers: [
     {
-      domain: process.env.CONVEX_SITE_URL,
-      applicationID: "convex",
+      // Clerk JWT template issuer URL
+      // In development: https://working-deer-84.clerk.accounts.dev
+      // Can also use process.env.CLERK_JWT_ISSUER_DOMAIN for different environments
+      domain: process.env.CLERK_JWT_ISSUER_DOMAIN!,
+      applicationID: 'convex',
     },
   ],
 };

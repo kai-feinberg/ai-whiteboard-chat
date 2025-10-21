@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { query, mutation, action, internalQuery, internalMutation, internalAction } from "../_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 
@@ -11,10 +10,11 @@ export const getByUser = query({
     subscriptionId: v.optional(v.id("subscriptions")),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     let adsQuery = ctx.db
       .query("ads")
@@ -98,10 +98,11 @@ export const getByUser = query({
 export const getById = query({
   args: { id: v.id("ads") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     const ad = await ctx.db.get(args.id);
 
@@ -160,10 +161,11 @@ export const getById = query({
 export const getBySubscription = query({
   args: { subscriptionId: v.id("subscriptions") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     const ads = await ctx.db
       .query("ads")
@@ -244,10 +246,11 @@ export const getBySubscription = query({
 export const createExamples = mutation({
   args: { subscriptionId: v.id("subscriptions") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     // Verify subscription ownership
     const subscription = await ctx.db.get(args.subscriptionId);
@@ -372,10 +375,11 @@ export const createExamples = mutation({
 export const remove = mutation({
   args: { id: v.id("ads") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     const ad = await ctx.db.get(args.id);
     if (!ad) {
@@ -518,10 +522,12 @@ export const scrapeFromFacebookAdLibrary = action({
   },
   handler: async (ctx, args): Promise<{ success: boolean; count: number; message?: string; error?: string }> => {
     // Get user ID and verify subscription ownership
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
-      throw new Error("Not authenticated");
-    }
+    // TODO: Replace with Clerk auth
+    // const userId = await getAuthUserId(ctx);
+    // if (userId === null) {
+    //   throw new Error("Not authenticated");
+    // }
+    const userId = "temp-user-id"; // Temporary until Clerk is set up
 
     // Verify subscription exists and user owns it
     const subscription: Doc<"subscriptions"> | null = await ctx.runQuery(

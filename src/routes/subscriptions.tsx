@@ -3,7 +3,6 @@ import { api } from "../../convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { convexQuery } from "@convex-dev/react-query";
-import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -109,8 +108,7 @@ function SubscriptionsPage() {
   const subscriptionColumns = createSubscriptionColumns(handleDelete);
 
   return (
-    <ProtectedRoute>
-      <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-8 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Ad Subscriptions</h1>
@@ -271,7 +269,6 @@ function SubscriptionsPage() {
           ))}
         </div>
       )}
-      </div>
-    </ProtectedRoute>
+    </div>
   );
 }

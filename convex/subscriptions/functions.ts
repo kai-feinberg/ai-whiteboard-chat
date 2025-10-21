@@ -1,15 +1,15 @@
 import { v } from "convex/values";
 import { query, mutation } from "../_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
 
 // Get all subscriptions for the current user
 export const getByUser = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     const subscriptions = await ctx.db
       .query("subscriptions")
@@ -24,10 +24,11 @@ export const getByUser = query({
 export const getById = query({
   args: { id: v.id("subscriptions") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     const subscription = await ctx.db.get(args.id);
 
@@ -53,10 +54,11 @@ export const create = mutation({
     frequency: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     // Validate: must have either searchTerm or company
     if (!args.searchTerm && !args.company) {
@@ -88,10 +90,11 @@ export const update = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     const subscription = await ctx.db.get(args.id);
     if (!subscription) {
@@ -114,10 +117,11 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("subscriptions") },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     const subscription = await ctx.db.get(args.id);
     if (!subscription) {
@@ -138,10 +142,11 @@ export const remove = mutation({
 export const createExamples = mutation({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (userId === null) {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
       throw new Error("Not authenticated");
     }
+    const userId = identity.subject;
 
     const examples = [
       {
