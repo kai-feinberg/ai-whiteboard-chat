@@ -11,7 +11,11 @@ import {
   SignedIn,
   SignedOut,
   UserButton,
+  OrganizationSwitcher,
   useAuth,
+  useOrganization,
+  useClerk,
+  useOrganizationList,
 } from '@clerk/tanstack-react-start'
 import { createServerFn } from '@tanstack/react-start'
 import { QueryClient } from '@tanstack/react-query'
@@ -32,6 +36,7 @@ const fetchClerkAuth = createServerFn({ method: 'GET' }).handler(async () => {
 
   return {
     userId: authData.userId,
+    orgId: authData.orgId,
     token,
   }
 })
@@ -79,7 +84,7 @@ export const Route = createRootRouteWithContext<{
   }),
   beforeLoad: async (ctx) => {
     const auth = await fetchClerkAuth()
-    const { userId, token } = auth
+    const { userId, orgId, token } = auth
 
     // During SSR only (the only time serverHttpClient exists),
     // set the Clerk auth token to make HTTP queries with.
@@ -89,6 +94,7 @@ export const Route = createRootRouteWithContext<{
 
     return {
       userId,
+      orgId,
       token,
     }
   },
@@ -104,22 +110,7 @@ function RootComponent() {
       <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
         <RootDocument>
           <SignedIn>
-            <SidebarProvider>
-              <AppSidebar />
-              <SidebarInset>
-                <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-                  <SidebarTrigger className="-ml-1" />
-                  <Separator orientation="vertical" className="mr-2 h-4" />
-                  <span className="font-semibold">AdScout</span>
-                  <div className="ml-auto">
-                    <UserButton />
-                  </div>
-                </header>
-                <main className="flex-1">
-                  <Outlet />
-                </main>
-              </SidebarInset>
-            </SidebarProvider>
+            <AuthenticatedContent />
           </SignedIn>
           <SignedOut>
             <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
@@ -147,6 +138,95 @@ function RootComponent() {
         </RootDocument>
       </ConvexProviderWithClerk>
     </ClerkProvider>
+  )
+}
+
+function AuthenticatedContent() {
+  const { organization, isLoaded } = useOrganization()
+  const clerk = useClerk()
+  const { userMemberships } = useOrganizationList({
+    userMemberships: {
+      infinite: true,
+    },
+  })
+  const [isSettingOrg, setIsSettingOrg] = React.useState(false)
+
+  // Auto-select first organization if none is active
+  React.useEffect(() => {
+    async function autoSelectFirstOrg() {
+      if (!isLoaded || isSettingOrg) return
+
+      if (!organization && userMemberships?.data && userMemberships.data.length > 0) {
+        setIsSettingOrg(true)
+        try {
+          // Set the first organization as active
+          await clerk.setActive({ organization: userMemberships.data[0].organization.id })
+          window.location.reload()
+        } catch (error) {
+          console.error('Failed to auto-select organization:', error)
+          setIsSettingOrg(false)
+        }
+      }
+    }
+
+    autoSelectFirstOrg()
+  }, [isLoaded, organization, clerk, userMemberships, isSettingOrg])
+
+  if (!isLoaded || isSettingOrg) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!organization) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="w-full max-w-md space-y-8 p-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold tracking-tight">Create an Organization</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You need to create an organization to continue using AdScout
+            </p>
+          </div>
+          <div className="mt-8 flex justify-center">
+            <OrganizationSwitcher
+              hidePersonal={false}
+              afterCreateOrganizationUrl={() => window.location.href = '/'}
+              afterSelectOrganizationUrl={() => window.location.href = '/'}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <span className="font-semibold">AdScout</span>
+          <div className="ml-auto flex items-center gap-4">
+            <OrganizationSwitcher
+              hidePersonal={false}
+              afterCreateOrganizationUrl={() => window.location.href = '/'}
+              afterSelectOrganizationUrl={() => window.location.href = '/'}
+            />
+            <UserButton />
+          </div>
+        </header>
+        <main className="flex-1">
+          <Outlet />
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
 

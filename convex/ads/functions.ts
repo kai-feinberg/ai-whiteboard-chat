@@ -3,7 +3,7 @@ import { query, mutation, action, internalQuery, internalMutation, internalActio
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 
-// Get all ads for the current user
+// Get all ads for the current user's organization
 export const getByUser = query({
   args: {
     platform: v.optional(v.string()),
@@ -15,10 +15,15 @@ export const getByUser = query({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     let adsQuery = ctx.db
       .query("ads")
-      .withIndex("by_user", (q) => q.eq("userId", userId));
+      .withIndex("by_organization", (q) => q.eq("organizationId", orgId));
 
     const ads = await adsQuery.collect();
 
@@ -103,6 +108,11 @@ export const getById = query({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     const ad = await ctx.db.get(args.id);
 
@@ -110,9 +120,9 @@ export const getById = query({
       throw new Error("Ad not found");
     }
 
-    // Verify ownership
-    if (ad.userId !== userId) {
-      throw new Error("Unauthorized");
+    // Verify organization ownership
+    if (ad.organizationId !== orgId) {
+      throw new Error("Unauthorized - ad belongs to a different organization");
     }
 
     // Generate URLs from storage IDs (prefer Convex storage over Meta URLs)
@@ -166,6 +176,11 @@ export const getBySubscription = query({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     const ads = await ctx.db
       .query("ads")
@@ -176,8 +191,8 @@ export const getBySubscription = query({
 
     // Verify ownership of subscription
     const subscription = await ctx.db.get(args.subscriptionId);
-    if (!subscription || subscription.userId !== userId) {
-      throw new Error("Unauthorized");
+    if (!subscription || subscription.organizationId !== orgId) {
+      throw new Error("Unauthorized - subscription belongs to a different organization");
     }
 
     // Sort by scraped date, most recent first
@@ -251,6 +266,11 @@ export const createExamples = mutation({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     // Get or create subscription
     let subscriptionId = args.subscriptionId;
@@ -259,14 +279,14 @@ export const createExamples = mutation({
     if (subscriptionId) {
       // Verify subscription ownership if provided
       subscription = await ctx.db.get(subscriptionId);
-      if (!subscription || subscription.userId !== userId) {
-        throw new Error("Unauthorized");
+      if (!subscription || subscription.organizationId !== orgId) {
+        throw new Error("Unauthorized - subscription belongs to a different organization");
       }
     } else {
-      // Check if user has any subscriptions
+      // Check if organization has any subscriptions
       const existingSubs = await ctx.db
         .query("subscriptions")
-        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
         .collect();
 
       if (existingSubs.length > 0) {
@@ -278,6 +298,7 @@ export const createExamples = mutation({
         const exampleSubs = [
           {
             userId,
+            organizationId: orgId,
             searchTerm: "SaaS software",
             company: undefined,
             platform: "facebook",
@@ -286,6 +307,7 @@ export const createExamples = mutation({
           },
           {
             userId,
+            organizationId: orgId,
             searchTerm: undefined,
             company: "Shopify",
             platform: "facebook",
@@ -294,6 +316,7 @@ export const createExamples = mutation({
           },
           {
             userId,
+            organizationId: orgId,
             searchTerm: "AI tools",
             company: undefined,
             platform: "google",
@@ -320,6 +343,7 @@ export const createExamples = mutation({
     const examples = [
       {
         userId,
+        organizationId: orgId,
         subscriptionId,
         platform: subscription.platform,
         adId: `ad_${now}_1`,
@@ -352,6 +376,7 @@ export const createExamples = mutation({
       },
       {
         userId,
+        organizationId: orgId,
         subscriptionId,
         platform: subscription.platform,
         adId: `ad_${now}_2`,
@@ -386,6 +411,7 @@ export const createExamples = mutation({
       },
       {
         userId,
+        organizationId: orgId,
         subscriptionId,
         platform: subscription.platform,
         adId: `ad_${now}_3`,
@@ -438,15 +464,20 @@ export const remove = mutation({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     const ad = await ctx.db.get(args.id);
     if (!ad) {
       throw new Error("Ad not found");
     }
 
-    // Verify ownership
-    if (ad.userId !== userId) {
-      throw new Error("Unauthorized");
+    // Verify organization ownership
+    if (ad.organizationId !== orgId) {
+      throw new Error("Unauthorized - ad belongs to a different organization");
     }
 
     // Delete the ad document first
@@ -476,6 +507,7 @@ export const remove = mutation({
 export const insertAd = internalMutation({
   args: {
     userId: v.string(),
+    organizationId: v.string(),
     subscriptionId: v.id("subscriptions"),
     platform: v.string(),
     adId: v.string(),
@@ -579,30 +611,37 @@ export const scrapeFromFacebookAdLibrary = action({
     subscriptionId: v.id("subscriptions"),
   },
   handler: async (ctx, args): Promise<{ success: boolean; count: number; message?: string; error?: string }> => {
-    // Get user ID from Clerk authentication
+    // Get user ID and organization ID from Clerk authentication
     const identity = await ctx.auth.getUserIdentity();
     if (identity === null) {
       console.error("[scrapeFromFacebookAdLibrary] User not authenticated");
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
     console.log("[scrapeFromFacebookAdLibrary] User ID:", userId);
+    console.log("[scrapeFromFacebookAdLibrary] Organization ID:", orgId);
     console.log("[scrapeFromFacebookAdLibrary] Subscription ID:", args.subscriptionId);
 
-    // Verify subscription exists and user owns it
+    // Verify subscription exists and organization owns it
     const subscription: Doc<"subscriptions"> | null = await ctx.runQuery(
       (internal as any)["ads/functions"].getSubscriptionForAction,
       {
         subscriptionId: args.subscriptionId,
-        userId,
+        organizationId: orgId,
       }
     );
 
     console.log("[scrapeFromFacebookAdLibrary] Subscription found:", subscription !== null);
     if (subscription) {
-      console.log("[scrapeFromFacebookAdLibrary] Subscription userId:", subscription.userId);
-      console.log("[scrapeFromFacebookAdLibrary] Requesting userId:", userId);
-      console.log("[scrapeFromFacebookAdLibrary] UserIds match:", subscription.userId === userId);
+      console.log("[scrapeFromFacebookAdLibrary] Subscription organizationId:", subscription.organizationId);
+      console.log("[scrapeFromFacebookAdLibrary] Requesting organizationId:", orgId);
+      console.log("[scrapeFromFacebookAdLibrary] OrganizationIds match:", subscription.organizationId === orgId);
     }
 
     if (!subscription) {
@@ -725,6 +764,7 @@ export const scrapeFromFacebookAdLibrary = action({
               pageProfilePictureUrl: profilePictureUrl,
               pageProfilePictureStorageId: profilePictureStorageId,
               pageProfileUri: result.snapshot?.page_profile_uri,
+              organizationId: orgId,
             }
           );
 
@@ -812,6 +852,7 @@ export const scrapeFromFacebookAdLibrary = action({
             (internal as any)["ads/functions"].insertAd,
             {
               userId,
+              organizationId: orgId,
               subscriptionId: args.subscriptionId,
               platform: "facebook",
               adId: archiveId,
@@ -878,12 +919,12 @@ export const scrapeFromFacebookAdLibrary = action({
 export const getSubscriptionForAction = internalQuery({
   args: {
     subscriptionId: v.id("subscriptions"),
-    userId: v.string(),
+    organizationId: v.string(),
   },
   handler: async (ctx, args) => {
     const subscription = await ctx.db.get(args.subscriptionId);
 
-    if (!subscription || subscription.userId !== args.userId) {
+    if (!subscription || subscription.organizationId !== args.organizationId) {
       return null;
     }
 

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "../_generated/server";
 
-// Get all subscriptions for the current user
+// Get all subscriptions for the current user's organization
 export const getByUser = query({
   args: {},
   handler: async (ctx) => {
@@ -10,10 +10,15 @@ export const getByUser = query({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     const subscriptions = await ctx.db
       .query("subscriptions")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
       .collect();
 
     return subscriptions;
@@ -29,6 +34,11 @@ export const getById = query({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     const subscription = await ctx.db.get(args.id);
 
@@ -36,9 +46,9 @@ export const getById = query({
       throw new Error("Subscription not found");
     }
 
-    // Verify ownership
-    if (subscription.userId !== userId) {
-      throw new Error("Unauthorized");
+    // Verify organization ownership
+    if (subscription.organizationId !== orgId) {
+      throw new Error("Unauthorized - subscription belongs to a different organization");
     }
 
     return subscription;
@@ -59,6 +69,11 @@ export const create = mutation({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     // Validate: must have either searchTerm or company
     if (!args.searchTerm && !args.company) {
@@ -67,6 +82,7 @@ export const create = mutation({
 
     const subscriptionId = await ctx.db.insert("subscriptions", {
       userId,
+      organizationId: orgId,
       searchTerm: args.searchTerm,
       company: args.company,
       platform: args.platform,
@@ -95,15 +111,20 @@ export const update = mutation({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     const subscription = await ctx.db.get(args.id);
     if (!subscription) {
       throw new Error("Subscription not found");
     }
 
-    // Verify ownership
-    if (subscription.userId !== userId) {
-      throw new Error("Unauthorized");
+    // Verify organization ownership
+    if (subscription.organizationId !== orgId) {
+      throw new Error("Unauthorized - subscription belongs to a different organization");
     }
 
     const { id, ...updates } = args;
@@ -122,15 +143,20 @@ export const remove = mutation({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     const subscription = await ctx.db.get(args.id);
     if (!subscription) {
       throw new Error("Subscription not found");
     }
 
-    // Verify ownership
-    if (subscription.userId !== userId) {
-      throw new Error("Unauthorized");
+    // Verify organization ownership
+    if (subscription.organizationId !== orgId) {
+      throw new Error("Unauthorized - subscription belongs to a different organization");
     }
 
     await ctx.db.delete(args.id);
@@ -147,10 +173,16 @@ export const createExamples = mutation({
       throw new Error("Not authenticated");
     }
     const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
 
     const examples = [
       {
         userId,
+        organizationId: orgId,
         searchTerm: "SaaS software",
         company: undefined,
         platform: "facebook",
@@ -159,6 +191,7 @@ export const createExamples = mutation({
       },
       {
         userId,
+        organizationId: orgId,
         searchTerm: undefined,
         company: "Shopify",
         platform: "facebook",
@@ -167,6 +200,7 @@ export const createExamples = mutation({
       },
       {
         userId,
+        organizationId: orgId,
         searchTerm: "AI tools",
         company: undefined,
         platform: "google",

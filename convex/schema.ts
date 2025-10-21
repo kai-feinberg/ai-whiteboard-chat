@@ -5,14 +5,17 @@ export default defineSchema({
 
   // Ad Subscriptions - User's tracked search terms and companies
   subscriptions: defineTable({
-    userId: v.string(), // Auth identity subject
+    userId: v.string(), // Auth identity subject (owner)
+    organizationId: v.string(), // Clerk organization ID for multi-tenancy
     searchTerm: v.optional(v.string()),
     company: v.optional(v.string()),
     platform: v.string(), // "facebook", "google", "linkedin", etc.
     frequency: v.string(), // "daily", "weekly", "realtime"
     isActive: v.boolean(),
     lastScrapedAt: v.optional(v.number()),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_organization", ["organizationId"]),
 
   // Advertisers - Deduplicated advertiser/page data
   advertisers: defineTable({
@@ -25,13 +28,15 @@ export default defineSchema({
     pageProfilePictureStorageId: v.optional(v.id("_storage")), // Convex storage ID
     pageProfileUri: v.optional(v.string()), // e.g., https://www.facebook.com/username/
     lastScrapedAt: v.number(), // Track when we last saw this advertiser
+    organizationId: v.optional(v.string()), // Organization that discovered this advertiser (optional)
   })
     .index("by_page_id_and_platform", ["pageId", "platform"])
     .index("by_platform", ["platform"]),
 
   // Ads - Scraped ad data
   ads: defineTable({
-    userId: v.string(), // Auth identity subject
+    userId: v.string(), // Auth identity subject (owner)
+    organizationId: v.string(), // Clerk organization ID for multi-tenancy
     subscriptionId: v.id("subscriptions"),
     platform: v.string(),
     adId: v.string(), // Platform's unique ad ID
@@ -104,6 +109,7 @@ export default defineSchema({
     imageCount: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
+    .index("by_organization", ["organizationId"])
     .index("by_subscription", ["subscriptionId"])
     .index("by_scraped_at", ["scrapedAt"])
     .index("by_platform_and_ad_id", ["platform", "adId"])

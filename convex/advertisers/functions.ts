@@ -13,6 +13,7 @@ export const upsertAdvertiser = internalMutation({
     pageProfilePictureUrl: v.optional(v.string()),
     pageProfilePictureStorageId: v.optional(v.id("_storage")),
     pageProfileUri: v.optional(v.string()),
+    organizationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Check if advertiser already exists
@@ -32,6 +33,7 @@ export const upsertAdvertiser = internalMutation({
         pageProfilePictureUrl: args.pageProfilePictureUrl,
         pageProfilePictureStorageId: args.pageProfilePictureStorageId,
         pageProfileUri: args.pageProfileUri,
+        organizationId: args.organizationId,
         lastScrapedAt: Date.now(),
       });
       return existing._id;
