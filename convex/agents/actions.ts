@@ -5,6 +5,7 @@ import { canvasAgent } from "./agent";
 import { internal } from "../_generated/api";
 import { createThread } from "@convex-dev/agent";
 import { components } from "../_generated/api";
+import { getCurrentDocumentText } from "./tools";
 
 /**
  * Get or create a playground thread for the organization (internal)
@@ -134,12 +135,21 @@ export const sendMessage = action({
     });
 
     try {
+      // Get current document text to provide context to the AI
+      const currentDocumentText = await getCurrentDocumentText(ctx, organizationId as string);
+      console.log("[sendMessage] Current document text:", currentDocumentText ? `${currentDocumentText.substring(0, 100)}...` : "empty");
+
+      // Build enhanced prompt with document context
+      const enhancedPrompt = currentDocumentText
+        ? `Current document content:\n\`\`\`\n${currentDocumentText}\n\`\`\`\n\nUser request: ${args.message}`
+        : args.message;
+
       // Generate AI response
       const result: any = await canvasAgent.generateText(
         ctx,
         { threadId },
         {
-          prompt: args.message,
+          prompt: enhancedPrompt,
         }
       );
 

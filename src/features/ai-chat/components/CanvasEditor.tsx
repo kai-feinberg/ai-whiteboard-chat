@@ -50,10 +50,18 @@ export function CanvasEditor({ documentId, documentVersion }: CanvasEditorProps)
     });
   }, [sync.isLoading, sync.initialContent, sync.extension, documentId, documentVersion]);
 
-  // Handle document version changes (AI edits)
+  // Handle document version changes (AI edits) - force editor to reload
   useEffect(() => {
     console.log('[CanvasEditor] Document version changed:', documentVersion);
-  }, [documentVersion]);
+
+    // When AI updates the document, the version changes
+    // The sync system should automatically pull the changes, but we can force a refresh
+    if (editor && documentVersion && documentVersion > 1) {
+      console.log('[CanvasEditor] AI updated document, sync will pull changes automatically');
+      // The useTiptapSync hook automatically handles syncing new changes
+      // No manual intervention needed - the extension handles it
+    }
+  }, [documentVersion, editor]);
 
   if (sync.isLoading) {
     return (

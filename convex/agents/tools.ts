@@ -3,10 +3,73 @@ import { createTool } from "@convex-dev/agent";
 import { z } from "zod";
 import { prosemirrorSync } from "./canvas";
 import { api, components, internal } from "../_generated/api";
+import { getSchema } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
+import { Transform } from "@tiptap/pm/transform";
+
+// Define the extensions - must match the client-side editor schema
+// Note: For server-side operations, we only need extensions that affect the schema
+const extensions = [
+  StarterKit.configure({
+    // Don't include history on server side - it doesn't affect schema
+    paragraph: {},
+    heading: { levels: [1, 2, 3, 4, 5, 6] },
+    bold: {},
+    italic: {},
+    code: {},
+    codeBlock: {},
+    bulletList: {},
+    orderedList: {},
+    listItem: {},
+    blockquote: {},
+    horizontalRule: {},
+  }),
+];
+
+/**
+ * Helper function to get current document text
+ * Exported so it can be used by the agent to provide context
+ */
+export async function getCurrentDocumentText(ctx: any, organizationId: string): Promise<string | null> {
+  const documentId = `playground-doc-${organizationId}`;
+  const schema = getSchema(extensions);
+
+  try {
+    // Check if document exists
+    const latestVersion = await ctx.runQuery(components.prosemirrorSync.lib.latestVersion, {
+      id: documentId
+    });
+
+    if (latestVersion === null) {
+      return null; // Document doesn't exist yet
+    }
+
+    // Get the document content
+    const { doc } = await prosemirrorSync.getDoc(ctx, documentId, schema);
+
+    // Convert ProseMirror doc to plain text
+    let text = '';
+    doc.content.forEach((node: any) => {
+      if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+        node.content?.forEach((textNode: any) => {
+          if (textNode.type.name === 'text') {
+            text += textNode.text;
+          }
+        });
+        text += '\n';
+      }
+    });
+
+    return text.trim();
+  } catch (error) {
+    console.error('[getCurrentDocumentText] Error:', error);
+    return null;
+  }
+}
 
 /**
  * Tool for AI to create or update the collaborative document
- * Uses delete-and-recreate pattern to avoid OT conflicts
+ * Uses ProseMirror transforms for proper OT (Operational Transform) support
  */
 export const setDocumentText = createTool({
   description: "Create or update the collaborative document with new content. Use this when you want to write, edit, or replace content in the document.",
@@ -44,7 +107,10 @@ export const setDocumentText = createTool({
 
     console.log('[setDocumentText] Existing metadata:', existingDocMetadata ? 'found' : 'not found');
 
-    // Check if ProseMirror snapshot exists (this is the actual document)
+    // Get the schema (must match client-side editor)
+    const schema = getSchema(extensions);
+
+    // Check if ProseMirror snapshot exists
     const latestVersion = await ctx.runQuery(components.prosemirrorSync.lib.latestVersion, {
       id: documentId
     });
@@ -53,59 +119,71 @@ export const setDocumentText = createTool({
 
     // Convert text content to ProseMirror JSON structure
     const paragraphs = args.content.split('\n').filter(p => p.trim().length > 0);
-    const documentContent = {
-      type: "doc",
-      content: paragraphs.length > 0
-        ? paragraphs.map(paragraph => ({
-            type: "paragraph",
-            content: [{ type: "text", text: paragraph }]
-          }))
-        : [{
-            type: "paragraph",
-            content: []
-          }]
-    };
+    const newContent = paragraphs.length > 0
+      ? paragraphs.map(paragraph => ({
+          type: "paragraph",
+          content: [{ type: "text", text: paragraph }]
+        }))
+      : [{
+          type: "paragraph",
+          content: []
+        }];
 
-    console.log('[setDocumentText] Created document content with', documentContent.content.length, 'paragraphs');
+    console.log('[setDocumentText] Created new content with', newContent.length, 'paragraphs');
 
     try {
-      // DELETE-AND-RECREATE PATTERN (Critical for AI edits)
-      // Check for actual snapshot, not just metadata
-      if (latestVersion !== null) {
-        console.log('[setDocumentText] Deleting existing ProseMirror document');
-        await ctx.runMutation(components.prosemirrorSync.lib.deleteDocument, {
-          id: documentId
+      // If document doesn't exist yet, create it
+      if (latestVersion === null) {
+        console.log('[setDocumentText] Creating new document');
+        await prosemirrorSync.create(ctx, documentId, {
+          type: "doc",
+          content: newContent
         });
 
-        // Wait a moment for deletion to complete (helps avoid race conditions)
-        // The deleteDocument mutation schedules async deletion of steps
-        console.log('[setDocumentText] Document deleted, waiting before recreate');
-      }
-
-      // Recreate with new content at version 1 (since we deleted everything)
-      console.log('[setDocumentText] Creating new document at version 1');
-      await prosemirrorSync.create(ctx, documentId, documentContent);
-
-      // Handle document metadata
-      if (existingDocMetadata) {
-        console.log('[setDocumentText] Refreshing document timestamp');
-        await ctx.runMutation(internal.documents.functions.refreshDocumentTimestamp, {
-          threadDocumentId: existingDocMetadata._id
-        });
-      } else {
-        // Create initial document metadata
+        // Create document metadata
         console.log('[setDocumentText] Creating document metadata');
         await ctx.runMutation(internal.documents.functions.createDocumentMetadata, {
           documentId,
           title: args.title || "AI Playground Document",
           userId,
           organizationId: organizationId as string,
-          threadId: "playground-thread", // Hardcoded for now
+          threadId: "playground-thread",
+        });
+
+        console.log('[setDocumentText] Document created successfully');
+        return `✅ Document created successfully! (${args.content.length} characters, ${newContent.length} paragraphs)`;
+      }
+
+      // Document exists - use transform to replace content
+      console.log('[setDocumentText] Transforming existing document');
+
+      await prosemirrorSync.transform(ctx, documentId, schema, (doc) => {
+        const tr = new Transform(doc);
+
+        // Replace entire document content with new content
+        // Delete everything from position 0 to end of doc
+        tr.delete(0, doc.content.size);
+
+        // Insert new content at position 0
+        for (let i = 0; i < newContent.length; i++) {
+          const paragraphJson = newContent[i];
+          const node = schema.nodeFromJSON(paragraphJson);
+          tr.insert(i === 0 ? 0 : tr.doc.content.size, node);
+        }
+
+        return tr;
+      });
+
+      // Update document metadata timestamp
+      if (existingDocMetadata) {
+        console.log('[setDocumentText] Refreshing document timestamp');
+        await ctx.runMutation(internal.documents.functions.refreshDocumentTimestamp, {
+          threadDocumentId: existingDocMetadata._id
         });
       }
 
-      console.log('[setDocumentText] Document successfully updated');
-      return `✅ Document updated successfully! (${args.content.length} characters, ${paragraphs.length} paragraphs)`;
+      console.log('[setDocumentText] Document successfully transformed');
+      return `✅ Document updated successfully! (${args.content.length} characters, ${newContent.length} paragraphs)`;
     } catch (error) {
       console.error('[setDocumentText] Error updating document:', error);
       return `❌ Error updating document: ${error instanceof Error ? error.message : 'Unknown error'}`;
