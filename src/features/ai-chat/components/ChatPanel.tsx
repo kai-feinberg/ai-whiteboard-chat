@@ -29,21 +29,14 @@ interface ChatPanelProps {
 }
 
 export function ChatPanel({ messages, onSendMessage, isStreaming }: ChatPanelProps) {
-  const [input, setInput] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isStreaming) return;
-
-    const messageToSend = input;
-    setInput(""); // Clear input immediately for better UX
+  const handleSubmit = async (message: { text?: string; files?: any[] }) => {
+    if (!message.text?.trim() || isStreaming) return;
 
     try {
-      await onSendMessage(messageToSend);
+      await onSendMessage(message.text);
     } catch (error) {
-      // If there's an error, restore the message
-      setInput(messageToSend);
       console.error("[ChatPanel] Error sending message:", error);
+      throw error; // Re-throw so PromptInput can handle it
     }
   };
 
@@ -75,14 +68,11 @@ export function ChatPanel({ messages, onSendMessage, isStreaming }: ChatPanelPro
         className="mt-4 w-full relative border-t pt-4 px-4"
       >
         <PromptInputTextarea
-          value={input}
           placeholder="Ask the AI to write something... (Shift+Enter for new line)"
-          onChange={(e) => setInput(e.currentTarget.value)}
           className="pr-12"
         />
         <PromptInputSubmit
           status={isStreaming ? "streaming" : "ready"}
-          disabled={!input.trim()}
           className="absolute bottom-5 right-5"
         />
       </PromptInput>

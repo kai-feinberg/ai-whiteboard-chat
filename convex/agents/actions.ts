@@ -1,8 +1,39 @@
 // convex/agents/actions.ts
 import { v } from "convex/values";
-import { action, internalMutation } from "../_generated/server";
+import { action, internalMutation, mutation, query } from "../_generated/server";
 import { canvasAgent } from "./agent";
 import { internal } from "../_generated/api";
+
+/**
+ * Get or create a playground thread for the organization (internal)
+ */
+export const getOrCreatePlaygroundThread = internalMutation({
+  args: {
+    userId: v.string(),
+    organizationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Look for existing playground thread
+    const existing = await ctx.db
+      .query("threads")
+      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+      .filter((q) => q.eq(q.field("title"), "Playground"))
+      .first();
+
+    if (existing) {
+      return existing._id;
+    }
+
+    // Create new playground thread
+    const threadId = await ctx.db.insert("threads", {
+      userId: args.userId,
+      organizationId: args.organizationId,
+      title: "Playground",
+    });
+
+    return threadId;
+  },
+});
 
 /**
  * Send a message to the AI agent and get a response
@@ -10,7 +41,7 @@ import { internal } from "../_generated/api";
 export const sendMessage = action({
   args: {
     message: v.string(),
-    threadId: v.optional(v.string()),
+    threadId: v.optional(v.id("threads")),
   },
   handler: async (ctx, args) => {
     console.log("[sendMessage] Received message:", args.message);
@@ -21,14 +52,17 @@ export const sendMessage = action({
     }
 
     const userId = identity.subject;
-    const organizationId = identity.orgId;
+    const organizationId = identity.organizationId;
 
     if (!organizationId || typeof organizationId !== "string") {
-      throw new Error("No organization context");
+      throw new Error("No organization selected. Please select an organization to continue.");
     }
 
-    // Use hardcoded thread ID for playground
-    const threadId = args.threadId || `playground-thread-${organizationId}`;
+    // Get or create thread ID
+    const threadId: string = args.threadId || (await ctx.runMutation(internal.agents.actions.getOrCreatePlaygroundThread, {
+      userId,
+      organizationId,
+    }) as any);
 
     console.log("[sendMessage] Using thread:", threadId);
 
@@ -37,12 +71,12 @@ export const sendMessage = action({
       threadId,
       message: args.message,
       userId,
-      organizationId,
+      organizationId: organizationId as string,
     });
 
     try {
       // Generate AI response
-      const result = await canvasAgent.generateText(
+      const result: any = await canvasAgent.generateText(
         ctx,
         { threadId },
         {
@@ -54,10 +88,10 @@ export const sendMessage = action({
 
       // Store AI response
       await ctx.runMutation(internal.agents.actions.saveAssistantMessage, {
-        threadId,
+        threadId: threadId as string,
         message: result.text,
         userId,
-        organizationId,
+        organizationId: organizationId as string,
       });
 
       return {

@@ -11,7 +11,7 @@ const openrouter = createOpenRouter({
 
 // Create the language model using OpenRouter
 // We'll use Claude 3.5 Sonnet via OpenRouter
-const languageModel = openrouter.chat("anthropic/claude-3.5-sonnet");
+const languageModel = openrouter("anthropic/claude-3.5-sonnet");
 
 /**
  * AI Canvas Assistant Agent

@@ -87,7 +87,7 @@ export const setDocumentText = createTool({
           documentId,
           title: args.title || "AI Playground Document",
           userId,
-          organizationId,
+          organizationId: organizationId as string,
           threadId: "playground-thread", // Hardcoded for now
         });
       }
