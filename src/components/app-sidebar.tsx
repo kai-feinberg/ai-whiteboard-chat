@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Search, BookmarkCheck, User } from "lucide-react"
 import { Link } from "@tanstack/react-router"
+import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 
 import {
   Sidebar,
@@ -14,6 +15,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
 
 // Navigation data for AdScout app
@@ -98,6 +100,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <div className="flex flex-col gap-2 p-2">
+          <OrganizationSwitcher
+            hidePersonal={false}
+            afterCreateOrganizationUrl={() => window.location.href = '/'}
+            afterSelectOrganizationUrl={() => window.location.href = '/'}
+          />
+          <UserButton
+            appearance={{
+              elements: {
+                userButtonBox: "flex-row-reverse",
+                userButtonAvatarBox: "w-10 h-10",
+                userButtonTrigger: "w-full justify-start px-2 py-2 rounded-md hover:bg-sidebar-accent",
+                userButtonOuterIdentifier: "text-sm font-medium",
+                userButtonInnerIdentifier: "text-xs text-muted-foreground",
+              }
+            }}
+            showName={true}
+          />
+        </div>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )

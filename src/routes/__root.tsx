@@ -213,14 +213,6 @@ function AuthenticatedContent() {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <span className="font-semibold">AdScout</span>
-          <div className="ml-auto flex items-center gap-4">
-            <OrganizationSwitcher
-              hidePersonal={false}
-              afterCreateOrganizationUrl={() => window.location.href = '/'}
-              afterSelectOrganizationUrl={() => window.location.href = '/'}
-            />
-            <UserButton />
-          </div>
         </header>
         <main className="flex-1">
           <Outlet />
