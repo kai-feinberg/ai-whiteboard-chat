@@ -27,7 +27,7 @@ Core Stack
 
 Frontend: TanStack Start (SSR React)
 Database: Convex (real-time, serverless)
-Auth: Clerk (migration in progress)
+Auth: Clerk with Organizations (fully integrated)
 AI: OpenAI + Claude Sonnet
 Vector Search: Convex Vector Search (RAG)
 Media Storage: Convex file storage
@@ -47,10 +47,10 @@ File Structure Pattern
 
 Core Features Overview
 
-Authentication - Clerk (migration in progress)
-User Profile - AI model config, search preferences
-Subscriptions - Manage search terms and company monitoring
-Ad Dashboard - View scraped ads with filters/tags
+Authentication - Clerk with Organizations (fully integrated)
+User Profile - User information and settings
+Subscriptions - Manage search terms and company monitoring (organization-scoped)
+Ad Dashboard - View scraped ads with filters/tags (organization-scoped)
 Search Ads - Tag-based and semantic search through ad database
 Chat - AI-powered ad analysis and variation generation
 RAG System - Vector embeddings for semantic search
@@ -58,75 +58,173 @@ RAG System - Vector embeddings for semantic search
 
 Authentication System 🔐
 
-**Migration Status**: Transitioning from Convex Auth to Clerk
+**Status**: ✅ Fully migrated to Clerk with Organizations
 
-**Current State**:
-- All Convex Auth code has been removed
-- Backend functions use temporary userId "temp-user-id" placeholder
-- All auth checks are commented out with "TODO: Replace with Clerk auth"
-- ConvexAuthProvider removed from router.tsx
-- @convex-dev/auth and @auth/core dependencies removed from package.json
+AdScout uses Clerk for authentication with multi-tenant organization support. All data is scoped to organizations, not individual users.
 
-**Next Steps for Clerk Integration**:
+## Backend Authentication (Convex Functions)
 
-1. **Setup Clerk**:
-   - Create Clerk application at https://clerk.com
-   - Get publishable and secret keys
-   - Add environment variables to .env.local
-
-2. **Install Clerk for Convex**:
-   ```bash
-   pnpm add @clerk/clerk-react
-   ```
-
-3. **Configure Clerk Provider in router.tsx**:
-   ```typescript
-   import { ClerkProvider } from '@clerk/clerk-react'
-
-   // In router Wrap:
-   Wrap: ({ children }) => (
-     <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
-       {children}
-     </ClerkProvider>
-   ),
-   ```
-
-4. **Update Convex Functions**:
-   Replace all instances of `const userId = "temp-user-id"` with Clerk authentication:
-   ```typescript
-   import { auth } from "./auth";
-
-   export const myQuery = query({
-     handler: async (ctx, args) => {
-       const identity = await auth.getUserIdentity(ctx);
-       if (!identity) {
-         throw new Error("Not authenticated");
-       }
-       const userId = identity.subject; // Clerk user ID
-
-       // Use userId for queries
-     },
-   });
-   ```
-
-**Files to Update After Clerk Setup**:
-- `/convex/auth.ts` - Create Clerk auth helper
-- `/convex/subscriptions/functions.ts` - Replace temp userId with Clerk auth
-- `/convex/ads/functions.ts` - Replace temp userId with Clerk auth
-- `/convex/profile/functions.ts` - Replace temp userId with Clerk auth
-- `/src/router.tsx` - Add ClerkProvider wrapper
-
-**Authentication Best Practices with Clerk**:
-
-1. **Get user ID** - Use `auth.getUserIdentity(ctx).subject` in backend
-2. **Check authentication** - Always verify `identity` is not null
-3. **Ownership checks** - Verify user owns the data they're accessing:
+**Getting User & Organization ID**:
 ```typescript
-const subscription = await ctx.db.get(args.id);
-if (subscription.userId !== userId) {
-  throw new Error("Unauthorized");
+import { query, mutation } from "../_generated/server";
+
+export const myQuery = query({
+  args: {},
+  handler: async (ctx, args) => {
+    // Get authenticated user identity
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get user ID and organization ID
+    const userId = identity.subject;
+    const orgId = identity.organizationId;
+
+    // ALWAYS verify organization is selected
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Now you can use userId and orgId for queries
+  },
+});
+```
+
+**Organization Ownership Checks**:
+Always verify that data belongs to the user's current organization:
+```typescript
+export const getById = query({
+  args: { id: v.id("items") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new Error("Not authenticated");
+    }
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected.");
+    }
+
+    const item = await ctx.db.get(args.id);
+    if (!item) {
+      throw new Error("Item not found");
+    }
+
+    // Verify organization ownership
+    if (item.organizationId !== orgId) {
+      throw new Error("Unauthorized - item belongs to a different organization");
+    }
+
+    return item;
+  },
+});
+```
+
+**Querying by Organization**:
+Use organization indexes for efficient queries:
+```typescript
+const items = await ctx.db
+  .query("items")
+  .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+  .collect();
+```
+
+## Client-Side Authentication
+
+**Showing Authenticated UI**:
+Use Clerk's `<SignedIn>` and `<SignedOut>` components:
+```typescript
+import { SignedIn, SignedOut, SignInButton } from '@clerk/tanstack-react-start';
+
+function MyComponent() {
+  return (
+    <>
+      <SignedIn>
+        {/* Content for authenticated users */}
+        <div>Welcome!</div>
+      </SignedIn>
+
+      <SignedOut>
+        {/* Content for unauthenticated users */}
+        <SignInButton mode="modal">
+          <button>Sign In</button>
+        </SignInButton>
+      </SignedOut>
+    </>
+  );
 }
 ```
+
+**Using Organization Data**:
+```typescript
+import { useOrganization, useAuth } from '@clerk/tanstack-react-start';
+
+function MyComponent() {
+  const { organization, isLoaded } = useOrganization();
+
+  if (!isLoaded) {
+    return <div>Loading...</div>;
+  }
+
+  if (!organization) {
+    return <div>Please select an organization</div>;
+  }
+
+  return <div>Current org: {organization.name}</div>;
+}
+```
+
+**User Actions (Sign Out, Profile)**:
+```typescript
+import { UserButton, SignOutButton, OrganizationSwitcher } from '@clerk/tanstack-react-start';
+
+// User profile dropdown with avatar
+<UserButton showName={true} />
+
+// Sign out button
+<SignOutButton>
+  <button>Sign Out</button>
+</SignOutButton>
+
+// Organization switcher
+<OrganizationSwitcher
+  hidePersonal={false}
+  afterCreateOrganizationUrl={() => window.location.href = '/'}
+  afterSelectOrganizationUrl={() => window.location.href = '/'}
+/>
+```
+
+## Configuration Files
+
+**Convex Auth Config** (`convex/auth.config.ts`):
+```typescript
+export default {
+  providers: [
+    {
+      domain: process.env.CLERK_JWT_ISSUER_DOMAIN!,
+      applicationID: 'convex',
+    },
+  ],
+};
+```
+
+**Root Route Setup** (`src/routes/__root.tsx`):
+- Uses `ClerkProvider` to wrap the entire app
+- Uses `ConvexProviderWithClerk` to integrate Clerk with Convex
+- Server function `fetchClerkAuth` gets auth token for SSR
+- Auto-selects first organization if none is active
+- Shows organization creation prompt if user has no organizations
+
+## Authentication Best Practices
+
+1. **Always check authentication** - Never skip the identity check
+2. **Always verify organization** - Check `orgId` exists and is a string
+3. **Scope all data to organizations** - Use `organizationId` field on all records
+4. **Use organization indexes** - Query by organization for performance
+5. **Check ownership on mutations** - Verify org owns the data before update/delete
+6. **Handle missing organization** - Show helpful error when no org is selected
 
 
 Ad Scraping & Analysis System
@@ -193,12 +291,14 @@ Actions - Interact with external APIs (ad platforms, AI services)
 
 ❌ Code Organization Mistakes
 
-Using getUserIdentity().subject for userId → Always use getAuthUserId() from @convex-dev/auth/server
+Not checking for organizationId → Always verify `orgId` exists and is a string
+Not verifying organization ownership → Always check data belongs to current org
 Cross-feature component imports → Features must be self-contained
-Manual auth in components → Use smart hooks
+Manual auth in components → Use Clerk hooks and components
 Splitting functions prematurely → Keep related functions together
 God components → Single responsibility principle
 Not using vector search → Leverage Convex's built-in capabilities
+Querying without organization index → Always use `by_organization` index
 
 Development Workflow
 Starting a New Feature
@@ -225,7 +325,7 @@ After building a feature, document:
 
 What went smoothly - patterns that worked well
 Unexpected challenges - issues not covered in documentation
-Authentication gotchas - Convex Auth edge cases encountered
+Authentication gotchas - Clerk or organization-related edge cases encountered
 Database issues - schema problems or relationship complications
 Vector search issues - embedding generation or query problems
 UI/UX discoveries - mobile responsiveness or real-time sync issues
@@ -254,21 +354,22 @@ Critical Gotchas & Fixes
 
 🚨 Update This Section When You Encounter Issues
 
-### Authentication: Clerk Migration in Progress
+### Authentication: Clerk with Organizations (Completed ✅)
 
-**Current State**:
-- Convex Auth has been completely removed
-- All backend functions use temporary userId "temp-user-id"
-- Auth checks are commented out pending Clerk integration
+**Implementation Complete**:
+- ✅ Clerk fully integrated with TanStack Start
+- ✅ Organizations required for all users
+- ✅ All backend functions use `ctx.auth.getUserIdentity()`
+- ✅ All data scoped to `organizationId`
+- ✅ Auto-selection of first organization
+- ✅ Organization creation prompt for new users
+- ✅ Database indexes on `organizationId` for all tables
 
-**Migration Checklist**:
-- [ ] Set up Clerk account and get API keys
-- [ ] Install Clerk dependencies
-- [ ] Configure ClerkProvider in router.tsx
-- [ ] Create Clerk auth helper in convex/auth.ts
-- [ ] Update all backend functions to use Clerk authentication
-- [ ] Remove all temporary "temp-user-id" placeholders
-- [ ] Test authentication flows
+**Key Points**:
+- All Convex queries/mutations MUST check for `organizationId`
+- All database records MUST include `organizationId` field
+- Use `by_organization` index for efficient queries
+- Always verify organization ownership before mutations
 
 When You Get Stuck
 

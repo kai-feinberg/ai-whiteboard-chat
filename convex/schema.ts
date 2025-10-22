@@ -114,4 +114,27 @@ export default defineSchema({
     .index("by_scraped_at", ["scrapedAt"])
     .index("by_platform_and_ad_id", ["platform", "adId"])
     .index("by_page_id", ["pageId"]),
+
+  // AI Chat Threads - Conversation threads for AI chat feature
+  threads: defineTable({
+    userId: v.string(), // Auth identity subject (owner)
+    organizationId: v.string(), // Clerk organization ID for multi-tenancy
+    title: v.optional(v.string()), // Thread title/name
+  })
+    .index("by_user", ["userId"])
+    .index("by_organization", ["organizationId"]),
+
+  // Thread Documents - Links chat threads to collaborative documents
+  threadDocuments: defineTable({
+    threadId: v.string(), // Foreign key to thread
+    documentId: v.string(), // ProseMirror document ID (e.g., "doc_thread123")
+    title: v.optional(v.string()), // User-editable document title
+    createdBy: v.string(), // User who created document
+    organizationId: v.string(), // Clerk organization ID for multi-tenancy
+    createdAt: v.number(), // Timestamp (used to trigger refreshes)
+    documentVersion: v.optional(v.number()), // Incremented on AI edits
+  })
+    .index("by_thread", ["threadId"])
+    .index("by_document", ["documentId"])
+    .index("by_organization", ["organizationId"]),
 });

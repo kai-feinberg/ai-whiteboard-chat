@@ -32,6 +32,16 @@ const data = {
       ],
     },
     {
+      title: "AI Chat",
+      url: "/ai-chat",
+      items: [
+        {
+          title: "Document Playground",
+          url: "/ai-chat",
+        },
+      ],
+    },
+    {
       title: "Subscriptions",
       url: "/subscriptions",
       items: [

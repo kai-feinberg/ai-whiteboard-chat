@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as AiChatRouteImport } from './routes/ai-chat'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -30,6 +31,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiChatRoute = AiChatRouteImport.update({
+  id: '/ai-chat',
+  path: '/ai-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
@@ -42,12 +48,14 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/ai-chat': typeof AiChatRoute
   '/profile': typeof ProfileRoute
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ai-chat': typeof AiChatRoute
   '/profile': typeof ProfileRoute
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
@@ -56,21 +64,30 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRoute
+  '/ai-chat': typeof AiChatRoute
   '/profile': typeof ProfileRoute
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/profile' | '/sign-in' | '/subscriptions'
+  fullPaths: '/' | '/ai-chat' | '/profile' | '/sign-in' | '/subscriptions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/profile' | '/sign-in' | '/subscriptions'
-  id: '__root__' | '/' | '/_authed' | '/profile' | '/sign-in' | '/subscriptions'
+  to: '/' | '/ai-chat' | '/profile' | '/sign-in' | '/subscriptions'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authed'
+    | '/ai-chat'
+    | '/profile'
+    | '/sign-in'
+    | '/subscriptions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRoute
+  AiChatRoute: typeof AiChatRoute
   ProfileRoute: typeof ProfileRoute
   SignInRoute: typeof SignInRoute
   SubscriptionsRoute: typeof SubscriptionsRoute
@@ -99,6 +116,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai-chat': {
+      id: '/ai-chat'
+      path: '/ai-chat'
+      fullPath: '/ai-chat'
+      preLoaderRoute: typeof AiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed': {
       id: '/_authed'
       path: ''
@@ -119,6 +143,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRoute,
+  AiChatRoute: AiChatRoute,
   ProfileRoute: ProfileRoute,
   SignInRoute: SignInRoute,
   SubscriptionsRoute: SubscriptionsRoute,
