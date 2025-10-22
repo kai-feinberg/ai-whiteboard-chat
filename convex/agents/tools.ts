@@ -25,7 +25,7 @@ export const setDocumentText = createTool({
     }
 
     const userId = identity.subject;
-    const organizationId = identity.orgId;
+    const organizationId = identity.organizationId;
 
     if (!organizationId || typeof organizationId !== "string") {
       console.error('[setDocumentText] No organization ID found');
@@ -37,12 +37,19 @@ export const setDocumentText = createTool({
 
     console.log('[setDocumentText] Using document ID:', documentId);
 
-    // Check if document already exists
-    const existingDoc = await ctx.runQuery(api.documents.functions.getByDocumentId, {
+    // Check if document metadata exists
+    const existingDocMetadata = await ctx.runQuery(api.documents.functions.getByDocumentId, {
       documentId
     });
 
-    console.log('[setDocumentText] Existing doc:', existingDoc ? 'found' : 'not found');
+    console.log('[setDocumentText] Existing metadata:', existingDocMetadata ? 'found' : 'not found');
+
+    // Check if ProseMirror snapshot exists (this is the actual document)
+    const latestVersion = await ctx.runQuery(components.prosemirrorSync.lib.latestVersion, {
+      id: documentId
+    });
+
+    console.log('[setDocumentText] Latest ProseMirror version:', latestVersion);
 
     // Convert text content to ProseMirror JSON structure
     const paragraphs = args.content.split('\n').filter(p => p.trim().length > 0);
@@ -63,22 +70,27 @@ export const setDocumentText = createTool({
 
     try {
       // DELETE-AND-RECREATE PATTERN (Critical for AI edits)
-      if (existingDoc) {
-        console.log('[setDocumentText] Deleting existing document');
+      // Check for actual snapshot, not just metadata
+      if (latestVersion !== null) {
+        console.log('[setDocumentText] Deleting existing ProseMirror document');
         await ctx.runMutation(components.prosemirrorSync.lib.deleteDocument, {
           id: documentId
         });
+
+        // Wait a moment for deletion to complete (helps avoid race conditions)
+        // The deleteDocument mutation schedules async deletion of steps
+        console.log('[setDocumentText] Document deleted, waiting before recreate');
       }
 
-      // Recreate with new content
-      console.log('[setDocumentText] Creating new document');
+      // Recreate with new content at version 1 (since we deleted everything)
+      console.log('[setDocumentText] Creating new document at version 1');
       await prosemirrorSync.create(ctx, documentId, documentContent);
 
-      // If document metadata exists, update its version
-      if (existingDoc) {
+      // Handle document metadata
+      if (existingDocMetadata) {
         console.log('[setDocumentText] Refreshing document timestamp');
         await ctx.runMutation(internal.documents.functions.refreshDocumentTimestamp, {
-          threadDocumentId: existingDoc._id
+          threadDocumentId: existingDocMetadata._id
         });
       } else {
         // Create initial document metadata

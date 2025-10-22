@@ -50,9 +50,9 @@ function AIChat() {
     setIsStreaming(true);
 
     try {
+      // Let the backend handle thread creation/retrieval
       const result = await sendMessageAction({
         message,
-        threadId: orgId ? `playground-thread-${orgId}` : undefined,
       });
 
       console.log("[AIChat] Received response:", result);

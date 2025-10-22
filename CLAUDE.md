@@ -79,16 +79,26 @@ export const myQuery = query({
 
     // Get user ID and organization ID
     const userId = identity.subject;
-    const orgId = identity.organizationId;
+    const organizationId = identity.organizationId;  // ⚠️ CRITICAL: Use 'organizationId' NOT 'orgId'
 
     // ALWAYS verify organization is selected
-    if (!orgId || typeof orgId !== "string") {
+    if (!organizationId || typeof organizationId !== "string") {
       throw new Error("No organization selected. Please select an organization to continue.");
     }
 
-    // Now you can use userId and orgId for queries
+    // Now you can use userId and organizationId for queries
   },
 });
+```
+
+**⚠️ COMMON MISTAKE - Property Name**:
+The organization ID property is `identity.organizationId`, **NOT** `identity.orgId`.
+```typescript
+// ❌ WRONG - Will cause "No organization context" errors
+const orgId = identity.orgId;
+
+// ✅ CORRECT - Use this exact property name
+const organizationId = identity.organizationId;
 ```
 
 **Organization Ownership Checks**:
@@ -101,9 +111,9 @@ export const getById = query({
     if (identity === null) {
       throw new Error("Not authenticated");
     }
-    const orgId = identity.organizationId;
+    const organizationId = identity.organizationId;  // ⚠️ Use 'organizationId' NOT 'orgId'
 
-    if (!orgId || typeof orgId !== "string") {
+    if (!organizationId || typeof organizationId !== "string") {
       throw new Error("No organization selected.");
     }
 
@@ -113,7 +123,7 @@ export const getById = query({
     }
 
     // Verify organization ownership
-    if (item.organizationId !== orgId) {
+    if (item.organizationId !== organizationId) {
       throw new Error("Unauthorized - item belongs to a different organization");
     }
 
@@ -127,7 +137,7 @@ Use organization indexes for efficient queries:
 ```typescript
 const items = await ctx.db
   .query("items")
-  .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
+  .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
   .collect();
 ```
 
