@@ -3,9 +3,10 @@ import { v } from "convex/values";
 import { action, internalAction, internalMutation, internalQuery, query } from "../_generated/server";
 import { canvasAgent } from "./agent";
 import { internal } from "../_generated/api";
-import { createThread } from "@convex-dev/agent";
+import { createThread, listUIMessages, syncStreams, vStreamArgs } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import { getCurrentDocumentText } from "./tools";
+import { paginationOptsValidator } from "convex/server";
 
 /**
  * Get or create a playground thread for the organization (internal)
@@ -137,35 +138,49 @@ export const sendMessage = action({
     try {
       // Get current document text to provide context to the AI
       const currentDocumentText = await getCurrentDocumentText(ctx, organizationId as string);
-      console.log("[sendMessage] Current document text:", currentDocumentText ? `${currentDocumentText.substring(0, 100)}...` : "empty");
+      // console.log("[sendMessage] Current document text:", currentDocumentText ? `${currentDocumentText.substring(0, 100)}...` : "empty");
 
-      // Build enhanced prompt with document context
-      const enhancedPrompt = currentDocumentText
-        ? `Current document content:\n\`\`\`\n${currentDocumentText}\n\`\`\`\n\nUser request: ${args.message}`
-        : args.message;
+      // Build system message with document context (not shown to user)
+      // NOTE: Document context is provided to give the AI awareness of what's in the editor
+      // This allows the AI to reference and edit the document content
+      const systemMessage = currentDocumentText
+        ? `You are assisting the user with a document. Here is the current document content:\n\`\`\`\n${currentDocumentText}\n\`\`\`\n\nThe user can see this document in their editor. When they ask you to modify it, use the setDocumentText tool.`
+        : undefined;
 
-      // Generate AI response
-      const result: any = await canvasAgent.generateText(
+      // Stream AI response with delta saving for async streaming
+      const result = await canvasAgent.streamText(
         ctx,
         { threadId },
         {
-          prompt: enhancedPrompt,
+          prompt: args.message, // Use the original user message, not enhanced
+          system: systemMessage, // Pass document context as system message
+        },
+        {
+          saveStreamDeltas: {
+            chunking: "word", // Stream word by word for smooth rendering
+            throttleMs: 100,  // Save deltas every 100ms to balance responsiveness and bandwidth
+          },
         }
       );
 
-      console.log("[sendMessage] AI response generated:", result.text.substring(0, 100));
+      // streamText returns a StreamTextResult where text is a promise
+      // The message is already saved by the Agent component with streaming deltas
+      // We need to await the text property to get the final complete text
+      const responseText = await result.text;
 
-      // Store AI response
+      console.log("[sendMessage] AI response streamed:", responseText.substring(0, 100));
+
+      // Store AI response (this is still saved for the final complete message)
       await ctx.runMutation(internal.agents.actions.saveAssistantMessage, {
         threadId: threadId as string,
-        message: result.text,
+        message: responseText,
         userId,
         organizationId: organizationId as string,
       });
 
       return {
         success: true,
-        response: result.text,
+        response: responseText,
         threadId,
       };
     } catch (error) {
@@ -206,5 +221,71 @@ export const saveAssistantMessage = internalMutation({
     // Note: In a full implementation, this would save to a messages table
     // For now, the agent component handles message storage
     console.log("[saveAssistantMessage] Assistant message saved");
+  },
+});
+
+/**
+ * Get the playground thread for the current organization
+ * Returns null if no thread exists yet
+ */
+export const getPlaygroundThread = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    const existing = await ctx.db
+      .query("threads")
+      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+      .filter((q) => q.eq(q.field("title"), "Playground"))
+      .first();
+
+    if (existing) {
+      // We store the agentThreadId in the userId field temporarily
+      return { threadId: existing.userId };
+    }
+
+    return null;
+  },
+});
+
+/**
+ * List messages for a thread with streaming support
+ * Returns both regular messages and streaming deltas
+ */
+export const listThreadMessages = query({
+  args: {
+    threadId: v.string(),
+    paginationOpts: paginationOptsValidator,
+    streamArgs: vStreamArgs,
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // TODO: Add organization ownership check for thread
+    // For now, we trust that the threadId provided belongs to the user's organization
+
+    // Fetch the regular non-streaming messages
+    const paginated = await listUIMessages(ctx, components.agent, args);
+
+    // Fetch streaming deltas for messages that are currently being generated
+    const streams = await syncStreams(ctx, components.agent, args);
+
+    return { ...paginated, streams };
   },
 });

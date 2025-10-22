@@ -12,8 +12,8 @@ import {
   PromptInputTextarea,
   PromptInputSubmit,
 } from "@/components/ai-elements/prompt-input";
-import { MessageSquare } from "lucide-react";
-import { useState } from "react";
+import { MessageSquare, Wrench, CheckCircle2, XCircle } from "lucide-react";
+import { useSmoothText, type UIMessage } from "@convex-dev/agent/react";
 
 export interface ChatMessage {
   id: string;
@@ -23,9 +23,99 @@ export interface ChatMessage {
 }
 
 interface ChatPanelProps {
-  messages: ChatMessage[];
+  messages: UIMessage[];
   onSendMessage: (message: string) => Promise<void>;
   isStreaming?: boolean;
+}
+
+// Component for rendering a message with smooth text streaming
+function StreamingMessage({ message }: { message: UIMessage }) {
+  const [visibleText] = useSmoothText(message.text, {
+    startStreaming: message.status === "streaming",
+  });
+
+  // Extract tool calls from the message
+  const toolInvocations = message.parts?.filter(
+    (part: any) => part.type === "tool-call" || part.type === "tool-result"
+  );
+
+  return (
+    <Message from={message.role} key={message.id}>
+      <MessageContent>
+        {/* Show tool calls if present */}
+        {toolInvocations && toolInvocations.length > 0 && (
+          <div className="space-y-2 mb-3">
+            {toolInvocations.map((tool: any, idx: number) => {
+              if (tool.type === "tool-call") {
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-2 p-2 rounded-md bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 text-sm"
+                  >
+                    <Wrench className="h-4 w-4 mt-0.5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-blue-900 dark:text-blue-100">
+                        Calling tool: {tool.toolName}
+                      </div>
+                      <div className="text-blue-700 dark:text-blue-300 text-xs mt-1 font-mono break-all">
+                        {JSON.stringify(tool.args)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              } else if (tool.type === "tool-result") {
+                const isError = tool.isError || false;
+                return (
+                  <div
+                    key={idx}
+                    className={`flex items-start gap-2 p-2 rounded-md text-sm ${
+                      isError
+                        ? "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"
+                        : "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
+                    }`}
+                  >
+                    {isError ? (
+                      <XCircle className="h-4 w-4 mt-0.5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 mt-0.5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div
+                        className={`font-medium ${
+                          isError
+                            ? "text-red-900 dark:text-red-100"
+                            : "text-green-900 dark:text-green-100"
+                        }`}
+                      >
+                        Tool result: {tool.toolName}
+                      </div>
+                      {tool.result && (
+                        <div
+                          className={`text-xs mt-1 font-mono break-all ${
+                            isError
+                              ? "text-red-700 dark:text-red-300"
+                              : "text-green-700 dark:text-green-300"
+                          }`}
+                        >
+                          {typeof tool.result === "string"
+                            ? tool.result
+                            : JSON.stringify(tool.result)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        )}
+
+        {/* Show the text response */}
+        <Response>{visibleText}</Response>
+      </MessageContent>
+    </Message>
+  );
 }
 
 export function ChatPanel({ messages, onSendMessage, isStreaming }: ChatPanelProps) {
@@ -52,11 +142,7 @@ export function ChatPanel({ messages, onSendMessage, isStreaming }: ChatPanelPro
             />
           ) : (
             messages.map((message) => (
-              <Message from={message.role} key={message.id}>
-                <MessageContent>
-                  <Response>{message.content}</Response>
-                </MessageContent>
-              </Message>
+              <StreamingMessage key={message.id} message={message} />
             ))
           )}
         </ConversationContent>
