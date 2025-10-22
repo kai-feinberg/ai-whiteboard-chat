@@ -2,6 +2,7 @@
 import { useTiptapSync } from "@convex-dev/prosemirror-sync/tiptap";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { Markdown } from "@tiptap/markdown";
 import { api } from "../../../../convex/_generated/api";
 import { useEffect } from "react";
 
@@ -28,7 +29,9 @@ export function CanvasEditor({ documentId, documentVersion }: CanvasEditorProps)
         listItem: {},
         blockquote: {},
         horizontalRule: {},
+        hardBreak: {}, // Enable Shift+Enter for line breaks
       }),
+      Markdown, // Enable markdown parsing and serialization
       ...(sync.extension ? [sync.extension] : []),
     ],
     content: sync.initialContent || "",

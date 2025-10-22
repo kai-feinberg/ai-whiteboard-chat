@@ -5,6 +5,7 @@ import { prosemirrorSync } from "./canvas";
 import { api, components, internal } from "../_generated/api";
 import { getSchema } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
+import { Markdown } from "@tiptap/markdown";
 import { Transform } from "@tiptap/pm/transform";
 
 // Define the extensions - must match the client-side editor schema
@@ -23,7 +24,9 @@ const extensions = [
     listItem: {},
     blockquote: {},
     horizontalRule: {},
+    hardBreak: {}, // Enable hard breaks for line breaks
   }),
+  Markdown, // Enable markdown parsing and serialization
 ];
 
 /**
@@ -118,11 +121,12 @@ export const setDocumentText = createTool({
     console.log('[setDocumentText] Latest ProseMirror version:', latestVersion);
 
     // Convert text content to ProseMirror JSON structure
-    const paragraphs = args.content.split('\n').filter(p => p.trim().length > 0);
+    // NOTE: Do NOT filter out empty lines - they create blank lines for spacing
+    const paragraphs = args.content.split('\n');
     const newContent = paragraphs.length > 0
       ? paragraphs.map(paragraph => ({
           type: "paragraph",
-          content: [{ type: "text", text: paragraph }]
+          content: paragraph.trim().length > 0 ? [{ type: "text", text: paragraph }] : []
         }))
       : [{
           type: "paragraph",
