@@ -66,7 +66,6 @@ function AIChat() {
       };
 
       setMessages((prev) => [...prev, aiMessage]);
-      toast.success("AI responded!");
     } catch (error) {
       console.error("[AIChat] Error:", error);
       toast.error(

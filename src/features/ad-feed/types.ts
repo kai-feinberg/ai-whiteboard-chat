@@ -33,6 +33,12 @@ export type Ad = {
     storageId: string;
     originalUrl: string;
   }>;
+  // Lazy loading media items (includes type, storageId, and url which may be null for videos)
+  mediaItems?: Array<{
+    type: string;
+    storageId: string;
+    url: string | null;
+  }>;
 
   // New fields (optional for backward compatibility)
   pageId?: string;

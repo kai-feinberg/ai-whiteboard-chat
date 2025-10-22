@@ -1,3 +1,5 @@
-- customize email magic link is sent from
-customize template magic link uses
-fix code structure (can we put components with routes? or just keep routes as light wrapper)
+stream text from agent for ai-chat
+onboarding form:
+- scrape links, accept voice notes, fill out doc
+
+save docs and view/edit docs for onboarding, ads, etc

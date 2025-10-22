@@ -10,8 +10,8 @@ const openrouter = createOpenRouter({
 });
 
 // Create the language model using OpenRouter
-// We'll use Claude 3.5 Sonnet via OpenRouter
-const languageModel = openrouter("anthropic/claude-3.5-sonnet");
+// We'll use Claude 4.5 Haiku via OpenRouter
+const languageModel = openrouter("anthropic/claude-haiku-4.5");
 
 /**
  * AI Canvas Assistant Agent

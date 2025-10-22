@@ -1,7 +1,97 @@
 import { v } from "convex/values";
-import { query, mutation, action, internalQuery, internalMutation, internalAction } from "../_generated/server";
+import { query, mutation, action, internalQuery, internalMutation, internalAction, QueryCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
+
+// Helper function to generate media URLs selectively (skip videos for bandwidth optimization)
+async function generateMediaUrlsSelectively(
+  ctx: QueryCtx,
+  ad: Doc<"ads">,
+  includeVideos: boolean = false
+) {
+  // Generate thumbnail URL (always include, usually an image)
+  const thumbnailUrl = ad.thumbnailStorageId
+    ? await ctx.storage.getUrl(ad.thumbnailStorageId)
+    : ad.thumbnailUrl;
+
+  // If no metadata, fall back to generating all URLs (backward compatibility)
+  if (!ad.mediaMetadata || ad.mediaMetadata.length === 0) {
+    const mediaUrls = ad.mediaStorageIds && includeVideos
+      ? await Promise.all(ad.mediaStorageIds.map(id => ctx.storage.getUrl(id)))
+      : ad.mediaUrls;
+
+    return {
+      thumbnailUrl,
+      mediaUrls,
+      mediaItems: undefined,
+    };
+  }
+
+  // Filter and generate URLs based on media type
+  const mediaItems = await Promise.all(
+    ad.mediaMetadata.map(async (meta) => {
+      if (meta.type === "video" && !includeVideos) {
+        // Return storage ID reference instead of URL for lazy loading
+        return { type: "video", storageId: meta.storageId, url: null };
+      }
+      const url = await ctx.storage.getUrl(meta.storageId);
+      return { type: meta.type, storageId: meta.storageId, url };
+    })
+  );
+
+  // Also provide mediaUrls for backward compatibility (only non-null URLs)
+  const mediaUrls = mediaItems
+    .filter(item => item.url !== null)
+    .map(item => item.url as string);
+
+  return { thumbnailUrl, mediaUrls, mediaItems };
+}
+
+// Get video URL on-demand (lazy loading for bandwidth optimization)
+export const getVideoUrl = mutation({
+  args: {
+    adId: v.id("ads"),
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new Error("Not authenticated");
+    }
+    const orgId = identity.organizationId;
+
+    if (!orgId || typeof orgId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Get the ad to verify ownership
+    const ad = await ctx.db.get(args.adId);
+    if (!ad) {
+      throw new Error("Ad not found");
+    }
+
+    // Verify organization ownership
+    if (ad.organizationId !== orgId) {
+      throw new Error("Unauthorized - ad belongs to a different organization");
+    }
+
+    // Verify the storage ID belongs to this ad
+    const belongsToAd = ad.mediaStorageIds?.includes(args.storageId) ||
+                        ad.thumbnailStorageId === args.storageId;
+
+    if (!belongsToAd) {
+      throw new Error("Storage ID does not belong to this ad");
+    }
+
+    // Generate and return the video URL
+    const url = await ctx.storage.getUrl(args.storageId);
+    if (!url) {
+      throw new Error("Failed to generate video URL");
+    }
+
+    return url;
+  },
+});
 
 // Get all ads for the current user's organization
 export const getByUser = query({
@@ -64,16 +154,8 @@ export const getByUser = query({
     // Return ads with advertiser data and generate Convex URLs
     return await Promise.all(
       filteredAds.map(async (ad) => {
-        // Generate URLs from storage IDs (prefer Convex storage over Meta URLs)
-        const thumbnailUrl = ad.thumbnailStorageId
-          ? await ctx.storage.getUrl(ad.thumbnailStorageId)
-          : ad.thumbnailUrl;
-
-        const mediaUrls = ad.mediaStorageIds
-          ? await Promise.all(
-              ad.mediaStorageIds.map((id) => ctx.storage.getUrl(id))
-            )
-          : ad.mediaUrls;
+        // Generate URLs selectively (skip videos for bandwidth optimization)
+        const { thumbnailUrl, mediaUrls, mediaItems } = await generateMediaUrlsSelectively(ctx, ad, false);
 
         // Get advertiser and generate profile picture URL
         const advertiser = advertisersMap.get(ad.pageId) || null;
@@ -92,6 +174,7 @@ export const getByUser = query({
           ...ad,
           thumbnailUrl,
           mediaUrls,
+          mediaItems,
           advertiser: advertiserWithUrl,
         };
       })
@@ -125,14 +208,8 @@ export const getById = query({
       throw new Error("Unauthorized - ad belongs to a different organization");
     }
 
-    // Generate URLs from storage IDs (prefer Convex storage over Meta URLs)
-    const thumbnailUrl = ad.thumbnailStorageId
-      ? await ctx.storage.getUrl(ad.thumbnailStorageId)
-      : ad.thumbnailUrl;
-
-    const mediaUrls = ad.mediaStorageIds
-      ? await Promise.all(ad.mediaStorageIds.map((id) => ctx.storage.getUrl(id)))
-      : ad.mediaUrls;
+    // Generate URLs selectively (skip videos for bandwidth optimization)
+    const { thumbnailUrl, mediaUrls, mediaItems } = await generateMediaUrlsSelectively(ctx, ad, false);
 
     // Fetch advertiser if pageId exists
     let advertiser = null;
@@ -162,6 +239,7 @@ export const getById = query({
       ...ad,
       thumbnailUrl,
       mediaUrls,
+      mediaItems,
       advertiser: advertiserWithUrl || null,
     };
   },
@@ -222,16 +300,8 @@ export const getBySubscription = query({
     // Return ads with advertiser data and generate Convex URLs
     return await Promise.all(
       ads.map(async (ad) => {
-        // Generate URLs from storage IDs (prefer Convex storage over Meta URLs)
-        const thumbnailUrl = ad.thumbnailStorageId
-          ? await ctx.storage.getUrl(ad.thumbnailStorageId)
-          : ad.thumbnailUrl;
-
-        const mediaUrls = ad.mediaStorageIds
-          ? await Promise.all(
-              ad.mediaStorageIds.map((id) => ctx.storage.getUrl(id))
-            )
-          : ad.mediaUrls;
+        // Generate URLs selectively (skip videos for bandwidth optimization)
+        const { thumbnailUrl, mediaUrls, mediaItems } = await generateMediaUrlsSelectively(ctx, ad, false);
 
         // Get advertiser and generate profile picture URL
         const advertiser = advertisersMap.get(ad.pageId) || null;
@@ -250,6 +320,7 @@ export const getBySubscription = query({
           ...ad,
           thumbnailUrl,
           mediaUrls,
+          mediaItems,
           advertiser: advertiserWithUrl,
         };
       })

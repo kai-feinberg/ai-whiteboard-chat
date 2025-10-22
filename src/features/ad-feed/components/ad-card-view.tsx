@@ -113,7 +113,10 @@ export function AdCardView({ ads }: AdCardViewProps) {
               <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-muted to-muted/50">
                 {hasVideo ? (
                   <VideoPlayer
-                    url={ad.thumbnailUrl}
+                    storageId={ad.mediaItems?.[0]?.storageId || ad.mediaStorageIds?.[0]}
+                    adId={ad._id}
+                    url={ad.mediaItems?.[0]?.url || undefined}
+                    thumbnail={ad.thumbnailUrl}
                     className="w-full h-full object-cover"
                     showPlayOverlay={true}
                   />
