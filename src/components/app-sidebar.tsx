@@ -52,6 +52,16 @@ const data = {
       ],
     },
     {
+      title: "Onboarding",
+      url: "/onboarding",
+      items: [
+        {
+          title: "Marketing Documents",
+          url: "/onboarding",
+        },
+      ],
+    },
+    {
       title: "Account",
       url: "/profile",
       items: [

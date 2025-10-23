@@ -15,6 +15,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as AiChatRouteImport } from './routes/ai-chat'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthedOnboardingRouteImport } from './routes/_authed.onboarding'
 
 const SubscriptionsRoute = SubscriptionsRouteImport.update({
   id: '/subscriptions',
@@ -45,6 +46,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedOnboardingRoute = AuthedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
+  '/onboarding': typeof AuthedOnboardingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,21 +66,35 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
+  '/onboarding': typeof AuthedOnboardingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authed': typeof AuthedRoute
+  '/_authed': typeof AuthedRouteWithChildren
   '/ai-chat': typeof AiChatRoute
   '/profile': typeof ProfileRoute
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
+  '/_authed/onboarding': typeof AuthedOnboardingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ai-chat' | '/profile' | '/sign-in' | '/subscriptions'
+  fullPaths:
+    | '/'
+    | '/ai-chat'
+    | '/profile'
+    | '/sign-in'
+    | '/subscriptions'
+    | '/onboarding'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ai-chat' | '/profile' | '/sign-in' | '/subscriptions'
+  to:
+    | '/'
+    | '/ai-chat'
+    | '/profile'
+    | '/sign-in'
+    | '/subscriptions'
+    | '/onboarding'
   id:
     | '__root__'
     | '/'
@@ -82,11 +103,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sign-in'
     | '/subscriptions'
+    | '/_authed/onboarding'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthedRoute: typeof AuthedRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
   AiChatRoute: typeof AiChatRoute
   ProfileRoute: typeof ProfileRoute
   SignInRoute: typeof SignInRoute
@@ -137,12 +159,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/onboarding': {
+      id: '/_authed/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthedOnboardingRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
+interface AuthedRouteChildren {
+  AuthedOnboardingRoute: typeof AuthedOnboardingRoute
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedOnboardingRoute: AuthedOnboardingRoute,
+}
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthedRoute: AuthedRoute,
+  AuthedRoute: AuthedRouteWithChildren,
   AiChatRoute: AiChatRoute,
   ProfileRoute: ProfileRoute,
   SignInRoute: SignInRoute,

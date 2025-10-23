@@ -137,4 +137,33 @@ export default defineSchema({
     .index("by_thread", ["threadId"])
     .index("by_document", ["documentId"])
     .index("by_organization", ["organizationId"]),
+
+  // Onboarding Profiles - Organization's onboarding data (one per org)
+  onboardingProfiles: defineTable({
+    organizationId: v.string(), // Clerk organization ID
+    websiteUrl: v.optional(v.string()), // Optional website for analysis
+    vslTranscript: v.string(), // Required VSL/sales letter transcript
+    productDescription: v.string(), // Required product details
+    marketDescription: v.string(), // Required market details
+    targetBuyerDescription: v.string(), // Required buyer persona
+    workflowId: v.optional(v.string()), // Workflow execution ID for tracking
+    completedAt: v.optional(v.number()), // When all documents finished generating
+    createdBy: v.string(), // User who filled form
+  })
+    .index("by_organization", ["organizationId"]),
+
+  // Generated Documents - AI-generated marketing documents
+  generatedDocuments: defineTable({
+    organizationId: v.string(), // Clerk organization ID
+    onboardingProfileId: v.id("onboardingProfiles"), // Foreign key to profile
+    documentType: v.string(), // "offer_brief" | "copy_blocks" | "ump_ums" | "beat_map"
+    content: v.optional(v.string()), // Generated markdown content
+    status: v.string(), // "pending" | "generating" | "completed" | "failed"
+    errorMessage: v.optional(v.string()), // Error message if failed
+    generatedAt: v.optional(v.number()), // Timestamp when completed
+    regenerationCount: v.number(), // Track regeneration attempts
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_profile", ["onboardingProfileId"])
+    .index("by_profile_and_type", ["onboardingProfileId", "documentType"]),
 });

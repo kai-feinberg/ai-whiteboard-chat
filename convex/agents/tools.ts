@@ -5,28 +5,15 @@ import { prosemirrorSync } from "./canvas";
 import { api, components, internal } from "../_generated/api";
 import { getSchema } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
-import { Markdown } from "@tiptap/markdown";
 import { Transform } from "@tiptap/pm/transform";
 
 // Define the extensions - must match the client-side editor schema
 // Note: For server-side operations, we only need extensions that affect the schema
 const extensions = [
   StarterKit.configure({
-    // Don't include history on server side - it doesn't affect schema
-    paragraph: {},
-    heading: { levels: [1, 2, 3, 4, 5, 6] },
-    bold: {},
-    italic: {},
-    code: {},
-    codeBlock: {},
-    bulletList: {},
-    orderedList: {},
-    listItem: {},
-    blockquote: {},
-    horizontalRule: {},
-    hardBreak: {}, // Enable hard breaks for line breaks
+    heading: { levels: [1, 2, 3, 4, 5, 6] }, // Customize heading levels to match client
+    // All other extensions use defaults
   }),
-  Markdown, // Enable markdown parsing and serialization
 ];
 
 /**

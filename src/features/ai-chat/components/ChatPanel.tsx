@@ -11,9 +11,13 @@ import {
   PromptInput,
   PromptInputTextarea,
   PromptInputSubmit,
+  PromptInputSpeechButton,
+  PromptInputFooter,
+  PromptInputBody,
 } from "@/components/ai-elements/prompt-input";
 import { MessageSquare, Wrench, CheckCircle2, XCircle } from "lucide-react";
 import { useSmoothText, type UIMessage } from "@convex-dev/agent/react";
+import { useRef } from "react";
 
 export interface ChatMessage {
   id: string;
@@ -119,6 +123,8 @@ function StreamingMessage({ message }: { message: UIMessage }) {
 }
 
 export function ChatPanel({ messages, onSendMessage, isStreaming }: ChatPanelProps) {
+  // const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const handleSubmit = async (message: { text?: string; files?: any[] }) => {
     if (!message.text?.trim() || isStreaming) return;
 
@@ -162,6 +168,24 @@ export function ChatPanel({ messages, onSendMessage, isStreaming }: ChatPanelPro
           className="absolute bottom-5 right-5"
         />
       </PromptInput>
+
+      {/* Voice input implementation - commented out for now
+      <PromptInput
+        onSubmit={handleSubmit}
+        className="mt-4 w-full border-t pt-4 px-4"
+      >
+        <PromptInputBody>
+          <PromptInputTextarea
+            ref={textareaRef}
+            placeholder="Ask the AI to write something... (Shift+Enter for new line)"
+          />
+          <PromptInputFooter>
+            <PromptInputSpeechButton textareaRef={textareaRef} />
+            <PromptInputSubmit status={isStreaming ? "streaming" : "ready"} />
+          </PromptInputFooter>
+        </PromptInputBody>
+      </PromptInput>
+      */}
     </div>
   );
 }
