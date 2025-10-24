@@ -16,6 +16,7 @@ import { Route as AiChatRouteImport } from './routes/ai-chat'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed.onboarding'
+import { Route as AuthedAdvancedOnboardingRouteImport } from './routes/_authed.advanced-onboarding'
 
 const SubscriptionsRoute = SubscriptionsRouteImport.update({
   id: '/subscriptions',
@@ -51,6 +52,12 @@ const AuthedOnboardingRoute = AuthedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedAdvancedOnboardingRoute =
+  AuthedAdvancedOnboardingRouteImport.update({
+    id: '/advanced-onboarding',
+    path: '/advanced-onboarding',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
+  '/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
   '/onboarding': typeof AuthedOnboardingRoute
 }
 export interface FileRoutesByTo {
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
+  '/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
   '/onboarding': typeof AuthedOnboardingRoute
 }
 export interface FileRoutesById {
@@ -76,6 +85,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
+  '/_authed/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
 }
 export interface FileRouteTypes {
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sign-in'
     | '/subscriptions'
+    | '/advanced-onboarding'
     | '/onboarding'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sign-in'
     | '/subscriptions'
+    | '/advanced-onboarding'
     | '/onboarding'
   id:
     | '__root__'
@@ -103,6 +115,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sign-in'
     | '/subscriptions'
+    | '/_authed/advanced-onboarding'
     | '/_authed/onboarding'
   fileRoutesById: FileRoutesById
 }
@@ -166,14 +179,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOnboardingRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/advanced-onboarding': {
+      id: '/_authed/advanced-onboarding'
+      path: '/advanced-onboarding'
+      fullPath: '/advanced-onboarding'
+      preLoaderRoute: typeof AuthedAdvancedOnboardingRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
+  AuthedAdvancedOnboardingRoute: typeof AuthedAdvancedOnboardingRoute
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAdvancedOnboardingRoute: AuthedAdvancedOnboardingRoute,
   AuthedOnboardingRoute: AuthedOnboardingRoute,
 }
 

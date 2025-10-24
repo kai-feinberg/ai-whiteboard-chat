@@ -50,9 +50,32 @@ export const getOnboardingData = query({
       .withIndex("by_profile", (q) => q.eq("onboardingProfileId", profile._id))
       .collect();
 
-    // Sort in consistent order: offer_brief, copy_blocks, ump_ums, beat_map
-    const typeOrder = ["offer_brief", "copy_blocks", "ump_ums", "beat_map"];
-    const sortedDocuments = documents.sort((a, b) => {
+    // Fetch analysis for each document
+    const documentsWithAnalysis = await Promise.all(
+      documents.map(async (doc) => {
+        const analysis = await ctx.db
+          .query("documentAnalysis")
+          .withIndex("by_profile_and_type", (q) =>
+            q
+              .eq("onboardingProfileId", profile._id)
+              .eq("documentType", doc.documentType)
+          )
+          .first();
+        return { ...doc, analysis };
+      })
+    );
+
+    // Sort in consistent order: all 7 document types
+    const typeOrder = [
+      "offer_brief",
+      "copy_blocks",
+      "ump_ums",
+      "beat_map",
+      "build_a_buyer",
+      "pain_core_wound",
+      "competitors",
+    ];
+    const sortedDocuments = documentsWithAnalysis.sort((a, b) => {
       return typeOrder.indexOf(a.documentType) - typeOrder.indexOf(b.documentType);
     });
 

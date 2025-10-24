@@ -124,6 +124,117 @@ export const markProfileCompleted = internalMutation({
 });
 
 /**
+ * Create pending analysis records for all documents
+ */
+export const createPendingAnalysis = internalMutation({
+  args: {
+    profileId: v.id("onboardingProfiles"),
+    organizationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const documentTypes = [
+      "offer_brief",
+      "copy_blocks",
+      "ump_ums",
+      "beat_map",
+      "build_a_buyer",
+      "pain_core_wound",
+      "competitors"
+    ];
+
+    console.log(`[createPendingAnalysis] Creating 7 analysis records for profile ${args.profileId}`);
+
+    await Promise.all(
+      documentTypes.map((type) =>
+        ctx.db.insert("documentAnalysis", {
+          organizationId: args.organizationId,
+          onboardingProfileId: args.profileId,
+          documentType: type,
+          status: "pending",
+          completeness: 0,
+          suggestions: [],
+          missingElements: [],
+          regenerationCount: 0,
+        })
+      )
+    );
+
+    console.log(`[createPendingAnalysis] ✅ Created all pending analysis records`);
+  },
+});
+
+/**
+ * Update analysis status
+ */
+export const updateAnalysisStatus = internalMutation({
+  args: {
+    profileId: v.id("onboardingProfiles"),
+    documentType: v.string(),
+    status: v.string(),
+    errorMessage: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const analysis = await ctx.db
+      .query("documentAnalysis")
+      .withIndex("by_profile_and_type", (q) =>
+        q
+          .eq("onboardingProfileId", args.profileId)
+          .eq("documentType", args.documentType)
+      )
+      .first();
+
+    if (!analysis) {
+      throw new Error(`Analysis ${args.documentType} not found for profile ${args.profileId}`);
+    }
+
+    await ctx.db.patch(analysis._id, {
+      status: args.status,
+      errorMessage: args.errorMessage,
+    });
+
+    console.log(`[updateAnalysisStatus] ${args.documentType} -> ${args.status}`);
+  },
+});
+
+/**
+ * Save analysis results
+ */
+export const saveAnalysisResults = internalMutation({
+  args: {
+    profileId: v.id("onboardingProfiles"),
+    documentType: v.string(),
+    completeness: v.number(),
+    suggestions: v.array(v.string()),
+    missingElements: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const analysis = await ctx.db
+      .query("documentAnalysis")
+      .withIndex("by_profile_and_type", (q) =>
+        q
+          .eq("onboardingProfileId", args.profileId)
+          .eq("documentType", args.documentType)
+      )
+      .first();
+
+    if (!analysis) {
+      throw new Error(`Analysis ${args.documentType} not found for profile ${args.profileId}`);
+    }
+
+    await ctx.db.patch(analysis._id, {
+      completeness: args.completeness,
+      suggestions: args.suggestions,
+      missingElements: args.missingElements,
+      status: "completed",
+      analysisGeneratedAt: Date.now(),
+      errorMessage: undefined,
+    });
+
+    console.log(`[saveAnalysisResults] ✅ Saved ${args.documentType} analysis (${args.completeness}% complete)`);
+  },
+});
+
+/**
  * Workflow completion handler
  * Called by workflow component when workflow finishes
  */

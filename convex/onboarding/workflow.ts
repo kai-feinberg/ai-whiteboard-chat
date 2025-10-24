@@ -47,6 +47,16 @@ export const documentGenerationWorkflow = workflow.define({
       { name: "create-pending-docs" }
     );
 
+    // Step 1b: Create 7 pending analysis records in database
+    await step.runMutation(
+      internal.onboarding.mutations.createPendingAnalysis,
+      {
+        profileId: args.onboardingProfileId,
+        organizationId: args.organizationId
+      },
+      { name: "create-pending-analysis" }
+    );
+
     // Step 2: Generate all 7 documents in parallel
     // Each action handles its own error state and status updates
     await Promise.all([
@@ -114,7 +124,53 @@ export const documentGenerationWorkflow = workflow.define({
       ),
     ]);
 
-    // Step 3: Mark profile as completed (regardless of individual failures)
+    // Step 3: Analyze all 7 documents in parallel
+    // Analysis runs after documents are complete
+    await Promise.all([
+      step.runAction(
+        internal.onboarding.actions.analyzeDocument,
+        { profileId: args.onboardingProfileId, documentType: "offer_brief" },
+        { name: "analyze-offer-brief", retry: true }
+      ),
+
+      step.runAction(
+        internal.onboarding.actions.analyzeDocument,
+        { profileId: args.onboardingProfileId, documentType: "copy_blocks" },
+        { name: "analyze-copy-blocks", retry: true }
+      ),
+
+      step.runAction(
+        internal.onboarding.actions.analyzeDocument,
+        { profileId: args.onboardingProfileId, documentType: "ump_ums" },
+        { name: "analyze-ump-ums", retry: true }
+      ),
+
+      step.runAction(
+        internal.onboarding.actions.analyzeDocument,
+        { profileId: args.onboardingProfileId, documentType: "beat_map" },
+        { name: "analyze-beat-map", retry: true }
+      ),
+
+      step.runAction(
+        internal.onboarding.actions.analyzeDocument,
+        { profileId: args.onboardingProfileId, documentType: "build_a_buyer" },
+        { name: "analyze-build-a-buyer", retry: true }
+      ),
+
+      step.runAction(
+        internal.onboarding.actions.analyzeDocument,
+        { profileId: args.onboardingProfileId, documentType: "pain_core_wound" },
+        { name: "analyze-pain-core-wound", retry: true }
+      ),
+
+      step.runAction(
+        internal.onboarding.actions.analyzeDocument,
+        { profileId: args.onboardingProfileId, documentType: "competitors" },
+        { name: "analyze-competitors", retry: true }
+      ),
+    ]);
+
+    // Step 4: Mark profile as completed (regardless of individual failures)
     await step.runMutation(
       internal.onboarding.mutations.markProfileCompleted,
       { profileId: args.onboardingProfileId },

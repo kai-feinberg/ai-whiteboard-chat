@@ -1,3 +1,8 @@
+finish advanced onboarding
+- table for beliefs/desires/etc
+- migrate from open router to anthropic
+- creation prompt
+
 onboarding form:
 - scrape links, accept voice notes, fill out doc
 

@@ -3,14 +3,17 @@ import { v } from "convex/values";
 import { internalAction } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
+// import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import {anthropic} from "@ai-sdk/anthropic";
+import { generateText, generateObject } from "ai";
+import { z } from "zod";
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPEN_ROUTER_API_KEY,
-});
+// const openrouter = createOpenRouter({
+//   apiKey: process.env.OPEN_ROUTER_API_KEY,
+// });
+const model = anthropic("claude-sonnet-4-5-20250929");
 
-const model = openrouter("anthropic/claude-haiku-4.5");
+// const model = anthropicProvider("anthropic/claude-haiku-4.5");
 
 /**
  * System prompts for each document type
@@ -349,3 +352,151 @@ ${profile.vslTranscript ? `\n\nVSL/SALES LETTER TRANSCRIPT:\n${profile.vslTransc
       return baseContext;
   }
 }
+
+/**
+ * DOCUMENT ANALYSIS
+ * AI-powered quality analysis using generateObject for structured output
+ */
+
+const analysisSchema = z.object({
+  completeness: z.number().min(0).max(100).describe("Completeness percentage (0-100) - how thorough and complete is this document"),
+  suggestions: z.array(z.string()).describe("3-5 specific, actionable improvements to enhance the document quality"),
+  missingElements: z.array(z.string()).describe("Critical components or sections that are missing or insufficiently covered"),
+});
+
+const ANALYSIS_PROMPTS: Record<string, string> = {
+  offer_brief: `Analyze this Offer Brief for completeness and quality. Evaluate:
+- Clarity and specificity of the core promise
+- Strength of unique value proposition vs competitors
+- Quality and credibility of proof elements
+- Strategic market positioning
+- Actionability for marketing team
+
+Provide objective assessment with specific areas for improvement.`,
+
+  copy_blocks: `Analyze these Copy Blocks for usability and variety. Evaluate:
+- Headline diversity and emotional hooks
+- CTA strength and variety (5+ variations)
+- Objection handling coverage
+- Social proof template quality
+- Immediate usability for campaigns
+
+Provide specific suggestions for stronger copy elements.`,
+
+  ump_ums: `Analyze the UMP/UMS mechanism for uniqueness and believability. Evaluate:
+- How unique and proprietary the mechanism feels
+- Believability and logical foundation
+- Clear differentiation from obvious solutions
+- Emotional resonance of the mechanism
+- Specificity vs vague claims
+
+Identify gaps in mechanism articulation.`,
+
+  beat_map: `Analyze this Beat Map for completeness and persuasion flow. Evaluate:
+- Coverage of all 9 beat components (hook, story, solution, credibility, mechanism, benefits, objections, urgency, CTA)
+- Identification of emotional triggers at each beat
+- Analysis of persuasion techniques used
+- Sequence logic and flow
+- Specificity of timing/positioning notes
+
+Suggest missing beats or weak transitions.`,
+
+  build_a_buyer: `Analyze this Build-A-Buyer persona for depth and usability. Evaluate:
+- Specificity of demographics (not generic)
+- Depth of psychographics (values, identity, beliefs)
+- Clarity of pain points and frustrations
+- Articulation of desires and aspirations
+- Buying triggers and objections
+
+Identify generic or missing persona elements.`,
+
+  pain_core_wound: `Analyze this Pain & Core Wound analysis for psychological depth. Evaluate:
+- Clear progression from surface → deeper → core wound
+- Differentiation between each pain layer
+- Believability and emotional resonance
+- Connection between pain amplification and false solutions
+- How well the product addresses the core wound (not just surface)
+
+Point out shallow analysis or missing psychological layers.`,
+
+  competitors: `Analyze this Competitor Analysis for strategic value. Evaluate:
+- Coverage of both direct AND indirect competitors
+- Quality of competitive positioning analysis
+- Identification of specific market gaps
+- Actionable differentiation opportunities
+- Strategic advantages articulated
+
+Suggest missing competitive angles or generic analysis.`,
+};
+
+/**
+ * Analyze a single document using AI with structured output
+ */
+export const analyzeDocument = internalAction({
+  args: {
+    profileId: v.id("onboardingProfiles"),
+    documentType: v.string(),
+  },
+  handler: async (ctx, args): Promise<void> => {
+    try {
+      console.log(`[analyzeDocument] Starting analysis for ${args.documentType}`);
+
+      // Update status to "analyzing"
+      await ctx.runMutation(internal.onboarding.mutations.updateAnalysisStatus, {
+        profileId: args.profileId,
+        documentType: args.documentType,
+        status: "analyzing",
+      });
+
+      // Fetch the document to analyze
+      const document = await ctx.runQuery(
+        internal.onboarding.queries.getDocumentByTypeInternal,
+        { profileId: args.profileId, documentType: args.documentType }
+      );
+
+      if (!document || document.status !== "completed" || !document.content) {
+        throw new Error("Document not ready for analysis");
+      }
+
+      const analysisPrompt = ANALYSIS_PROMPTS[args.documentType] || ANALYSIS_PROMPTS.offer_brief;
+
+      console.log(`[analyzeDocument] Calling AI for ${args.documentType} analysis...`);
+
+      // Use generateObject for structured analysis
+      const result = await generateObject({
+        model,
+        schema: analysisSchema,
+        prompt: `${analysisPrompt}\n\n--- DOCUMENT TO ANALYZE ---\n${document.content}\n\nProvide a thorough, objective analysis.`,
+        temperature: 0.3, // Lower temperature for more consistent analysis
+      });
+
+      const analysis = result.object;
+
+      console.log(`[analyzeDocument] Analysis complete: ${analysis.completeness}% complete, ${analysis.suggestions.length} suggestions`);
+
+      // Save the analysis
+      await ctx.runMutation(internal.onboarding.mutations.saveAnalysisResults, {
+        profileId: args.profileId,
+        documentType: args.documentType,
+        completeness: analysis.completeness,
+        suggestions: analysis.suggestions,
+        missingElements: analysis.missingElements,
+      });
+
+      console.log(`[analyzeDocument] ✅ ${args.documentType} analysis saved`);
+    } catch (error) {
+      console.error(`[analyzeDocument] ❌ Analysis failed for ${args.documentType}:`, error);
+
+      // Save error state
+      await ctx.runMutation(internal.onboarding.mutations.updateAnalysisStatus, {
+        profileId: args.profileId,
+        documentType: args.documentType,
+        status: "failed",
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+      });
+
+      // Re-throw so workflow can handle retry
+      throw error;
+    }
+  },
+});

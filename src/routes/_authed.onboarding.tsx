@@ -11,8 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, FileText, CheckCircle2, XCircle, Clock, File } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, FileText, CheckCircle2, XCircle, Clock, File, AlertTriangle, Lightbulb, Target, ArrowRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authed/onboarding")({
   component: OnboardingPage,
@@ -28,6 +30,7 @@ type OnboardingFormData = {
 };
 
 function OnboardingPage() {
+  const navigate = useNavigate();
   const profile = useQuery(api.onboarding.queries.getOnboardingProfile);
   const documents = useQuery(
     api.onboarding.queries.getGeneratedDocuments,
@@ -35,7 +38,9 @@ function OnboardingPage() {
   );
 
   const submitForm = useMutation(api.onboarding.functions.submitOnboardingForm);
+  const triggerAnalysis = useMutation(api.onboarding.functions.triggerAnalysis);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTriggeringAnalysis, setIsTriggeringAnalysis] = useState(false);
 
   const {
     register,
@@ -80,6 +85,19 @@ function OnboardingPage() {
     toast.success("Form filled with example data!");
   };
 
+  const handleTriggerAnalysis = async () => {
+    setIsTriggeringAnalysis(true);
+    try {
+      const result = await triggerAnalysis();
+      toast.success(`Analysis started for ${result.triggered} documents!`);
+    } catch (error) {
+      console.error("Failed to trigger analysis:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to start analysis");
+    } finally {
+      setIsTriggeringAnalysis(false);
+    }
+  };
+
   const onSubmit = async (data: OnboardingFormData) => {
     setIsSubmitting(true);
     try {
@@ -96,6 +114,9 @@ function OnboardingPage() {
   // Check if workflow is in progress
   const isGenerating = documents?.some((doc) => doc.status === "generating" || doc.status === "pending");
   const allCompleted = documents?.every((doc) => doc.status === "completed" || doc.status === "failed");
+  const hasCompletedDocs = documents?.some((doc) => doc.status === "completed");
+  const anyAnalysisMissing = documents?.some((doc) => doc.status === "completed" && !doc.analysis);
+  const hasAnalysisReady = documents?.some((doc) => doc.status === "completed" && doc.analysis?.status === "completed");
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
@@ -236,14 +257,46 @@ function OnboardingPage() {
       {documents && documents.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Generated Documents</CardTitle>
-            <CardDescription>
-              {isGenerating
-                ? "Your documents are being generated..."
-                : allCompleted
-                ? "All documents have been processed"
-                : "Document generation status"}
-            </CardDescription>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle>Generated Documents</CardTitle>
+                <CardDescription>
+                  {isGenerating
+                    ? "Your documents are being generated..."
+                    : allCompleted
+                    ? "All documents have been processed"
+                    : "Document generation status"}
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                {hasAnalysisReady && (
+                  <Button
+                    size="sm"
+                    onClick={() => navigate({ to: "/advanced-onboarding" })}
+                  >
+                    View Analysis
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                )}
+                {hasCompletedDocs && anyAnalysisMissing && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTriggerAnalysis}
+                    disabled={isTriggeringAnalysis || isGenerating}
+                  >
+                    {isTriggeringAnalysis ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      "Analyze Documents"
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -254,6 +307,30 @@ function OnboardingPage() {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+function CompletenessIndicator({ completeness }: { completeness: number }) {
+  const getColor = (score: number) => {
+    if (score >= 85) return "text-green-600 dark:text-green-400";
+    if (score >= 70) return "text-amber-600 dark:text-amber-400";
+    return "text-red-600 dark:text-red-400";
+  };
+
+  const getLabel = (score: number) => {
+    if (score >= 85) return "Excellent";
+    if (score >= 70) return "Good";
+    return "Needs Work";
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Target className={`h-5 w-5 ${getColor(completeness)}`} />
+      <div className="text-right">
+        <div className={`text-lg font-bold ${getColor(completeness)}`}>{completeness}%</div>
+        <div className="text-xs text-muted-foreground">{getLabel(completeness)}</div>
+      </div>
     </div>
   );
 }
@@ -337,8 +414,29 @@ function DocumentCard({ document }: { document: any }) {
               <span className={`text-xs ${status.color} flex-shrink-0`}>{status.label}</span>
             </div>
 
-            {/* Preview text for completed documents */}
-            {document.status === "completed" && document.content && (
+            {/* Analysis preview for completed documents */}
+            {document.status === "completed" && document.analysis?.status === "completed" && (
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="text-xs font-medium text-green-600 dark:text-green-400">
+                    {document.analysis.completeness}% Complete
+                  </div>
+                </div>
+                {document.analysis.suggestions.slice(0, 2).map((suggestion: string, i: number) => (
+                  <p key={i} className="text-xs text-muted-foreground line-clamp-1">
+                    • {suggestion}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {/* Analyzing state */}
+            {document.status === "completed" && document.analysis?.status === "analyzing" && (
+              <p className="text-xs text-blue-500 mt-2">Analyzing quality...</p>
+            )}
+
+            {/* Preview text for completed documents without analysis yet */}
+            {document.status === "completed" && !document.analysis && document.content && (
               <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{getPreview()}</p>
             )}
 
@@ -355,15 +453,87 @@ function DocumentCard({ document }: { document: any }) {
         </div>
       </div>
 
-      {/* Modal for full content */}
+      {/* Modal for full content with analysis */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{title}</span>
+              {document.analysis?.status === "completed" && (
+                <CompletenessIndicator completeness={document.analysis.completeness} />
+              )}
+            </DialogTitle>
           </DialogHeader>
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            <ReactMarkdown>{document.content || "No content available"}</ReactMarkdown>
-          </div>
+
+          {document.analysis?.status === "completed" ? (
+            <Tabs defaultValue="content" className="flex-1 overflow-hidden flex flex-col">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="content">Document</TabsTrigger>
+                <TabsTrigger value="suggestions">
+                  Suggestions {document.analysis.suggestions.length > 0 && `(${document.analysis.suggestions.length})`}
+                </TabsTrigger>
+                <TabsTrigger value="missing">
+                  Missing Elements {document.analysis.missingElements.length > 0 && `(${document.analysis.missingElements.length})`}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="content" className="flex-1 overflow-y-auto mt-4">
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <ReactMarkdown>{document.content || "No content available"}</ReactMarkdown>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="suggestions" className="flex-1 overflow-y-auto mt-4 space-y-3">
+                {document.analysis.suggestions.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500" />
+                    <p>No suggestions - document looks great!</p>
+                  </div>
+                ) : (
+                  document.analysis.suggestions.map((suggestion: string, i: number) => (
+                    <Card key={i} className="border-l-4 border-l-blue-500">
+                      <CardContent className="pt-4">
+                        <div className="flex gap-3">
+                          <Lightbulb className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm">{suggestion}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </TabsContent>
+
+              <TabsContent value="missing" className="flex-1 overflow-y-auto mt-4 space-y-3">
+                {document.analysis.missingElements.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500" />
+                    <p>All critical elements are present!</p>
+                  </div>
+                ) : (
+                  document.analysis.missingElements.map((element: string, i: number) => (
+                    <Card key={i} className="border-l-4 border-l-amber-500">
+                      <CardContent className="pt-4">
+                        <div className="flex gap-3">
+                          <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{element}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <ReactMarkdown>{document.content || "No content available"}</ReactMarkdown>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>

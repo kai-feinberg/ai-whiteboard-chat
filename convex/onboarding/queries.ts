@@ -39,7 +39,7 @@ export const getProfileById = internalQuery({
 });
 
 /**
- * Get all generated documents for a profile
+ * Get all generated documents for a profile with their analysis
  * Real-time subscription - updates as documents are generated
  */
 export const getGeneratedDocuments = query({
@@ -67,9 +67,32 @@ export const getGeneratedDocuments = query({
       .withIndex("by_profile", (q) => q.eq("onboardingProfileId", args.profileId))
       .collect();
 
-    // Return in consistent order: offer_brief, copy_blocks, ump_ums, beat_map
-    const typeOrder = ["offer_brief", "copy_blocks", "ump_ums", "beat_map"];
-    return documents.sort((a, b) => {
+    // Fetch analysis for each document
+    const documentsWithAnalysis = await Promise.all(
+      documents.map(async (doc) => {
+        const analysis = await ctx.db
+          .query("documentAnalysis")
+          .withIndex("by_profile_and_type", (q) =>
+            q
+              .eq("onboardingProfileId", args.profileId)
+              .eq("documentType", doc.documentType)
+          )
+          .first();
+        return { ...doc, analysis };
+      })
+    );
+
+    // Return in consistent order: all 7 document types
+    const typeOrder = [
+      "offer_brief",
+      "copy_blocks",
+      "ump_ums",
+      "beat_map",
+      "build_a_buyer",
+      "pain_core_wound",
+      "competitors",
+    ];
+    return documentsWithAnalysis.sort((a, b) => {
       return typeOrder.indexOf(a.documentType) - typeOrder.indexOf(b.documentType);
     });
   },
@@ -109,6 +132,36 @@ export const getDocumentByType = query({
       )
       .first();
 
-    return document;
+    // Fetch analysis if available
+    const analysis = await ctx.db
+      .query("documentAnalysis")
+      .withIndex("by_profile_and_type", (q) =>
+        q
+          .eq("onboardingProfileId", args.profileId)
+          .eq("documentType", args.documentType)
+      )
+      .first();
+
+    return document ? { ...document, analysis } : null;
+  },
+});
+
+/**
+ * Internal query to get document by type (for workflow actions)
+ */
+export const getDocumentByTypeInternal = internalQuery({
+  args: {
+    profileId: v.id("onboardingProfiles"),
+    documentType: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("generatedDocuments")
+      .withIndex("by_profile_and_type", (q) =>
+        q
+          .eq("onboardingProfileId", args.profileId)
+          .eq("documentType", args.documentType)
+      )
+      .first();
   },
 });

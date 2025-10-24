@@ -214,8 +214,29 @@ function DocumentCard({ document }: { document: any }) {
               <span className={`text-xs ${status.color} flex-shrink-0`}>{status.label}</span>
             </div>
 
-            {/* Preview text for completed documents */}
-            {document.status === "completed" && document.content && (
+            {/* Analysis preview for completed documents */}
+            {document.status === "completed" && document.analysis?.status === "completed" && (
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="text-xs font-medium text-green-600 dark:text-green-400">
+                    {document.analysis.completeness}% Complete
+                  </div>
+                </div>
+                {document.analysis.suggestions.slice(0, 2).map((suggestion: string, i: number) => (
+                  <p key={i} className="text-xs text-muted-foreground line-clamp-1">
+                    • {suggestion}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {/* Analyzing state */}
+            {document.status === "completed" && document.analysis?.status === "analyzing" && (
+              <p className="text-xs text-blue-500 mt-2">Analyzing quality...</p>
+            )}
+
+            {/* Preview text for completed documents without analysis yet */}
+            {document.status === "completed" && !document.analysis && document.content && (
               <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{getPreview()}</p>
             )}
 

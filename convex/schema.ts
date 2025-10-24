@@ -174,4 +174,21 @@ export default defineSchema({
     .index("by_organization", ["organizationId"])
     .index("by_profile", ["onboardingProfileId"])
     .index("by_profile_and_type", ["onboardingProfileId", "documentType"]),
+
+  // Document Analysis - AI quality analysis of generated documents
+  documentAnalysis: defineTable({
+    organizationId: v.string(), // Clerk organization ID
+    onboardingProfileId: v.id("onboardingProfiles"), // Foreign key to profile
+    documentType: v.string(), // Same as generatedDocuments
+    completeness: v.number(), // 0-100 percentage
+    suggestions: v.array(v.string()), // Improvement suggestions
+    missingElements: v.array(v.string()), // Critical gaps
+    status: v.string(), // "pending" | "analyzing" | "completed" | "failed"
+    errorMessage: v.optional(v.string()), // Error if analysis failed
+    analysisGeneratedAt: v.optional(v.number()), // Timestamp
+    regenerationCount: v.number(), // Track re-analysis
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_profile", ["onboardingProfileId"])
+    .index("by_profile_and_type", ["onboardingProfileId", "documentType"]),
 });
