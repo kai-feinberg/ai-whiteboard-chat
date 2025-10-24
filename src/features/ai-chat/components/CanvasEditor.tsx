@@ -2,6 +2,7 @@
 import { useTiptapSync } from "@convex-dev/prosemirror-sync/tiptap";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { Markdown } from "@tiptap/markdown";
 import { api } from "../../../../convex/_generated/api";
 import { useEffect } from "react";
 
@@ -18,8 +19,9 @@ export function CanvasEditor({ documentId, documentVersion }: CanvasEditorProps)
       StarterKit.configure({
         history: false, // Disable local history since we're using sync
         heading: { levels: [1, 2, 3, 4, 5, 6] }, // Customize heading levels
-        // All other extensions use defaults (including inputRules for markdown shortcuts)
+        // All other extensions use defaults (includes bold, italic, strike, etc.)
       }),
+      Markdown, // Enable markdown parsing/serialization (must match server)
       ...(sync.extension ? [sync.extension] : []),
     ],
     content: sync.initialContent || "",

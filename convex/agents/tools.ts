@@ -5,6 +5,7 @@ import { prosemirrorSync } from "./canvas";
 import { api, components, internal } from "../_generated/api";
 import { getSchema } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
+import { Markdown } from "@tiptap/markdown";
 import { Transform } from "@tiptap/pm/transform";
 
 // Define the extensions - must match the client-side editor schema
@@ -12,9 +13,93 @@ import { Transform } from "@tiptap/pm/transform";
 const extensions = [
   StarterKit.configure({
     heading: { levels: [1, 2, 3, 4, 5, 6] }, // Customize heading levels to match client
-    // All other extensions use defaults
+    // All other extensions use defaults (includes bold, italic, strike, etc.)
   }),
+  Markdown, // Enable markdown parsing/serialization
 ];
+
+/**
+ * Parse inline markdown (bold, italic, strikethrough, code, underline) into ProseMirror text nodes with marks
+ */
+function parseInlineMarkdown(text: string): any[] {
+  if (!text) return [];
+
+  // Process markdown patterns in a single pass to avoid overlaps
+  // Patterns: **bold**, __underline__, *italic*, ~~strike~~, `code`
+  // Use a combined regex that matches all patterns and processes them in order
+
+  const nodes: any[] = [];
+  let remaining = text;
+  let processed = '';
+
+  // Combined pattern - order matters: longer patterns first to avoid false matches
+  // \*\*([^*]+)\*\* = **bold**
+  // __([^_]+)__ = __underline__
+  // \*([^*]+)\* = *italic*
+  // ~~([^~]+)~~ = ~~strike~~
+  // `([^`]+)` = `code`
+  const combinedPattern = /(\*\*([^*]+)\*\*)|(__([^_]+)__)|(\*([^*]+)\*)|(~~([^~]+)~~)|(`([^`]+)`)/g;
+
+  let lastIndex = 0;
+  let match;
+
+  while ((match = combinedPattern.exec(text)) !== null) {
+    // Add plain text before this match
+    if (match.index > lastIndex) {
+      const plainText = text.substring(lastIndex, match.index);
+      if (plainText) {
+        nodes.push({ type: 'text', text: plainText });
+      }
+    }
+
+    // Determine which pattern matched and extract the text
+    let markedText = '';
+    let markType = '';
+
+    if (match[1]) { // **bold**
+      markedText = match[2];
+      markType = 'bold';
+    } else if (match[3]) { // __underline__
+      markedText = match[4];
+      markType = 'underline';
+    } else if (match[5]) { // *italic*
+      markedText = match[6];
+      markType = 'italic';
+    } else if (match[7]) { // ~~strike~~
+      markedText = match[8];
+      markType = 'strike';
+    } else if (match[9]) { // `code`
+      markedText = match[10];
+      markType = 'code';
+    }
+
+    // Add marked text node
+    if (markedText && markType) {
+      nodes.push({
+        type: 'text',
+        text: markedText,
+        marks: [{ type: markType }],
+      });
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add remaining plain text after last match
+  if (lastIndex < text.length) {
+    const remainingText = text.substring(lastIndex);
+    if (remainingText) {
+      nodes.push({ type: 'text', text: remainingText });
+    }
+  }
+
+  // If no markdown found, return simple text node
+  if (nodes.length === 0 && text) {
+    return [{ type: 'text', text }];
+  }
+
+  return nodes;
+}
 
 /**
  * Helper function to get current document text
@@ -107,20 +192,44 @@ export const setDocumentText = createTool({
 
     console.log('[setDocumentText] Latest ProseMirror version:', latestVersion);
 
-    // Convert text content to ProseMirror JSON structure
-    // NOTE: Do NOT filter out empty lines - they create blank lines for spacing
-    const paragraphs = args.content.split('\n');
-    const newContent = paragraphs.length > 0
-      ? paragraphs.map(paragraph => ({
-          type: "paragraph",
-          content: paragraph.trim().length > 0 ? [{ type: "text", text: paragraph }] : []
-        }))
-      : [{
-          type: "paragraph",
-          content: []
-        }];
+    // Convert markdown text content to ProseMirror JSON structure with formatting marks
+    // We need to manually parse markdown since generateJSON requires browser APIs
+    // For now, we'll create a simple parser that handles common markdown:
+    // **bold**, *italic*, ~~strikethrough~~, # headings
 
-    console.log('[setDocumentText] Created new content with', newContent.length, 'paragraphs');
+    const lines = args.content.split('\n');
+    const newContent: any[] = [];
+
+    for (const line of lines) {
+      // Check for headings
+      const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+      if (headingMatch) {
+        const level = headingMatch[1].length;
+        const text = headingMatch[2];
+        newContent.push({
+          type: "heading",
+          attrs: { level },
+          content: parseInlineMarkdown(text),
+        });
+        continue;
+      }
+
+      // Regular paragraph
+      if (line.trim().length > 0) {
+        newContent.push({
+          type: "paragraph",
+          content: parseInlineMarkdown(line),
+        });
+      } else {
+        // Empty line = empty paragraph for spacing
+        newContent.push({
+          type: "paragraph",
+          content: [],
+        });
+      }
+    }
+
+    console.log('[setDocumentText] Parsed markdown into', newContent.length, 'nodes');
 
     try {
       // If document doesn't exist yet, create it
