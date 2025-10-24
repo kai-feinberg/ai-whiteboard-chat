@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, AlertTriangle, Lightbulb, Target, ChevronLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "@tanstack/react-router";
@@ -59,22 +60,37 @@ function AnalysisPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <div className="border-b p-4">
-        <div className="max-w-full mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" onClick={() => navigate({ to: "/onboarding" })}>
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Document Analysis</h1>
-              <p className="text-sm text-muted-foreground">
-                Review AI-generated feedback and suggestions
-              </p>
-            </div>
-          </div>
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* Single Combined Header */}
+      <div className="border-b px-6 py-3 flex items-center justify-between gap-4 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/onboarding" })}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-lg font-semibold">Document Analysis</h1>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Select value={selectedDocType || undefined} onValueChange={(value) => setSelectedDocType(value as DocumentType)}>
+            <SelectTrigger className="w-[240px]">
+              <SelectValue placeholder="Select document" />
+            </SelectTrigger>
+            <SelectContent>
+              {completedDocs.map((doc) => (
+                <SelectItem key={doc._id} value={doc.documentType}>
+                  <div className="flex items-center justify-between gap-3 w-full">
+                    <span>{documentTitles[doc.documentType] || doc.documentType}</span>
+                    {doc.analysis?.completeness && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        {doc.analysis.completeness}%
+                      </span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           {selectedDoc?.analysis && (
             <CompletenessIndicator completeness={selectedDoc.analysis.completeness} />
           )}
@@ -82,37 +98,9 @@ function AnalysisPage() {
       </div>
 
       {/* Main Content - Split Screen */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Left Side - Feedback */}
         <div className="w-1/3 border-r flex flex-col overflow-hidden">
-          {/* Document Selector */}
-          <div className="border-b p-4 space-y-2">
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3">SELECT DOCUMENT</h3>
-            <div className="space-y-1">
-              {completedDocs.map((doc) => (
-                <button
-                  key={doc._id}
-                  onClick={() => setSelectedDocType(doc.documentType as DocumentType)}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                    selectedDocType === doc.documentType
-                      ? "bg-primary text-primary-foreground font-medium"
-                      : "hover:bg-muted"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{documentTitles[doc.documentType] || doc.documentType}</span>
-                    {doc.analysis?.completeness && (
-                      <span className={`text-xs ${selectedDocType === doc.documentType ? "opacity-90" : "text-muted-foreground"}`}>
-                        {doc.analysis.completeness}%
-                      </span>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Feedback Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {selectedDoc?.analysis ? (
               <>
@@ -166,7 +154,7 @@ function AnalysisPage() {
               </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                <p>No analysis available for this document</p>
+                <p>No analysis available</p>
               </div>
             )}
           </div>
@@ -174,11 +162,6 @@ function AnalysisPage() {
 
         {/* Right Side - Document Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="border-b p-4">
-            <h2 className="text-xl font-semibold">
-              {selectedDocType ? documentTitles[selectedDocType] : "Select a document"}
-            </h2>
-          </div>
           <div className="flex-1 overflow-y-auto p-8">
             {selectedDoc ? (
               <div className="prose prose-sm max-w-none dark:prose-invert">
