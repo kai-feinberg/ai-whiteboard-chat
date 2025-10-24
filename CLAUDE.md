@@ -1,3 +1,5 @@
+In all interactions, be extremely concise and sacrifice grammar for the sake of concision.
+
 AdScout - Claude Development Guide
 
 If you have made changes to the backend then when you are done developing make sure to run pnpm dev which will both start the dev server and run a typecheck on the backend code. After you have confirmed the check passes kill the task.
@@ -8,26 +10,14 @@ AdScout is a B2B ad intelligence platform built for SPEED over perfection.
 Core Principles
 
 Speed over perfection - Launch in ≤1 day, iterate based on feedback
-Manual over automated - Users/VAs handle complex setup initially
 Simple over robust - Choose scrappiest solution that solves core problem
-B2B tolerance - Business users accept manual workarounds for value
-
-When Building ANY Feature
-Ask these questions FIRST:
-
-Does this solve the core pain point?
-Can this be done manually/by VA instead?
-Is this implementable in <1 day?
-Are we solving for edge cases too early?
-Will users tolerate a manual workaround?
-
 
 Tech Stack & Architecture
 Core Stack
 
 Frontend: TanStack Start (SSR React)
 Database: Convex (real-time, serverless)
-Auth: Clerk with Organizations (fully integrated)
+Auth: Clerk with Organizations
 AI: OpenAI + Claude Sonnet
 Vector Search: Convex Vector Search (RAG)
 Media Storage: Convex file storage
@@ -54,7 +44,6 @@ Ad Dashboard - View scraped ads with filters/tags (organization-scoped)
 Search Ads - Tag-based and semantic search through ad database
 Chat - AI-powered ad analysis and variation generation
 RAG System - Vector embeddings for semantic search
-
 
 Authentication System 🔐
 
@@ -93,44 +82,10 @@ export const myQuery = query({
 
 **⚠️ COMMON MISTAKE - Property Name**:
 The organization ID property is `identity.organizationId`, **NOT** `identity.orgId`.
-```typescript
-// ❌ WRONG - Will cause "No organization context" errors
-const orgId = identity.orgId;
 
-// ✅ CORRECT - Use this exact property name
-const organizationId = identity.organizationId;
-```
 
 **Organization Ownership Checks**:
 Always verify that data belongs to the user's current organization:
-```typescript
-export const getById = query({
-  args: { id: v.id("items") },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
-    }
-    const organizationId = identity.organizationId;  // ⚠️ Use 'organizationId' NOT 'orgId'
-
-    if (!organizationId || typeof organizationId !== "string") {
-      throw new Error("No organization selected.");
-    }
-
-    const item = await ctx.db.get(args.id);
-    if (!item) {
-      throw new Error("Item not found");
-    }
-
-    // Verify organization ownership
-    if (item.organizationId !== organizationId) {
-      throw new Error("Unauthorized - item belongs to a different organization");
-    }
-
-    return item;
-  },
-});
-```
 
 **Querying by Organization**:
 Use organization indexes for efficient queries:
@@ -145,27 +100,6 @@ const items = await ctx.db
 
 **Showing Authenticated UI**:
 Use Clerk's `<SignedIn>` and `<SignedOut>` components:
-```typescript
-import { SignedIn, SignedOut, SignInButton } from '@clerk/tanstack-react-start';
-
-function MyComponent() {
-  return (
-    <>
-      <SignedIn>
-        {/* Content for authenticated users */}
-        <div>Welcome!</div>
-      </SignedIn>
-
-      <SignedOut>
-        {/* Content for unauthenticated users */}
-        <SignInButton mode="modal">
-          <button>Sign In</button>
-        </SignInButton>
-      </SignedOut>
-    </>
-  );
-}
-```
 
 **Using Organization Data**:
 ```typescript
@@ -363,17 +297,6 @@ Media files load correctly
 Critical Gotchas & Fixes
 
 🚨 Update This Section When You Encounter Issues
-
-### Authentication: Clerk with Organizations (Completed ✅)
-
-**Implementation Complete**:
-- ✅ Clerk fully integrated with TanStack Start
-- ✅ Organizations required for all users
-- ✅ All backend functions use `ctx.auth.getUserIdentity()`
-- ✅ All data scoped to `organizationId`
-- ✅ Auto-selection of first organization
-- ✅ Organization creation prompt for new users
-- ✅ Database indexes on `organizationId` for all tables
 
 **Key Points**:
 - All Convex queries/mutations MUST check for `organizationId`
