@@ -87,6 +87,42 @@ For each beat, note:
 
 Use structured markdown with headers and bullet points.
 Aim for 500-800 words.`,
+
+  buildABuyer: `You are a customer research expert specializing in buyer persona development.
+
+Create a detailed Build-A-Buyer analysis with:
+1. **Demographics** - Age, income, location, occupation
+2. **Psychographics** - Values, beliefs, lifestyle, identity
+3. **Pain Points** - Problems, frustrations, fears
+4. **Desires** - Goals, aspirations, dream outcomes
+5. **Buying Triggers** - What makes them ready to purchase
+6. **Objections** - What holds them back
+
+Use markdown formatting. Aim for 400-600 words.`,
+
+  painCoreWound: `You are a marketing psychologist specializing in emotional drivers.
+
+Analyze the customer's pain layers:
+1. **Surface Pain** - Obvious problems they're aware of
+2. **Deeper Pain** - Underlying issues they may not articulate
+3. **Core Wound** - Fundamental emotional wound driving behavior
+4. **Pain Amplification** - How pain compounds over time
+5. **False Solutions** - What they've tried that didn't work
+6. **True Resolution** - How this product addresses the core wound
+
+Use markdown formatting. Aim for 350-500 words.`,
+
+  competitors: `You are a competitive intelligence analyst.
+
+Analyze the competitive landscape:
+1. **Direct Competitors** - Same solution, same market
+2. **Indirect Competitors** - Different solution, same pain
+3. **Competitor Positioning** - How they position themselves
+4. **Market Gaps** - What competitors miss
+5. **Differentiation Opportunities** - How to stand out
+6. **Competitive Advantages** - Unique strengths to emphasize
+
+Use markdown formatting. Aim for 400-600 words.`,
 };
 
 /**
@@ -145,6 +181,51 @@ export const generateBeatMap = internalAction({
       args.profileId,
       "beat_map",
       SYSTEM_PROMPTS.beatMap
+    );
+  },
+});
+
+/**
+ * Generate Build-A-Buyer document
+ */
+export const generateBuildABuyer = internalAction({
+  args: { profileId: v.id("onboardingProfiles") },
+  handler: async (ctx, args): Promise<void> => {
+    await generateDocument(
+      ctx,
+      args.profileId,
+      "build_a_buyer",
+      SYSTEM_PROMPTS.buildABuyer
+    );
+  },
+});
+
+/**
+ * Generate Pain & Core Wound document
+ */
+export const generatePainCoreWound = internalAction({
+  args: { profileId: v.id("onboardingProfiles") },
+  handler: async (ctx, args): Promise<void> => {
+    await generateDocument(
+      ctx,
+      args.profileId,
+      "pain_core_wound",
+      SYSTEM_PROMPTS.painCoreWound
+    );
+  },
+});
+
+/**
+ * Generate Competitors document
+ */
+export const generateCompetitors = internalAction({
+  args: { profileId: v.id("onboardingProfiles") },
+  handler: async (ctx, args): Promise<void> => {
+    await generateDocument(
+      ctx,
+      args.profileId,
+      "competitors",
+      SYSTEM_PROMPTS.competitors
     );
   },
 });
@@ -235,6 +316,7 @@ ${profile.marketDescription}
 TARGET BUYER:
 ${profile.targetBuyerDescription}
 ${profile.websiteUrl ? `\nWEBSITE: ${profile.websiteUrl}` : ""}
+${profile.additionalIdeas ? `\n\nADDITIONAL IDEAS/NOTES:\n${profile.additionalIdeas}` : ""}
 ${profile.vslTranscript ? `\n\nVSL/SALES LETTER TRANSCRIPT:\n${profile.vslTranscript}` : ""}
 `;
 
@@ -253,6 +335,15 @@ ${profile.vslTranscript ? `\n\nVSL/SALES LETTER TRANSCRIPT:\n${profile.vslTransc
         throw new Error("VSL transcript is required for beat map generation");
       }
       return `${baseContext}\n\nAnalyze the VSL/sales letter transcript above and create a detailed beat-by-beat breakdown of the sales sequence, identifying hooks, emotional triggers, and persuasion tactics.`;
+
+    case "build_a_buyer":
+      return `${baseContext}\n\nBased on the above information, create a detailed Build-A-Buyer persona profile for the ideal customer.`;
+
+    case "pain_core_wound":
+      return `${baseContext}\n\nBased on the above information, analyze the customer's pain layers from surface problems to core emotional wounds.`;
+
+    case "competitors":
+      return `${baseContext}\n\nBased on the above information, analyze the competitive landscape and identify differentiation opportunities.`;
 
     default:
       return baseContext;

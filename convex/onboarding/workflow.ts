@@ -10,7 +10,7 @@ import { v } from "convex/values";
  */
 export const workflow = new WorkflowManager(components.workflow, {
   workpoolOptions: {
-    maxParallelism: 4, // Allow all 4 documents to generate in parallel
+    maxParallelism: 7, // Allow all 7 documents to generate in parallel
     retryActionsByDefault: true,
     defaultRetryBehavior: {
       maxAttempts: 3,
@@ -22,11 +22,14 @@ export const workflow = new WorkflowManager(components.workflow, {
 
 /**
  * Document Generation Workflow
- * Orchestrates the creation of 4 marketing documents in parallel:
+ * Orchestrates the creation of 7 marketing documents in parallel:
  * 1. Offer Brief
  * 2. Copy Blocks
  * 3. UMP/UMS (Universal Mechanism)
  * 4. Beat Map (VSL breakdown)
+ * 5. Build-A-Buyer (Buyer Persona)
+ * 6. Pain & Core Wound Analysis
+ * 7. Competitor Analysis
  */
 export const documentGenerationWorkflow = workflow.define({
   args: {
@@ -34,7 +37,7 @@ export const documentGenerationWorkflow = workflow.define({
     organizationId: v.string(),
   },
   handler: async (step, args): Promise<void> => {
-    // Step 1: Create 4 pending document records in database
+    // Step 1: Create 7 pending document records in database
     await step.runMutation(
       internal.onboarding.mutations.createPendingDocuments,
       {
@@ -44,7 +47,7 @@ export const documentGenerationWorkflow = workflow.define({
       { name: "create-pending-docs" }
     );
 
-    // Step 2: Generate all 4 documents in parallel
+    // Step 2: Generate all 7 documents in parallel
     // Each action handles its own error state and status updates
     await Promise.all([
       step.runAction(
@@ -79,6 +82,33 @@ export const documentGenerationWorkflow = workflow.define({
         { profileId: args.onboardingProfileId },
         {
           name: "generate-beat-map",
+          retry: true
+        }
+      ),
+
+      step.runAction(
+        internal.onboarding.actions.generateBuildABuyer,
+        { profileId: args.onboardingProfileId },
+        {
+          name: "generate-build-a-buyer",
+          retry: true
+        }
+      ),
+
+      step.runAction(
+        internal.onboarding.actions.generatePainCoreWound,
+        { profileId: args.onboardingProfileId },
+        {
+          name: "generate-pain-core-wound",
+          retry: true
+        }
+      ),
+
+      step.runAction(
+        internal.onboarding.actions.generateCompetitors,
+        { profileId: args.onboardingProfileId },
+        {
+          name: "generate-competitors",
           retry: true
         }
       ),

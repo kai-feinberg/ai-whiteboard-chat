@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, FileText, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2, FileText, CheckCircle2, XCircle, Clock, File } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useState } from "react";
 
@@ -99,9 +100,11 @@ function ProfilePage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {documents.map((doc) => (
-                <DocumentCard key={doc._id} document={doc} />
-              ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {documents.map((doc) => (
+                  <DocumentCard key={doc._id} document={doc} />
+                ))}
+              </div>
               <div className="pt-4 border-t">
                 <Link to="/onboarding">
                   <Button variant="outline" className="w-full">
@@ -133,35 +136,42 @@ function ProfilePage() {
 }
 
 function DocumentCard({ document }: { document: any }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const documentTitles: Record<string, string> = {
     offer_brief: "Offer Brief",
     copy_blocks: "Copy Blocks",
     ump_ums: "UMP/UMS Analysis",
     beat_map: "Beat Map",
+    build_a_buyer: "Build-A-Buyer Persona",
+    pain_core_wound: "Pain & Core Wound Analysis",
+    competitors: "Competitor Analysis",
   };
 
   const statusConfig = {
     pending: {
       icon: Clock,
       color: "text-muted-foreground",
+      bgColor: "bg-muted/50",
       label: "Pending",
     },
     generating: {
       icon: Loader2,
       color: "text-blue-500",
+      bgColor: "bg-blue-50 dark:bg-blue-950/30",
       label: "Generating...",
       animate: true,
     },
     completed: {
       icon: CheckCircle2,
       color: "text-green-500",
+      bgColor: "bg-green-50 dark:bg-green-950/30",
       label: "Completed",
     },
     failed: {
       icon: XCircle,
       color: "text-destructive",
+      bgColor: "bg-destructive/10",
       label: "Failed",
     },
   };
@@ -169,42 +179,70 @@ function DocumentCard({ document }: { document: any }) {
   const status = statusConfig[document.status as keyof typeof statusConfig];
   const StatusIcon = status.icon;
   const isAnimated = "animate" in status && status.animate;
+  const title = documentTitles[document.documentType] || document.documentType;
+
+  // Get a short preview of the content (first 120 characters)
+  const getPreview = () => {
+    if (!document.content) return "No content available yet...";
+    const plainText = document.content.replace(/[#*_~`]/g, "").trim();
+    return plainText.length > 120 ? plainText.slice(0, 120) + "..." : plainText;
+  };
 
   return (
-    <div className="border rounded-lg">
+    <>
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50 transition-colors"
-        onClick={() => document.status === "completed" && setIsExpanded(!isExpanded)}
+        className={`border rounded-lg p-4 transition-all cursor-pointer hover:shadow-md ${
+          document.status === "completed" ? "hover:border-primary" : ""
+        } ${status.bgColor}`}
+        onClick={() => document.status === "completed" && setIsModalOpen(true)}
       >
-        <div className="flex items-center gap-3">
-          <StatusIcon
-            className={`h-5 w-5 ${status.color} ${isAnimated ? "animate-spin" : ""}`}
-          />
-          <div>
-            <h3 className="font-semibold">{documentTitles[document.documentType]}</h3>
-            <p className="text-sm text-muted-foreground">{status.label}</p>
+        <div className="flex items-start gap-3">
+          {/* File icon with status indicator */}
+          <div className="relative flex-shrink-0">
+            <File className="h-10 w-10 text-muted-foreground" />
+            <StatusIcon
+              className={`absolute -bottom-1 -right-1 h-4 w-4 ${status.color} ${
+                isAnimated ? "animate-spin" : ""
+              } bg-background rounded-full`}
+            />
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-semibold text-sm truncate">{title}</h3>
+              <span className={`text-xs ${status.color} flex-shrink-0`}>{status.label}</span>
+            </div>
+
+            {/* Preview text for completed documents */}
+            {document.status === "completed" && document.content && (
+              <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{getPreview()}</p>
+            )}
+
+            {/* Error message for failed documents */}
+            {document.status === "failed" && document.errorMessage && (
+              <p className="text-xs text-destructive mt-2">Error: {document.errorMessage}</p>
+            )}
+
+            {/* Generating indicator */}
+            {document.status === "generating" && (
+              <p className="text-xs text-muted-foreground mt-2">Generating document...</p>
+            )}
           </div>
         </div>
-        {document.status === "completed" && (
-          <Button variant="ghost" size="sm">
-            {isExpanded ? "Hide" : "View"}
-          </Button>
-        )}
       </div>
 
-      {document.status === "failed" && document.errorMessage && (
-        <div className="px-4 pb-4">
-          <p className="text-sm text-destructive">Error: {document.errorMessage}</p>
-        </div>
-      )}
-
-      {isExpanded && document.content && (
-        <div className="border-t p-4 bg-muted/20">
+      {/* Modal for full content */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <ReactMarkdown>{document.content}</ReactMarkdown>
+            <ReactMarkdown>{document.content || "No content available"}</ReactMarkdown>
           </div>
-        </div>
-      )}
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -5,7 +5,7 @@ import { vWorkflowId } from "@convex-dev/workflow";
 import { vResultValidator } from "@convex-dev/workpool";
 
 /**
- * Create 4 pending document records for a new workflow
+ * Create 7 pending document records for a new workflow
  */
 export const createPendingDocuments = internalMutation({
   args: {
@@ -13,9 +13,17 @@ export const createPendingDocuments = internalMutation({
     organizationId: v.string(),
   },
   handler: async (ctx, args) => {
-    const documentTypes = ["offer_brief", "copy_blocks", "ump_ums", "beat_map"];
+    const documentTypes = [
+      "offer_brief",
+      "copy_blocks",
+      "ump_ums",
+      "beat_map",
+      "build_a_buyer",
+      "pain_core_wound",
+      "competitors"
+    ];
 
-    console.log(`[createPendingDocuments] Creating 4 documents for profile ${args.profileId}`);
+    console.log(`[createPendingDocuments] Creating 7 documents for profile ${args.profileId}`);
 
     await Promise.all(
       documentTypes.map((type) =>

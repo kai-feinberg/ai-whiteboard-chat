@@ -12,3 +12,7 @@ templates
 start building it and make doc on inputs/architecture
 - will change as we develop conceptual stuff, start to build it
 - keep internal
+
+
+scrape existing facebook ads from them
+chat playground with custom agent switcher

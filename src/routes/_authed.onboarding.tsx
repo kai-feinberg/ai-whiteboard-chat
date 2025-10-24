@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, FileText, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2, FileText, CheckCircle2, XCircle, Clock, File } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 export const Route = createFileRoute("/_authed/onboarding")({
@@ -23,6 +24,7 @@ type OnboardingFormData = {
   productDescription: string;
   marketDescription: string;
   targetBuyerDescription: string;
+  additionalIdeas?: string;
 };
 
 function OnboardingPage() {
@@ -39,6 +41,7 @@ function OnboardingPage() {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<OnboardingFormData>({
     defaultValues: profile
       ? {
@@ -47,9 +50,35 @@ function OnboardingPage() {
           productDescription: profile.productDescription,
           marketDescription: profile.marketDescription,
           targetBuyerDescription: profile.targetBuyerDescription,
+          additionalIdeas: profile.additionalIdeas || "",
         }
       : undefined,
   });
+
+  const fillExampleData = () => {
+    setValue("websiteUrl", "https://usemotion.com");
+    setValue(
+      "vslTranscript",
+      "Are you drowning in a sea of tasks, switching between 12 different apps just to figure out what to work on next? You're not alone. The average knowledge worker wastes 2 hours every day just organizing their work. That's 500 hours a year – over 12 work weeks – lost to chaos.\n\nMotion changes everything. It's an AI-powered project manager that automatically plans your perfect day. Just tell Motion what needs to get done, and it instantly creates an optimized schedule across your calendar, tasks, and projects.\n\nNo more manual planning. No more context switching. No more wondering if you're working on the right thing. Motion does the thinking for you, so you can focus on doing.\n\nJoin 50,000+ professionals who've reclaimed their time with Motion."
+    );
+    setValue(
+      "productDescription",
+      "Motion is an AI-powered productivity platform that combines your calendar, tasks, and project management into one intelligent system. It automatically schedules your to-dos around your meetings, dynamically adjusts when plans change, and ensures you're always working on the highest-priority items. Instead of spending hours manually planning your week, Motion's AI creates an optimized schedule in seconds, accounting for deadlines, dependencies, and your work patterns."
+    );
+    setValue(
+      "marketDescription",
+      "Productivity software market serving knowledge workers, entrepreneurs, and small-to-medium teams. Competitive landscape includes Todoist, Asana, ClickUp, and Notion for task/project management, plus Calendly and Reclaim.ai for calendar optimization. Market trend shows growing frustration with app fatigue – users juggle 5-10 tools daily. Rising demand for AI-powered automation to reduce manual planning overhead. Primary challenge: most tools are passive organizers, not active planners."
+    );
+    setValue(
+      "targetBuyerDescription",
+      "Busy professionals and entrepreneurs managing 20+ tasks daily across multiple projects. Often founders, executives, consultants, or senior ICs juggling client work, internal projects, and meetings. Core pain: spending 1-2 hours daily on task triage and schedule Tetris instead of deep work. Frustrated by rigid tools that become outdated the moment plans change. Motivated by desire to feel in control, reduce decision fatigue, and prove they're working on what matters most. Values automation over customization – wants results, not another tool to maintain."
+    );
+    setValue(
+      "additionalIdeas",
+      "Focus on time savings ROI. Emphasize the cost of NOT using Motion (500 wasted hours/year). Target high-agency professionals who value their time at $100+/hour."
+    );
+    toast.success("Form filled with example data!");
+  };
 
   const onSubmit = async (data: OnboardingFormData) => {
     setIsSubmitting(true);
@@ -80,10 +109,23 @@ function OnboardingPage() {
       {/* Onboarding Form */}
       <Card>
         <CardHeader>
-          <CardTitle>{profile ? "Update Your Information" : "Get Started"}</CardTitle>
-          <CardDescription>
-            Fill out the form below to generate your marketing documents
-          </CardDescription>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle>{profile ? "Update Your Information" : "Get Started"}</CardTitle>
+              <CardDescription>
+                Fill out the form below to generate your marketing documents
+              </CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={fillExampleData}
+              disabled={isSubmitting || isGenerating}
+            >
+              Fill Example Data
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -163,6 +205,16 @@ function OnboardingPage() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="additionalIdeas">Additional Ideas/Notes (Optional)</Label>
+              <Textarea
+                id="additionalIdeas"
+                rows={3}
+                placeholder="Any other context, ideas, or insights you'd like to include..."
+                {...register("additionalIdeas")}
+              />
+            </div>
+
             <Button type="submit" disabled={isSubmitting || isGenerating} className="w-full">
               {isSubmitting || isGenerating ? (
                 <>
@@ -194,7 +246,7 @@ function OnboardingPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {documents.map((doc) => (
                 <DocumentCard key={doc._id} document={doc} />
               ))}
@@ -207,35 +259,42 @@ function OnboardingPage() {
 }
 
 function DocumentCard({ document }: { document: any }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const documentTitles: Record<string, string> = {
     offer_brief: "Offer Brief",
     copy_blocks: "Copy Blocks",
     ump_ums: "UMP/UMS Analysis",
     beat_map: "Beat Map",
+    build_a_buyer: "Build-A-Buyer Persona",
+    pain_core_wound: "Pain & Core Wound Analysis",
+    competitors: "Competitor Analysis",
   };
 
   const statusConfig = {
     pending: {
       icon: Clock,
       color: "text-muted-foreground",
+      bgColor: "bg-muted/50",
       label: "Pending",
     },
     generating: {
       icon: Loader2,
       color: "text-blue-500",
+      bgColor: "bg-blue-50 dark:bg-blue-950/30",
       label: "Generating...",
       animate: true,
     },
     completed: {
       icon: CheckCircle2,
       color: "text-green-500",
+      bgColor: "bg-green-50 dark:bg-green-950/30",
       label: "Completed",
     },
     failed: {
       icon: XCircle,
       color: "text-destructive",
+      bgColor: "bg-destructive/10",
       label: "Failed",
     },
   };
@@ -243,42 +302,70 @@ function DocumentCard({ document }: { document: any }) {
   const status = statusConfig[document.status as keyof typeof statusConfig];
   const StatusIcon = status.icon;
   const isAnimated = "animate" in status && status.animate;
+  const title = documentTitles[document.documentType] || document.documentType;
+
+  // Get a short preview of the content (first 120 characters)
+  const getPreview = () => {
+    if (!document.content) return "No content available yet...";
+    const plainText = document.content.replace(/[#*_~`]/g, "").trim();
+    return plainText.length > 120 ? plainText.slice(0, 120) + "..." : plainText;
+  };
 
   return (
-    <div className="border rounded-lg">
+    <>
       <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-accent/50 transition-colors"
-        onClick={() => document.status === "completed" && setIsExpanded(!isExpanded)}
+        className={`border rounded-lg p-4 transition-all cursor-pointer hover:shadow-md ${
+          document.status === "completed" ? "hover:border-primary" : ""
+        } ${status.bgColor}`}
+        onClick={() => document.status === "completed" && setIsModalOpen(true)}
       >
-        <div className="flex items-center gap-3">
-          <StatusIcon
-            className={`h-5 w-5 ${status.color} ${isAnimated ? "animate-spin" : ""}`}
-          />
-          <div>
-            <h3 className="font-semibold">{documentTitles[document.documentType]}</h3>
-            <p className="text-sm text-muted-foreground">{status.label}</p>
+        <div className="flex items-start gap-3">
+          {/* File icon with status indicator */}
+          <div className="relative flex-shrink-0">
+            <File className="h-10 w-10 text-muted-foreground" />
+            <StatusIcon
+              className={`absolute -bottom-1 -right-1 h-4 w-4 ${status.color} ${
+                isAnimated ? "animate-spin" : ""
+              } bg-background rounded-full`}
+            />
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-semibold text-sm truncate">{title}</h3>
+              <span className={`text-xs ${status.color} flex-shrink-0`}>{status.label}</span>
+            </div>
+
+            {/* Preview text for completed documents */}
+            {document.status === "completed" && document.content && (
+              <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{getPreview()}</p>
+            )}
+
+            {/* Error message for failed documents */}
+            {document.status === "failed" && document.errorMessage && (
+              <p className="text-xs text-destructive mt-2">Error: {document.errorMessage}</p>
+            )}
+
+            {/* Generating indicator */}
+            {document.status === "generating" && (
+              <p className="text-xs text-muted-foreground mt-2">Generating document...</p>
+            )}
           </div>
         </div>
-        {document.status === "completed" && (
-          <Button variant="ghost" size="sm">
-            {isExpanded ? "Hide" : "View"}
-          </Button>
-        )}
       </div>
 
-      {document.status === "failed" && document.errorMessage && (
-        <div className="px-4 pb-4">
-          <p className="text-sm text-destructive">Error: {document.errorMessage}</p>
-        </div>
-      )}
-
-      {isExpanded && document.content && (
-        <div className="border-t p-4 bg-muted/20">
+      {/* Modal for full content */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <ReactMarkdown>{document.content}</ReactMarkdown>
+            <ReactMarkdown>{document.content || "No content available"}</ReactMarkdown>
           </div>
-        </div>
-      )}
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

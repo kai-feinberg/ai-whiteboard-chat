@@ -146,9 +146,17 @@ export default defineSchema({
     productDescription: v.string(), // Required product details
     marketDescription: v.string(), // Required market details
     targetBuyerDescription: v.string(), // Required buyer persona
+    additionalIdeas: v.optional(v.string()), // Optional freeform ideas/notes
     workflowId: v.optional(v.string()), // Workflow execution ID for tracking
     completedAt: v.optional(v.number()), // When all documents finished generating
     createdBy: v.string(), // User who filled form
+    // Facebook ad scraping fields (optional for backward compatibility)
+    facebookPageId: v.optional(v.string()),
+    facebookPageName: v.optional(v.string()),
+    facebookAdLibraryUrl: v.optional(v.string()),
+    totalAdsScraped: v.optional(v.number()),
+    adsLastScrapedAt: v.optional(v.number()),
+    adsScrapeStatus: v.optional(v.string()),
   })
     .index("by_organization", ["organizationId"]),
 
@@ -156,7 +164,7 @@ export default defineSchema({
   generatedDocuments: defineTable({
     organizationId: v.string(), // Clerk organization ID
     onboardingProfileId: v.id("onboardingProfiles"), // Foreign key to profile
-    documentType: v.string(), // "offer_brief" | "copy_blocks" | "ump_ums" | "beat_map"
+    documentType: v.string(), // "offer_brief" | "copy_blocks" | "ump_ums" | "beat_map" | "build_a_buyer" | "pain_core_wound" | "competitors"
     content: v.optional(v.string()), // Generated markdown content
     status: v.string(), // "pending" | "generating" | "completed" | "failed"
     errorMessage: v.optional(v.string()), // Error message if failed
