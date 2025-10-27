@@ -111,7 +111,7 @@ function AdChat() {
             ]}
           />
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold tracking-tight">{ad.name}</h1>
+            <h1 className="text-lg font-bold tracking-tight">{ad.name}</h1>
             <Tabs value={activeDocType} onValueChange={(value) => setActiveDocType(value as DocumentType)}>
               <TabsList className="bg-slate-100 dark:bg-slate-900 shadow-sm">
                 <TabsTrigger

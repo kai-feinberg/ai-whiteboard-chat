@@ -86,13 +86,13 @@ function AdDetail() {
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-4xl font-bold mb-2 tracking-tight">{ad.name}</h1>
+          <h1 className="text-4xl font-bold mb-2 mt-2 tracking-tight">{ad.name}</h1>
           <p className="text-muted-foreground text-base">
             Created {new Date(ad.createdAt).toLocaleDateString()}
           </p>
         </div>
         <Link to="/my-ads/$adId/chat" params={{ adId }}>
-          <Button size="lg" className="shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
+          <Button size="lg" className="shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 mt-2">
             <MessageSquare className="mr-2 h-5 w-5" />
             Edit in Chat
           </Button>

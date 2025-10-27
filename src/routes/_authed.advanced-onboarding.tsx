@@ -101,56 +101,56 @@ function AnalysisPage() {
       <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Left Side - Feedback */}
         <div className="w-1/3 border-r flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {selectedDoc?.analysis ? (
               <>
-                {/* Suggestions Section */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Lightbulb className="h-5 w-5 text-blue-500" />
-                    <h3 className="font-semibold">Suggestions ({selectedDoc.analysis.suggestions.length})</h3>
-                  </div>
-                  {selectedDoc.analysis.suggestions.length === 0 ? (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-green-500" />
-                      <p className="text-sm">No suggestions - looks great!</p>
+                {/* Missing Elements Section - Above with urgency */}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                      <h3 className="font-semibold">Missing Elements ({selectedDoc.analysis.missingElements.length})</h3>
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {selectedDoc.analysis.suggestions.map((suggestion: string, i: number) => (
-                        <Card key={i} className="border-l-4 border-l-blue-500">
-                          <CardContent className="pt-3 pb-3">
-                            <p className="text-sm">{suggestion}</p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {selectedDoc.analysis.missingElements.length === 0 ? (
+                      <div className="text-center py-6 text-muted-foreground">
+                        <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-green-500" />
+                        <p className="text-sm">All elements present!</p>
+                      </div>
+                    ) : (
+                      <ul className="space-y-2 list-disc list-inside">
+                        {selectedDoc.analysis.missingElements.map((element: string, i: number) => (
+                          <li key={i} className="text-sm font-medium text-foreground leading-relaxed">
+                            {element}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </CardContent>
+                </Card>
 
-                {/* Missing Elements Section */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <AlertTriangle className="h-5 w-5 text-amber-500" />
-                    <h3 className="font-semibold">Missing Elements ({selectedDoc.analysis.missingElements.length})</h3>
-                  </div>
-                  {selectedDoc.analysis.missingElements.length === 0 ? (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-green-500" />
-                      <p className="text-sm">All elements present!</p>
+                {/* Suggestions Section */}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Lightbulb className="h-5 w-5 text-blue-500" />
+                      <h3 className="font-semibold">Suggestions ({selectedDoc.analysis.suggestions.length})</h3>
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {selectedDoc.analysis.missingElements.map((element: string, i: number) => (
-                        <Card key={i} className="border-l-4 border-l-amber-500">
-                          <CardContent className="pt-3 pb-3">
-                            <p className="text-sm font-medium">{element}</p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {selectedDoc.analysis.suggestions.length === 0 ? (
+                      <div className="text-center py-6 text-muted-foreground">
+                        <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-green-500" />
+                        <p className="text-sm">No suggestions - looks great!</p>
+                      </div>
+                    ) : (
+                      <ul className="space-y-2 list-disc list-inside">
+                        {selectedDoc.analysis.suggestions.map((suggestion: string, i: number) => (
+                          <li key={i} className="text-sm text-foreground leading-relaxed">
+                            {suggestion}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </CardContent>
+                </Card>
               </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">

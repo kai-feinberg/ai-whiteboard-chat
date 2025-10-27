@@ -79,9 +79,22 @@ export const getOnboardingData = query({
       return typeOrder.indexOf(a.documentType) - typeOrder.indexOf(b.documentType);
     });
 
+    // Get target desires and beliefs
+    const targetDesires = await ctx.db
+      .query("targetDesires")
+      .withIndex("by_profile", (q) => q.eq("profileId", profile._id))
+      .collect();
+
+    const targetBeliefs = await ctx.db
+      .query("targetBeliefs")
+      .withIndex("by_profile", (q) => q.eq("profileId", profile._id))
+      .collect();
+
     return {
       profile,
       documents: sortedDocuments,
+      targetDesires,
+      targetBeliefs,
     };
   },
 });

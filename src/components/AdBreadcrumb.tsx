@@ -20,7 +20,7 @@ type AdBreadcrumbProps = {
 
 export function AdBreadcrumb({ segments }: AdBreadcrumbProps) {
   return (
-    <Breadcrumb className="mb-6">
+    <Breadcrumb className="mb-2">
       <BreadcrumbList>
         {segments.map((segment, index) => {
           const isLast = index === segments.length - 1;

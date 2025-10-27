@@ -4,7 +4,10 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
 import { api } from "../../../../convex/_generated/api";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 
 interface CanvasEditorProps {
   documentId: string;
@@ -13,6 +16,8 @@ interface CanvasEditorProps {
 
 export function CanvasEditor({ documentId, documentVersion }: CanvasEditorProps) {
   const sync = useTiptapSync(api.agents.canvas, documentId);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -31,6 +36,31 @@ export function CanvasEditor({ documentId, documentVersion }: CanvasEditorProps)
       },
     },
   }, [sync.initialContent, sync.extension]);
+
+  const copyAsMarkdown = async () => {
+    console.log('[CanvasEditor] Copy clicked');
+
+    if (!editor) {
+      console.error('[CanvasEditor] No editor instance');
+      return;
+    }
+
+    try {
+      // Get text content from the editor
+      const content = editor.getText();
+      console.log('[CanvasEditor] Extracted text:', content);
+
+      await navigator.clipboard.writeText(content);
+      console.log('[CanvasEditor] Successfully copied to clipboard');
+
+      setIsCopied(true);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error("[CanvasEditor] Failed to copy:", error);
+      toast.error("Failed to copy: " + (error instanceof Error ? error.message : String(error)));
+    }
+  };
 
   // Log sync state for debugging
   useEffect(() => {
@@ -101,10 +131,39 @@ export function CanvasEditor({ documentId, documentVersion }: CanvasEditorProps)
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-y-auto flex justify-center">
+      <div
+        className="flex-1 overflow-y-auto flex justify-center relative"
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+      >
         <div className="w-[80%]">
           <EditorContent editor={editor} />
         </div>
+
+        {/* Copy as Markdown button - appears on hover */}
+        {isHovering && (
+          <div className="absolute top-4 right-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={copyAsMarkdown}
+              className="shadow-md hover:shadow-lg transition-all"
+              title="Copy document text"
+            >
+              {isCopied ? (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

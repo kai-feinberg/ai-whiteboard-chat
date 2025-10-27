@@ -50,7 +50,7 @@ export function CanvasLayout({ documentPanel, chatPanel, documentHeader }: Canva
         {/* Chat Panel */}
         {isChatVisible && (
           <>
-            <PanelResizeHandle className="w-1.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600 transition-colors shadow-sm" />
+            <PanelResizeHandle className="w-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600 transition-colors shadow-sm" />
             <Panel defaultSize={30} minSize={20} maxSize={60}>
               <div className="h-full flex flex-col shadow-xl bg-slate-50/30 dark:bg-slate-950/30">
                 <div className="border-b-2 border-slate-200 dark:border-slate-800 p-4 bg-white/50 dark:bg-slate-900/50 shadow-md">

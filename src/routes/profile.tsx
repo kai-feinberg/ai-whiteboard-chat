@@ -13,7 +13,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, FileText, CheckCircle2, XCircle, Clock, File } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, FileText, CheckCircle2, XCircle, Clock, File, AlertTriangle, Lightbulb, Target, Heart, Brain, ArrowRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useState } from "react";
 
@@ -27,7 +29,7 @@ function ProfilePage() {
   } = useSuspenseQuery(convexQuery(api.profile.functions.getCurrentUser, {}));
 
   const {
-    data: { profile, documents },
+    data: { profile, documents, targetDesires, targetBeliefs },
   } = useSuspenseQuery(convexQuery(api.profile.functions.getOnboardingData, {}));
 
   const initials = viewer
@@ -39,7 +41,7 @@ function ProfilePage() {
     : "U";
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-8 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">Profile</h1>
 
       <Card>
@@ -105,11 +107,17 @@ function ProfilePage() {
                   <DocumentCard key={doc._id} document={doc} />
                 ))}
               </div>
-              <div className="pt-4 border-t">
-                <Link to="/onboarding">
+              <div className="pt-4 border-t flex gap-2">
+                <Link to="/onboarding" className="flex-1">
                   <Button variant="outline" className="w-full">
                     <FileText className="mr-2 h-4 w-4" />
                     Edit Onboarding Profile
+                  </Button>
+                </Link>
+                <Link to="/advanced-onboarding" className="flex-1">
+                  <Button className="w-full">
+                    View Advanced Analysis
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -117,6 +125,73 @@ function ProfilePage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Target Desires & Beliefs */}
+      {targetDesires && targetBeliefs && (targetDesires.length > 0 || targetBeliefs.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          {/* Target Desires */}
+          {targetDesires.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-pink-500" />
+                  <CardTitle>Target Desires</CardTitle>
+                </div>
+                <CardDescription>
+                  Core emotional outcomes your customer wants to achieve
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {targetDesires.map((desire) => (
+                    <div key={desire._id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex-1">
+                        <p className="text-sm">{desire.text}</p>
+                      </div>
+                      {desire.category && (
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                          {desire.category}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Target Beliefs */}
+          {targetBeliefs.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-blue-500" />
+                  <CardTitle>Target Beliefs</CardTitle>
+                </div>
+                <CardDescription>
+                  Core beliefs your customer holds about themselves and the world
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {targetBeliefs.map((belief) => (
+                    <div key={belief._id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex-1">
+                        <p className="text-sm">{belief.text}</p>
+                      </div>
+                      {belief.category && (
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                          {belief.category}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       <Card className="mt-6">
         <CardHeader>
@@ -253,17 +328,113 @@ function DocumentCard({ document }: { document: any }) {
         </div>
       </div>
 
-      {/* Modal for full content */}
+      {/* Modal for full content with analysis */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{title}</span>
+              {document.analysis?.status === "completed" && (
+                <CompletenessIndicator completeness={document.analysis.completeness} />
+              )}
+            </DialogTitle>
           </DialogHeader>
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            <ReactMarkdown>{document.content || "No content available"}</ReactMarkdown>
-          </div>
+
+          {document.analysis?.status === "completed" ? (
+            <Tabs defaultValue="content" className="flex-1 overflow-hidden flex flex-col">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="content">Document</TabsTrigger>
+                <TabsTrigger value="suggestions">
+                  Suggestions {document.analysis.suggestions.length > 0 && `(${document.analysis.suggestions.length})`}
+                </TabsTrigger>
+                <TabsTrigger value="missing">
+                  Missing Elements {document.analysis.missingElements.length > 0 && `(${document.analysis.missingElements.length})`}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="content" className="flex-1 overflow-y-auto mt-4">
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  <ReactMarkdown>{document.content || "No content available"}</ReactMarkdown>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="suggestions" className="flex-1 overflow-y-auto mt-4 space-y-3">
+                {document.analysis.suggestions.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500" />
+                    <p>No suggestions - document looks great!</p>
+                  </div>
+                ) : (
+                  document.analysis.suggestions.map((suggestion: string, i: number) => (
+                    <Card key={i} className="border-l-4 border-l-blue-500">
+                      <CardContent className="pt-4">
+                        <div className="flex gap-3">
+                          <Lightbulb className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm">{suggestion}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </TabsContent>
+
+              <TabsContent value="missing" className="flex-1 overflow-y-auto mt-4 space-y-3">
+                {document.analysis.missingElements.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500" />
+                    <p>All critical elements are present!</p>
+                  </div>
+                ) : (
+                  document.analysis.missingElements.map((element: string, i: number) => (
+                    <Card key={i} className="border-l-4 border-l-amber-500">
+                      <CardContent className="pt-4">
+                        <div className="flex gap-3">
+                          <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{element}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <ReactMarkdown>{document.content || "No content available"}</ReactMarkdown>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function CompletenessIndicator({ completeness }: { completeness: number }) {
+  const getColor = (score: number) => {
+    if (score >= 85) return "text-green-600 dark:text-green-400";
+    if (score >= 70) return "text-amber-600 dark:text-amber-400";
+    return "text-red-600 dark:text-red-400";
+  };
+
+  const getLabel = (score: number) => {
+    if (score >= 85) return "Excellent";
+    if (score >= 70) return "Good";
+    return "Needs Work";
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Target className={`h-5 w-5 ${getColor(completeness)}`} />
+      <div className="text-right">
+        <div className={`text-lg font-bold ${getColor(completeness)}`}>{completeness}%</div>
+        <div className="text-xs text-muted-foreground">{getLabel(completeness)}</div>
+      </div>
+    </div>
   );
 }
