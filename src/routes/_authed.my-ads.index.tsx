@@ -29,12 +29,12 @@ export const Route = createFileRoute("/_authed/my-ads/")({
 });
 
 const PIPELINE_STAGES = [
-  { value: "to_do", label: "To Do" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "ready_for_review", label: "Ready for Review" },
-  { value: "asset_creation", label: "Asset Creation" },
-  { value: "ready_to_publish", label: "Ready to Publish" },
-  { value: "published", label: "Published" },
+  { value: "to_do", label: "To Do", color: "var(--stage-to-do)" },
+  { value: "in_progress", label: "In Progress", color: "var(--stage-in-progress)" },
+  { value: "ready_for_review", label: "Ready for Review", color: "var(--stage-ready-for-review)" },
+  { value: "asset_creation", label: "Asset Creation", color: "var(--stage-asset-creation)" },
+  { value: "ready_to_publish", label: "Ready to Publish", color: "var(--stage-ready-to-publish)" },
+  { value: "published", label: "Published", color: "var(--stage-published)" },
 ];
 
 function AdsIndex() {
@@ -58,7 +58,6 @@ function AdsIndex() {
 
   return (
     <div className="p-12 space-y-8">
-      <AdBreadcrumb segments={[{ label: "My Ads" }]} />
 
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -82,16 +81,16 @@ function AdsIndex() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         </div>
       ) : ads.length === 0 ? (
-        <Card>
+        <Card className="shadow-xl border-2">
           <CardHeader>
-            <CardTitle>No ads yet</CardTitle>
+            <CardTitle className="text-2xl">No ads yet</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground mb-6 text-base">
               Create your first ad to get started!
             </p>
             <Link to="/my-ads/new">
-              <Button>
+              <Button className="shadow-md hover:shadow-xl transition-all hover:-translate-y-0.5">
                 <Plus className="mr-2 h-4 w-4" />
                 Create Ad
               </Button>
@@ -100,32 +99,38 @@ function AdsIndex() {
         </Card>
       ) : (
         /* Pipeline Tables */
-        <div className="space-y-6">
+        <div className="space-y-8">
           {adsByStage.map((stage) => (
-            <Card key={stage.value}>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{stage.label}</span>
-                  <span className="text-sm font-normal text-muted-foreground">
+            <Card
+              key={stage.value}
+              className="shadow-lg hover:shadow-xl transition-all duration-300 border-slate-200 dark:border-slate-800"
+            >
+              <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-900/50 pb-4">
+                <CardTitle className="flex items-center justify-between text-xl">
+                  <span className="font-semibold">{stage.label}</span>
+                  <span className="text-sm font-normal text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
                     {stage.ads.length} {stage.ads.length === 1 ? 'ad' : 'ads'}
                   </span>
                 </CardTitle>
               </CardHeader>
               {stage.ads.length > 0 && (
-                <CardContent>
+                <CardContent className="pt-6">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Concept</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                      <TableRow className="border-slate-200 dark:border-slate-800">
+                        <TableHead className="font-semibold">Name</TableHead>
+                        <TableHead className="font-semibold">Concept</TableHead>
+                        <TableHead className="font-semibold">Created</TableHead>
+                        <TableHead className="text-right font-semibold">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {stage.ads.map((ad) => (
-                        <TableRow key={ad._id}>
-                          <TableCell className="font-medium">{ad.name}</TableCell>
+                        <TableRow
+                          key={ad._id}
+                          className="border-slate-100 dark:border-slate-900 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"
+                        >
+                          <TableCell className="font-medium text-base">{ad.name}</TableCell>
                           <TableCell className="text-muted-foreground">
                             {ad.conceptName}
                           </TableCell>
@@ -138,7 +143,7 @@ function AdsIndex() {
                                 value={ad.pipelineStage}
                                 onValueChange={(value) => handleStageChange(ad._id, value)}
                               >
-                                <SelectTrigger className="w-[140px]">
+                                <SelectTrigger className="w-[140px] shadow-sm">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -150,12 +155,20 @@ function AdsIndex() {
                                 </SelectContent>
                               </Select>
                               <Link to="/my-ads/$adId" params={{ adId: ad._id }}>
-                                <Button variant="outline" size="sm">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                                >
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </Link>
                               <Link to="/my-ads/$adId/chat" params={{ adId: ad._id }}>
-                                <Button variant="default" size="sm">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                                >
                                   <MessageSquare className="h-4 w-4" />
                                 </Button>
                               </Link>

@@ -111,13 +111,33 @@ function AdChat() {
             ]}
           />
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold">{ad.name}</h1>
+            <h1 className="text-xl font-bold tracking-tight">{ad.name}</h1>
             <Tabs value={activeDocType} onValueChange={(value) => setActiveDocType(value as DocumentType)}>
-              <TabsList>
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="copy">Copy</TabsTrigger>
-                <TabsTrigger value="asset_brief">Asset Brief</TabsTrigger>
-                <TabsTrigger value="notes">Notes</TabsTrigger>
+              <TabsList className="bg-slate-100 dark:bg-slate-900 shadow-sm">
+                <TabsTrigger
+                  value="details"
+                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md data-[state=active]:font-semibold"
+                >
+                  Details
+                </TabsTrigger>
+                <TabsTrigger
+                  value="copy"
+                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md data-[state=active]:font-semibold"
+                >
+                  Copy
+                </TabsTrigger>
+                <TabsTrigger
+                  value="asset_brief"
+                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md data-[state=active]:font-semibold"
+                >
+                  Asset Brief
+                </TabsTrigger>
+                <TabsTrigger
+                  value="notes"
+                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:shadow-md data-[state=active]:font-semibold"
+                >
+                  Notes
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
