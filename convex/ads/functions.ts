@@ -865,9 +865,9 @@ export const scrapeFromFacebookAdLibrary = action({
           );
 
           // Filter successful uploads
-          const successfulMedia = mediaResults.filter((r) => r !== null);
-          const mediaStorageIds = successfulMedia.map((m) => m!.storageId);
-          const mediaMetadata = successfulMedia.map((m) => ({
+          const successfulMedia = mediaResults.filter((r: any) => r !== null);
+          const mediaStorageIds = successfulMedia.map((m: any) => m!.storageId);
+          const mediaMetadata = successfulMedia.map((m: any) => ({
             type: m!.type,
             storageId: m!.storageId,
             originalUrl: m!.originalUrl,

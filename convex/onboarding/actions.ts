@@ -613,9 +613,9 @@ export const generateTargetDesires = internalAction({
         { profileId: args.profileId }
       );
 
-      const buildABuyer = documents.find(d => d.documentType === "build_a_buyer");
-      const painCoreWound = documents.find(d => d.documentType === "pain_core_wound");
-      const offerBrief = documents.find(d => d.documentType === "offer_brief");
+      const buildABuyer = documents.find((d: any) => d.documentType === "build_a_buyer");
+      const painCoreWound = documents.find((d: any) => d.documentType === "pain_core_wound");
+      const offerBrief = documents.find((d: any) => d.documentType === "offer_brief");
 
       // Build enriched context
       const baseContext = buildProfileContext(profile);
@@ -679,9 +679,9 @@ export const generateTargetBeliefs = internalAction({
         { profileId: args.profileId }
       );
 
-      const buildABuyer = documents.find(d => d.documentType === "build_a_buyer");
-      const painCoreWound = documents.find(d => d.documentType === "pain_core_wound");
-      const offerBrief = documents.find(d => d.documentType === "offer_brief");
+      const buildABuyer = documents.find((d: any) => d.documentType === "build_a_buyer");
+      const painCoreWound = documents.find((d: any) => d.documentType === "pain_core_wound");
+      const offerBrief = documents.find((d: any) => d.documentType === "offer_brief");
 
       // Build enriched context
       const baseContext = buildProfileContext(profile);

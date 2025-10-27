@@ -1,6 +1,6 @@
 // convex/agents/actions.ts
 import { v } from "convex/values";
-import { action, internalAction, internalMutation, internalQuery, query } from "../_generated/server";
+import { action, internalAction, query } from "../_generated/server";
 import { canvasAgent } from "./agent";
 import { internal } from "../_generated/api";
 import { createThread, listUIMessages, syncStreams, vStreamArgs } from "@convex-dev/agent";
@@ -21,7 +21,7 @@ export const getOrCreatePlaygroundThread = internalAction({
     console.log("[getOrCreatePlaygroundThread] Looking for thread for org:", args.organizationId);
 
     // Look for existing playground thread in our custom tracking table
-    const existing: { agentThreadId: string } | null = await ctx.runQuery(internal.agents.actions.queryPlaygroundThread, {
+    const existing: { agentThreadId: string } | null = await ctx.runQuery(internal.agents.queries.queryPlaygroundThread, {
       organizationId: args.organizationId,
     });
 
@@ -41,53 +41,13 @@ export const getOrCreatePlaygroundThread = internalAction({
     console.log("[getOrCreatePlaygroundThread] Created agent thread with ID:", agentThreadId);
 
     // Store the mapping in our custom table for organization tracking
-    await ctx.runMutation(internal.agents.actions.saveThreadMapping, {
+    await ctx.runMutation(internal.agents.mutations.saveThreadMapping, {
       agentThreadId,
       userId: args.userId,
       organizationId: args.organizationId,
     });
 
     return agentThreadId;
-  },
-});
-
-/**
- * Query playground thread (internal query helper)
- */
-export const queryPlaygroundThread = internalQuery({
-  args: {
-    organizationId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("threads")
-      .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
-      .filter((q) => q.eq(q.field("title"), "Playground"))
-      .first();
-
-    if (existing) {
-      return { agentThreadId: existing.userId }; // We'll store agentThreadId in userId field temporarily
-    }
-    return null;
-  },
-});
-
-/**
- * Save thread mapping (internal mutation)
- */
-export const saveThreadMapping = internalMutation({
-  args: {
-    agentThreadId: v.string(),
-    userId: v.string(),
-    organizationId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    // Store in our custom threads table for organization tracking
-    await ctx.db.insert("threads", {
-      userId: args.agentThreadId, // Store agentThreadId in userId field temporarily
-      organizationId: args.organizationId,
-      title: "Playground",
-    });
   },
 });
 
@@ -128,7 +88,7 @@ export const sendMessage = action({
     console.log("[sendMessage] Thread ID obtained:", threadId, "Type:", typeof threadId);
 
     // Store user message
-    await ctx.runMutation(internal.agents.actions.saveUserMessage, {
+    await ctx.runMutation(internal.agents.mutations.saveUserMessage, {
       threadId,
       message: args.message,
       userId,
@@ -171,7 +131,7 @@ export const sendMessage = action({
       console.log("[sendMessage] AI response streamed:", responseText.substring(0, 100));
 
       // Store AI response (this is still saved for the final complete message)
-      await ctx.runMutation(internal.agents.actions.saveAssistantMessage, {
+      await ctx.runMutation(internal.agents.mutations.saveAssistantMessage, {
         threadId: threadId as string,
         message: responseText,
         userId,
@@ -187,40 +147,6 @@ export const sendMessage = action({
       console.error("[sendMessage] Error generating response:", error);
       throw error;
     }
-  },
-});
-
-/**
- * Save user message (internal)
- */
-export const saveUserMessage = internalMutation({
-  args: {
-    threadId: v.string(),
-    message: v.string(),
-    userId: v.string(),
-    organizationId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    // Note: In a full implementation, this would save to a messages table
-    // For now, the agent component handles message storage
-    console.log("[saveUserMessage] User message saved");
-  },
-});
-
-/**
- * Save assistant message (internal)
- */
-export const saveAssistantMessage = internalMutation({
-  args: {
-    threadId: v.string(),
-    message: v.string(),
-    userId: v.string(),
-    organizationId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    // Note: In a full implementation, this would save to a messages table
-    // For now, the agent component handles message storage
-    console.log("[saveAssistantMessage] Assistant message saved");
   },
 });
 

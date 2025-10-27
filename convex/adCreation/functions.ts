@@ -1,5 +1,7 @@
 // convex/ad-creation/functions.ts
 // Re-export all queries and mutations from this module
+// NOTE: Actions are NOT re-exported here to avoid circular dependencies
+// Access actions via api.adCreation.actions.* instead
 
 export {
   getCreatedAds,
@@ -10,6 +12,7 @@ export {
   getAdStyles,
   getAdHooks,
   getDocumentTemplate,
+  getAdThreadId,
 } from "./queries";
 
 export {
@@ -22,8 +25,3 @@ export {
   seedAdHooks,
   seedDocumentTemplates,
 } from "./mutations";
-
-export {
-  getAdThread,
-  sendAdMessage,
-} from "./actions";

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { SignIn } from '@clerk/tanstack-react-start'
 
 export const Route = createFileRoute('/_authed')({
@@ -7,6 +7,7 @@ export const Route = createFileRoute('/_authed')({
       throw new Error('Not authenticated')
     }
   },
+  component: () => <Outlet />,
   errorComponent: ({ error }) => {
     if (error.message === 'Not authenticated') {
       return (

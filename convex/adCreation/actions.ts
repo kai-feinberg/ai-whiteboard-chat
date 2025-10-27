@@ -252,7 +252,7 @@ export const createAdThreadWithContext = internalAction({
     console.log(`[createAdThreadWithContext] Creating thread for ad ${args.adId}`);
 
     // Fetch ad with all details
-    const ad = await ctx.runQuery(api.adCreation.queries.getCreatedAdById, {
+    const ad = await ctx.runQuery(internal.adCreation.queries.getCreatedAdByIdInternal, {
       adId: args.adId,
     });
 
@@ -334,8 +334,8 @@ export const getAdThread = action({
       throw new Error("No organization selected. Please select an organization to continue.");
     }
 
-    // Verify ad belongs to current organization
-    const ad = await ctx.runQuery(api.adCreation.queries.getCreatedAdById, {
+    // Verify ad belongs to current organization - use internal query to avoid circular dependency
+    const ad = await ctx.runQuery(internal.adCreation.queries.getCreatedAdByIdInternal, {
       adId: args.adId,
     });
 
@@ -344,7 +344,7 @@ export const getAdThread = action({
     }
 
     // Find thread mapping
-    const thread: { agentThreadId: string } | null = await ctx.runQuery(internal.agents.actions.queryPlaygroundThread, {
+    const thread = await ctx.runQuery(internal.agents.queries.queryPlaygroundThread, {
       organizationId: args.adId as string, // We stored adId temporarily
     });
 
@@ -377,8 +377,8 @@ export const sendAdMessage = action({
       throw new Error("No organization selected. Please select an organization to continue.");
     }
 
-    // Verify ad belongs to current organization
-    const ad = await ctx.runQuery(api.adCreation.queries.getCreatedAdById, {
+    // Verify ad belongs to current organization - use internal query to avoid circular dependency
+    const ad = await ctx.runQuery(internal.adCreation.queries.getCreatedAdByIdInternal, {
       adId: args.adId,
     });
 
@@ -392,7 +392,7 @@ export const sendAdMessage = action({
 
     // TODO: Implement proper thread retrieval and document context injection
     // For MVP, we can pass through to the existing sendMessage action
-    const result: { success: boolean; response: string; threadId: string } = await ctx.runAction(api.agents.actions.sendMessage, {
+    const result = await ctx.runAction(api.agents.actions.sendMessage, {
       message: args.message,
     });
 

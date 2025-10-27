@@ -354,3 +354,38 @@ export const getCreatedAdByIdInternal = internalQuery({
     };
   },
 });
+
+/**
+ * Get thread ID for an ad
+ * Returns the agent thread ID stored for this ad
+ */
+export const getAdThreadId = query({
+  args: { adId: v.id("createdAds") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Verify ad belongs to current organization
+    const ad = await ctx.db.get(args.adId);
+    if (!ad || ad.organizationId !== organizationId) {
+      throw new Error("Ad not found or unauthorized");
+    }
+
+    // Find thread mapping (we stored adId in title field)
+    const thread = await ctx.db
+      .query("threads")
+      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+      .filter((q) => q.eq(q.field("title"), `Ad: ${args.adId as string}`))
+      .first();
+
+    // The agentThreadId is stored in the userId field (hacky but works for MVP)
+    return thread ? { threadId: thread.userId } : null;
+  },
+});

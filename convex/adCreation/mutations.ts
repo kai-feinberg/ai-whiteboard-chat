@@ -499,9 +499,9 @@ export const saveAdThreadMapping = internalMutation({
   },
   handler: async (ctx, args) => {
     // Store in threads table with ad reference
-    // We'll use the userId field to store the adId temporarily (hacky but works for MVP)
+    // Store the agentThreadId in userId field (matches playground pattern)
     await ctx.db.insert("threads", {
-      userId: args.adId as string,
+      userId: args.agentThreadId,
       organizationId: args.organizationId,
       title: `Ad: ${args.adId}`,
     });

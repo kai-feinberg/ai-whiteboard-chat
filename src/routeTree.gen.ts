@@ -21,6 +21,7 @@ import { Route as AuthedAdsIndexRouteImport } from './routes/_authed.ads.index'
 import { Route as AuthedAdsNewRouteImport } from './routes/_authed.ads.new'
 import { Route as AuthedAdsAdIdRouteImport } from './routes/_authed.ads.$adId'
 import { Route as AuthedAdminSeedRouteImport } from './routes/_authed.admin.seed'
+import { Route as AuthedAdsAdIdChatRouteImport } from './routes/_authed.ads.$adId_.chat'
 
 const SubscriptionsRoute = SubscriptionsRouteImport.update({
   id: '/subscriptions',
@@ -82,6 +83,11 @@ const AuthedAdminSeedRoute = AuthedAdminSeedRouteImport.update({
   path: '/admin/seed',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedAdsAdIdChatRoute = AuthedAdsAdIdChatRouteImport.update({
+  id: '/ads/$adId_/chat',
+  path: '/ads/$adId/chat',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/ads/$adId': typeof AuthedAdsAdIdRoute
   '/ads/new': typeof AuthedAdsNewRoute
   '/ads': typeof AuthedAdsIndexRoute
+  '/ads/$adId/chat': typeof AuthedAdsAdIdChatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/ads/$adId': typeof AuthedAdsAdIdRoute
   '/ads/new': typeof AuthedAdsNewRoute
   '/ads': typeof AuthedAdsIndexRoute
+  '/ads/$adId/chat': typeof AuthedAdsAdIdChatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/_authed/ads/$adId': typeof AuthedAdsAdIdRoute
   '/_authed/ads/new': typeof AuthedAdsNewRoute
   '/_authed/ads/': typeof AuthedAdsIndexRoute
+  '/_authed/ads/$adId_/chat': typeof AuthedAdsAdIdChatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/ads/$adId'
     | '/ads/new'
     | '/ads'
+    | '/ads/$adId/chat'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/ads/$adId'
     | '/ads/new'
     | '/ads'
+    | '/ads/$adId/chat'
   id:
     | '__root__'
     | '/'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/_authed/ads/$adId'
     | '/_authed/ads/new'
     | '/_authed/ads/'
+    | '/_authed/ads/$adId_/chat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -262,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminSeedRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/ads/$adId_/chat': {
+      id: '/_authed/ads/$adId_/chat'
+      path: '/ads/$adId/chat'
+      fullPath: '/ads/$adId/chat'
+      preLoaderRoute: typeof AuthedAdsAdIdChatRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
@@ -272,6 +291,7 @@ interface AuthedRouteChildren {
   AuthedAdsAdIdRoute: typeof AuthedAdsAdIdRoute
   AuthedAdsNewRoute: typeof AuthedAdsNewRoute
   AuthedAdsIndexRoute: typeof AuthedAdsIndexRoute
+  AuthedAdsAdIdChatRoute: typeof AuthedAdsAdIdChatRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
@@ -281,6 +301,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAdsAdIdRoute: AuthedAdsAdIdRoute,
   AuthedAdsNewRoute: AuthedAdsNewRoute,
   AuthedAdsIndexRoute: AuthedAdsIndexRoute,
+  AuthedAdsAdIdChatRoute: AuthedAdsAdIdChatRoute,
 }
 
 const AuthedRouteWithChildren =

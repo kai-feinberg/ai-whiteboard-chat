@@ -17,6 +17,8 @@ import type * as advertisers_functions from "../advertisers/functions.js";
 import type * as agents_actions from "../agents/actions.js";
 import type * as agents_agent from "../agents/agent.js";
 import type * as agents_canvas from "../agents/canvas.js";
+import type * as agents_mutations from "../agents/mutations.js";
+import type * as agents_queries from "../agents/queries.js";
 import type * as agents_tools from "../agents/tools.js";
 import type * as documents_functions from "../documents/functions.js";
 import type * as http from "../http.js";
@@ -52,6 +54,8 @@ declare const fullApi: ApiFromModules<{
   "agents/actions": typeof agents_actions;
   "agents/agent": typeof agents_agent;
   "agents/canvas": typeof agents_canvas;
+  "agents/mutations": typeof agents_mutations;
+  "agents/queries": typeof agents_queries;
   "agents/tools": typeof agents_tools;
   "documents/functions": typeof documents_functions;
   http: typeof http;
