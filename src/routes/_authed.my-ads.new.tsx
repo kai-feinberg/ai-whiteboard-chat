@@ -1,4 +1,4 @@
-// src/routes/_authed.ads.new.tsx
+// src/routes/_authed.my-ads.new.tsx
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -12,7 +12,7 @@ import { useState } from "react";
 import { Search, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
 
-export const Route = createFileRoute("/_authed/ads/new")({
+export const Route = createFileRoute("/_authed/my-ads/new")({
   component: NewAdWizard,
 });
 
@@ -88,7 +88,7 @@ function NewAdWizard() {
       });
 
       toast.success("Ad created! Initializing documents...");
-      navigate({ to: `/ads/${adId}/chat` });
+      navigate({ to: `/my-ads/$adId/chat`, params: { adId } });
     } catch (error) {
       console.error("Error creating ad:", error);
       toast.error(error instanceof Error ? error.message : "Failed to create ad");

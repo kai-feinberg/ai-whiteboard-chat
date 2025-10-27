@@ -33,15 +33,15 @@ const data = {
     },
     {
       title: "Ad Creation",
-      url: "/ads",
+      url: "/my-ads",
       items: [
         {
           title: "My Ads",
-          url: "/ads",
+          url: "/my-ads",
         },
         {
           title: "Create New Ad",
-          url: "/ads/new",
+          url: "/my-ads/new",
         },
       ],
     },

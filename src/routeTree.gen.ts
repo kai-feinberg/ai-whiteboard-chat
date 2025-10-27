@@ -17,11 +17,11 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed.onboarding'
 import { Route as AuthedAdvancedOnboardingRouteImport } from './routes/_authed.advanced-onboarding'
-import { Route as AuthedAdsIndexRouteImport } from './routes/_authed.ads.index'
-import { Route as AuthedAdsNewRouteImport } from './routes/_authed.ads.new'
-import { Route as AuthedAdsAdIdRouteImport } from './routes/_authed.ads.$adId'
+import { Route as AuthedMyAdsIndexRouteImport } from './routes/_authed.my-ads.index'
+import { Route as AuthedMyAdsNewRouteImport } from './routes/_authed.my-ads.new'
+import { Route as AuthedMyAdsAdIdRouteImport } from './routes/_authed.my-ads.$adId'
 import { Route as AuthedAdminSeedRouteImport } from './routes/_authed.admin.seed'
-import { Route as AuthedAdsAdIdChatRouteImport } from './routes/_authed.ads.$adId_.chat'
+import { Route as AuthedMyAdsAdIdChatRouteImport } from './routes/_authed.my-ads.$adId_.chat'
 
 const SubscriptionsRoute = SubscriptionsRouteImport.update({
   id: '/subscriptions',
@@ -63,19 +63,19 @@ const AuthedAdvancedOnboardingRoute =
     path: '/advanced-onboarding',
     getParentRoute: () => AuthedRoute,
   } as any)
-const AuthedAdsIndexRoute = AuthedAdsIndexRouteImport.update({
-  id: '/ads/',
-  path: '/ads/',
+const AuthedMyAdsIndexRoute = AuthedMyAdsIndexRouteImport.update({
+  id: '/my-ads/',
+  path: '/my-ads/',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedAdsNewRoute = AuthedAdsNewRouteImport.update({
-  id: '/ads/new',
-  path: '/ads/new',
+const AuthedMyAdsNewRoute = AuthedMyAdsNewRouteImport.update({
+  id: '/my-ads/new',
+  path: '/my-ads/new',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedAdsAdIdRoute = AuthedAdsAdIdRouteImport.update({
-  id: '/ads/$adId',
-  path: '/ads/$adId',
+const AuthedMyAdsAdIdRoute = AuthedMyAdsAdIdRouteImport.update({
+  id: '/my-ads/$adId',
+  path: '/my-ads/$adId',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedAdminSeedRoute = AuthedAdminSeedRouteImport.update({
@@ -83,9 +83,9 @@ const AuthedAdminSeedRoute = AuthedAdminSeedRouteImport.update({
   path: '/admin/seed',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedAdsAdIdChatRoute = AuthedAdsAdIdChatRouteImport.update({
-  id: '/ads/$adId_/chat',
-  path: '/ads/$adId/chat',
+const AuthedMyAdsAdIdChatRoute = AuthedMyAdsAdIdChatRouteImport.update({
+  id: '/my-ads/$adId_/chat',
+  path: '/my-ads/$adId/chat',
   getParentRoute: () => AuthedRoute,
 } as any)
 
@@ -98,10 +98,10 @@ export interface FileRoutesByFullPath {
   '/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/admin/seed': typeof AuthedAdminSeedRoute
-  '/ads/$adId': typeof AuthedAdsAdIdRoute
-  '/ads/new': typeof AuthedAdsNewRoute
-  '/ads': typeof AuthedAdsIndexRoute
-  '/ads/$adId/chat': typeof AuthedAdsAdIdChatRoute
+  '/my-ads/$adId': typeof AuthedMyAdsAdIdRoute
+  '/my-ads/new': typeof AuthedMyAdsNewRoute
+  '/my-ads': typeof AuthedMyAdsIndexRoute
+  '/my-ads/$adId/chat': typeof AuthedMyAdsAdIdChatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -112,10 +112,10 @@ export interface FileRoutesByTo {
   '/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/admin/seed': typeof AuthedAdminSeedRoute
-  '/ads/$adId': typeof AuthedAdsAdIdRoute
-  '/ads/new': typeof AuthedAdsNewRoute
-  '/ads': typeof AuthedAdsIndexRoute
-  '/ads/$adId/chat': typeof AuthedAdsAdIdChatRoute
+  '/my-ads/$adId': typeof AuthedMyAdsAdIdRoute
+  '/my-ads/new': typeof AuthedMyAdsNewRoute
+  '/my-ads': typeof AuthedMyAdsIndexRoute
+  '/my-ads/$adId/chat': typeof AuthedMyAdsAdIdChatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -128,10 +128,10 @@ export interface FileRoutesById {
   '/_authed/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
   '/_authed/admin/seed': typeof AuthedAdminSeedRoute
-  '/_authed/ads/$adId': typeof AuthedAdsAdIdRoute
-  '/_authed/ads/new': typeof AuthedAdsNewRoute
-  '/_authed/ads/': typeof AuthedAdsIndexRoute
-  '/_authed/ads/$adId_/chat': typeof AuthedAdsAdIdChatRoute
+  '/_authed/my-ads/$adId': typeof AuthedMyAdsAdIdRoute
+  '/_authed/my-ads/new': typeof AuthedMyAdsNewRoute
+  '/_authed/my-ads/': typeof AuthedMyAdsIndexRoute
+  '/_authed/my-ads/$adId_/chat': typeof AuthedMyAdsAdIdChatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -144,10 +144,10 @@ export interface FileRouteTypes {
     | '/advanced-onboarding'
     | '/onboarding'
     | '/admin/seed'
-    | '/ads/$adId'
-    | '/ads/new'
-    | '/ads'
-    | '/ads/$adId/chat'
+    | '/my-ads/$adId'
+    | '/my-ads/new'
+    | '/my-ads'
+    | '/my-ads/$adId/chat'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -158,10 +158,10 @@ export interface FileRouteTypes {
     | '/advanced-onboarding'
     | '/onboarding'
     | '/admin/seed'
-    | '/ads/$adId'
-    | '/ads/new'
-    | '/ads'
-    | '/ads/$adId/chat'
+    | '/my-ads/$adId'
+    | '/my-ads/new'
+    | '/my-ads'
+    | '/my-ads/$adId/chat'
   id:
     | '__root__'
     | '/'
@@ -173,10 +173,10 @@ export interface FileRouteTypes {
     | '/_authed/advanced-onboarding'
     | '/_authed/onboarding'
     | '/_authed/admin/seed'
-    | '/_authed/ads/$adId'
-    | '/_authed/ads/new'
-    | '/_authed/ads/'
-    | '/_authed/ads/$adId_/chat'
+    | '/_authed/my-ads/$adId'
+    | '/_authed/my-ads/new'
+    | '/_authed/my-ads/'
+    | '/_authed/my-ads/$adId_/chat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -246,25 +246,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdvancedOnboardingRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/ads/': {
-      id: '/_authed/ads/'
-      path: '/ads'
-      fullPath: '/ads'
-      preLoaderRoute: typeof AuthedAdsIndexRouteImport
+    '/_authed/my-ads/': {
+      id: '/_authed/my-ads/'
+      path: '/my-ads'
+      fullPath: '/my-ads'
+      preLoaderRoute: typeof AuthedMyAdsIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/ads/new': {
-      id: '/_authed/ads/new'
-      path: '/ads/new'
-      fullPath: '/ads/new'
-      preLoaderRoute: typeof AuthedAdsNewRouteImport
+    '/_authed/my-ads/new': {
+      id: '/_authed/my-ads/new'
+      path: '/my-ads/new'
+      fullPath: '/my-ads/new'
+      preLoaderRoute: typeof AuthedMyAdsNewRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/ads/$adId': {
-      id: '/_authed/ads/$adId'
-      path: '/ads/$adId'
-      fullPath: '/ads/$adId'
-      preLoaderRoute: typeof AuthedAdsAdIdRouteImport
+    '/_authed/my-ads/$adId': {
+      id: '/_authed/my-ads/$adId'
+      path: '/my-ads/$adId'
+      fullPath: '/my-ads/$adId'
+      preLoaderRoute: typeof AuthedMyAdsAdIdRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/admin/seed': {
@@ -274,11 +274,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminSeedRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/ads/$adId_/chat': {
-      id: '/_authed/ads/$adId_/chat'
-      path: '/ads/$adId/chat'
-      fullPath: '/ads/$adId/chat'
-      preLoaderRoute: typeof AuthedAdsAdIdChatRouteImport
+    '/_authed/my-ads/$adId_/chat': {
+      id: '/_authed/my-ads/$adId_/chat'
+      path: '/my-ads/$adId/chat'
+      fullPath: '/my-ads/$adId/chat'
+      preLoaderRoute: typeof AuthedMyAdsAdIdChatRouteImport
       parentRoute: typeof AuthedRoute
     }
   }
@@ -288,20 +288,20 @@ interface AuthedRouteChildren {
   AuthedAdvancedOnboardingRoute: typeof AuthedAdvancedOnboardingRoute
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
   AuthedAdminSeedRoute: typeof AuthedAdminSeedRoute
-  AuthedAdsAdIdRoute: typeof AuthedAdsAdIdRoute
-  AuthedAdsNewRoute: typeof AuthedAdsNewRoute
-  AuthedAdsIndexRoute: typeof AuthedAdsIndexRoute
-  AuthedAdsAdIdChatRoute: typeof AuthedAdsAdIdChatRoute
+  AuthedMyAdsAdIdRoute: typeof AuthedMyAdsAdIdRoute
+  AuthedMyAdsNewRoute: typeof AuthedMyAdsNewRoute
+  AuthedMyAdsIndexRoute: typeof AuthedMyAdsIndexRoute
+  AuthedMyAdsAdIdChatRoute: typeof AuthedMyAdsAdIdChatRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAdvancedOnboardingRoute: AuthedAdvancedOnboardingRoute,
   AuthedOnboardingRoute: AuthedOnboardingRoute,
   AuthedAdminSeedRoute: AuthedAdminSeedRoute,
-  AuthedAdsAdIdRoute: AuthedAdsAdIdRoute,
-  AuthedAdsNewRoute: AuthedAdsNewRoute,
-  AuthedAdsIndexRoute: AuthedAdsIndexRoute,
-  AuthedAdsAdIdChatRoute: AuthedAdsAdIdChatRoute,
+  AuthedMyAdsAdIdRoute: AuthedMyAdsAdIdRoute,
+  AuthedMyAdsNewRoute: AuthedMyAdsNewRoute,
+  AuthedMyAdsIndexRoute: AuthedMyAdsIndexRoute,
+  AuthedMyAdsAdIdChatRoute: AuthedMyAdsAdIdChatRoute,
 }
 
 const AuthedRouteWithChildren =

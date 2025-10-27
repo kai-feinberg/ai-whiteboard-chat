@@ -1,4 +1,4 @@
-// src/routes/_authed.ads.$adId.tsx
+// src/routes/_authed.my-ads.$adId.tsx
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { MessageSquare, ArrowLeft } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
 
-export const Route = createFileRoute("/_authed/ads/$adId")({
+export const Route = createFileRoute("/_authed/my-ads/$adId")({
   component: AdDetail,
 });
 
@@ -61,7 +61,7 @@ function AdDetail() {
   return (
     <div className="container mx-auto py-8 max-w-5xl">
       {/* Back button */}
-      <Link to="/ads">
+      <Link to="/my-ads">
         <Button variant="ghost" className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Ads
@@ -76,7 +76,7 @@ function AdDetail() {
             Created {new Date(ad.createdAt).toLocaleDateString()}
           </p>
         </div>
-        <Link to={`/ads/${adId}/chat`}>
+        <Link to="/my-ads/$adId/chat" params={{ adId }}>
           <Button size="lg">
             <MessageSquare className="mr-2 h-4 w-4" />
             Edit in Chat
@@ -207,7 +207,7 @@ function AdDetail() {
             ))}
           </div>
           <div className="mt-4">
-            <Link to={`/ads/${adId}/chat`}>
+            <Link to="/my-ads/$adId/chat" params={{ adId }}>
               <Button variant="outline" className="w-full">
                 <MessageSquare className="mr-2 h-4 w-4" />
                 Edit Documents in Chat

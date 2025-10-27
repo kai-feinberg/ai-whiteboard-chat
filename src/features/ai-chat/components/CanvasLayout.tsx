@@ -50,13 +50,10 @@ export function CanvasLayout({ documentPanel, chatPanel, documentHeader }: Canva
         {isChatVisible && (
           <>
             <PanelResizeHandle  />
-            <Panel defaultSize={40} minSize={20} maxSize={60}>
+            <Panel defaultSize={30} minSize={20} maxSize={60}>
               <div className="h-full flex flex-col">
                 <div className="border-b p-4">
                   <h2 className="text-lg font-semibold">AI Assistant</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Chat with AI to edit your document
-                  </p>
                 </div>
                 <div className="flex-1 overflow-hidden">{chatPanel}</div>
               </div>

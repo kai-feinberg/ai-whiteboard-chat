@@ -1,4 +1,4 @@
-// src/routes/_authed.ads.$adId_.chat.tsx
+// src/routes/_authed.my-ads.$adId_.chat.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -12,7 +12,7 @@ import { useUIMessages } from "@convex-dev/agent/react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Id } from "../../convex/_generated/dataModel";
 
-export const Route = createFileRoute("/_authed/ads/$adId_/chat")({
+export const Route = createFileRoute("/_authed/my-ads/$adId_/chat")({
   component: AdChat,
 });
 
@@ -101,23 +101,16 @@ function AdChat() {
   return (
     <CanvasLayout
       documentHeader={
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-xl font-semibold">{ad.name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {ad.concept?.name} • {ad.angle?.name} • {ad.style?.name}
-              </p>
-            </div>
-            <Tabs value={activeDocType} onValueChange={(value) => setActiveDocType(value as DocumentType)}>
-              <TabsList>
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="copy">Copy</TabsTrigger>
-                <TabsTrigger value="asset_brief">Asset Brief</TabsTrigger>
-                <TabsTrigger value="notes">Notes</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+        <div className="flex-1 flex items-center justify-between">
+          <h1 className="text-xl font-semibold">{ad.name}</h1>
+          <Tabs value={activeDocType} onValueChange={(value) => setActiveDocType(value as DocumentType)}>
+            <TabsList>
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="copy">Copy</TabsTrigger>
+              <TabsTrigger value="asset_brief">Asset Brief</TabsTrigger>
+              <TabsTrigger value="notes">Notes</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       }
       documentPanel={

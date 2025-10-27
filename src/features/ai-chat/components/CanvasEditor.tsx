@@ -101,11 +101,10 @@ export function CanvasEditor({ documentId, documentVersion }: CanvasEditorProps)
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-y-auto">
-        <EditorContent editor={editor} />
-      </div>
-      <div className="border-t p-2 text-xs text-muted-foreground">
-        {sync.extension ? "✓ Connected" : "⚠ Not synced"} • Version {documentVersion || 1}
+      <div className="flex-1 overflow-y-auto flex justify-center">
+        <div className="w-[80%]">
+          <EditorContent editor={editor} />
+        </div>
       </div>
     </div>
   );
