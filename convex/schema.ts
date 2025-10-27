@@ -211,4 +211,78 @@ export default defineSchema({
   })
     .index("by_organization", ["organizationId"])
     .index("by_profile", ["profileId"]),
+
+  // Created Ads - User-created ads from wizard flow
+  createdAds: defineTable({
+    organizationId: v.string(), // Clerk organization ID
+    createdBy: v.string(), // User ID
+    name: v.string(), // Auto-generated from filters (e.g., "Social Proof - Testimonial - Bold")
+    conceptId: v.id("adConcepts"), // Selected concept
+    angleId: v.id("adAngles"), // Selected angle
+    styleId: v.id("adStyles"), // Selected style
+    hookId: v.id("adHooks"), // Selected hook
+    selectedDesireIds: v.array(v.id("targetDesires")), // Multi-select desires
+    selectedBeliefIds: v.array(v.id("targetBeliefs")), // Multi-select beliefs
+    pipelineStage: v.string(), // "to_do" | "in_progress" | "ready_for_review" | "asset_creation" | "ready_to_publish" | "published"
+    campaignId: v.optional(v.string()), // Future campaign grouping
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_pipeline_stage", ["organizationId", "pipelineStage"])
+    .index("by_created_at", ["organizationId", "createdAt"]),
+
+  // Ad Documents - ProseMirror documents for each created ad (4 per ad)
+  adDocuments: defineTable({
+    organizationId: v.string(), // Clerk organization ID
+    adId: v.id("createdAds"), // Parent ad
+    documentType: v.string(), // "details" | "copy" | "asset_brief" | "notes"
+    documentId: v.string(), // ProseMirror doc ID (e.g., "doc_ad_123_copy")
+    documentVersion: v.number(), // Incremented by AI edits
+    createdAt: v.number(),
+  })
+    .index("by_ad", ["adId"])
+    .index("by_organization", ["organizationId"])
+    .index("by_document_id", ["documentId"]),
+
+  // Ad Concepts - Filtering options for ad creation wizard
+  adConcepts: defineTable({
+    name: v.string(), // Display name
+    description: v.string(), // Search/description text
+    organizationId: v.optional(v.string()), // null = global, set = org-specific
+  })
+    .index("by_organization", ["organizationId"]),
+
+  // Ad Angles - Filtering options for ad creation wizard
+  adAngles: defineTable({
+    name: v.string(), // Display name
+    description: v.string(), // Search/description text
+    organizationId: v.optional(v.string()), // null = global, set = org-specific
+  })
+    .index("by_organization", ["organizationId"]),
+
+  // Ad Styles - Filtering options for ad creation wizard
+  adStyles: defineTable({
+    name: v.string(), // Display name
+    description: v.string(), // Search/description text
+    organizationId: v.optional(v.string()), // null = global, set = org-specific
+  })
+    .index("by_organization", ["organizationId"]),
+
+  // Ad Hooks - Filtering options for ad creation wizard
+  adHooks: defineTable({
+    name: v.string(), // Display name
+    description: v.string(), // Search/description text
+    organizationId: v.optional(v.string()), // null = global, set = org-specific
+  })
+    .index("by_organization", ["organizationId"]),
+
+  // Document Templates - Markdown templates for ad documents
+  documentTemplates: defineTable({
+    templateType: v.string(), // "ad_details" | "ad_copy" | "ad_asset_brief" | "ad_notes"
+    templateContent: v.string(), // Markdown with {{placeholders}}
+    organizationId: v.optional(v.string()), // null = global default
+  })
+    .index("by_template_type", ["templateType"])
+    .index("by_organization", ["organizationId"]),
 });

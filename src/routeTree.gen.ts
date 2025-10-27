@@ -17,6 +17,10 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed.onboarding'
 import { Route as AuthedAdvancedOnboardingRouteImport } from './routes/_authed.advanced-onboarding'
+import { Route as AuthedAdsIndexRouteImport } from './routes/_authed.ads.index'
+import { Route as AuthedAdsNewRouteImport } from './routes/_authed.ads.new'
+import { Route as AuthedAdsAdIdRouteImport } from './routes/_authed.ads.$adId'
+import { Route as AuthedAdminSeedRouteImport } from './routes/_authed.admin.seed'
 
 const SubscriptionsRoute = SubscriptionsRouteImport.update({
   id: '/subscriptions',
@@ -58,6 +62,26 @@ const AuthedAdvancedOnboardingRoute =
     path: '/advanced-onboarding',
     getParentRoute: () => AuthedRoute,
   } as any)
+const AuthedAdsIndexRoute = AuthedAdsIndexRouteImport.update({
+  id: '/ads/',
+  path: '/ads/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAdsNewRoute = AuthedAdsNewRouteImport.update({
+  id: '/ads/new',
+  path: '/ads/new',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAdsAdIdRoute = AuthedAdsAdIdRouteImport.update({
+  id: '/ads/$adId',
+  path: '/ads/$adId',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedAdminSeedRoute = AuthedAdminSeedRouteImport.update({
+  id: '/admin/seed',
+  path: '/admin/seed',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -67,6 +91,10 @@ export interface FileRoutesByFullPath {
   '/subscriptions': typeof SubscriptionsRoute
   '/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
   '/onboarding': typeof AuthedOnboardingRoute
+  '/admin/seed': typeof AuthedAdminSeedRoute
+  '/ads/$adId': typeof AuthedAdsAdIdRoute
+  '/ads/new': typeof AuthedAdsNewRoute
+  '/ads': typeof AuthedAdsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,6 +104,10 @@ export interface FileRoutesByTo {
   '/subscriptions': typeof SubscriptionsRoute
   '/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
   '/onboarding': typeof AuthedOnboardingRoute
+  '/admin/seed': typeof AuthedAdminSeedRoute
+  '/ads/$adId': typeof AuthedAdsAdIdRoute
+  '/ads/new': typeof AuthedAdsNewRoute
+  '/ads': typeof AuthedAdsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,6 +119,10 @@ export interface FileRoutesById {
   '/subscriptions': typeof SubscriptionsRoute
   '/_authed/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
+  '/_authed/admin/seed': typeof AuthedAdminSeedRoute
+  '/_authed/ads/$adId': typeof AuthedAdsAdIdRoute
+  '/_authed/ads/new': typeof AuthedAdsNewRoute
+  '/_authed/ads/': typeof AuthedAdsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,6 +134,10 @@ export interface FileRouteTypes {
     | '/subscriptions'
     | '/advanced-onboarding'
     | '/onboarding'
+    | '/admin/seed'
+    | '/ads/$adId'
+    | '/ads/new'
+    | '/ads'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -107,6 +147,10 @@ export interface FileRouteTypes {
     | '/subscriptions'
     | '/advanced-onboarding'
     | '/onboarding'
+    | '/admin/seed'
+    | '/ads/$adId'
+    | '/ads/new'
+    | '/ads'
   id:
     | '__root__'
     | '/'
@@ -117,6 +161,10 @@ export interface FileRouteTypes {
     | '/subscriptions'
     | '/_authed/advanced-onboarding'
     | '/_authed/onboarding'
+    | '/_authed/admin/seed'
+    | '/_authed/ads/$adId'
+    | '/_authed/ads/new'
+    | '/_authed/ads/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -186,17 +234,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdvancedOnboardingRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/ads/': {
+      id: '/_authed/ads/'
+      path: '/ads'
+      fullPath: '/ads'
+      preLoaderRoute: typeof AuthedAdsIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/ads/new': {
+      id: '/_authed/ads/new'
+      path: '/ads/new'
+      fullPath: '/ads/new'
+      preLoaderRoute: typeof AuthedAdsNewRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/ads/$adId': {
+      id: '/_authed/ads/$adId'
+      path: '/ads/$adId'
+      fullPath: '/ads/$adId'
+      preLoaderRoute: typeof AuthedAdsAdIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/admin/seed': {
+      id: '/_authed/admin/seed'
+      path: '/admin/seed'
+      fullPath: '/admin/seed'
+      preLoaderRoute: typeof AuthedAdminSeedRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
   AuthedAdvancedOnboardingRoute: typeof AuthedAdvancedOnboardingRoute
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
+  AuthedAdminSeedRoute: typeof AuthedAdminSeedRoute
+  AuthedAdsAdIdRoute: typeof AuthedAdsAdIdRoute
+  AuthedAdsNewRoute: typeof AuthedAdsNewRoute
+  AuthedAdsIndexRoute: typeof AuthedAdsIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAdvancedOnboardingRoute: AuthedAdvancedOnboardingRoute,
   AuthedOnboardingRoute: AuthedOnboardingRoute,
+  AuthedAdminSeedRoute: AuthedAdminSeedRoute,
+  AuthedAdsAdIdRoute: AuthedAdsAdIdRoute,
+  AuthedAdsNewRoute: AuthedAdsNewRoute,
+  AuthedAdsIndexRoute: AuthedAdsIndexRoute,
 }
 
 const AuthedRouteWithChildren =

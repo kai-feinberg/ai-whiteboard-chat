@@ -2,7 +2,7 @@ In all interactions, be extremely concise and sacrifice grammar for the sake of 
 
 AdScout - Claude Development Guide
 
-If you have made changes to the backend then when you are done developing make sure to run pnpm dev which will both start the dev server and run a typecheck on the backend code. After you have confirmed the check passes kill the task.
+If you have made changes to the backend then when you are done developing make sure to run pnpm dev which will both start the dev server and run a typecheck on the backend code. After you have confirmed the check passes kill the task. DO NOT run pnpm dev:backend
 
 
 Quick Start Philosophy 🚀

@@ -8,6 +8,10 @@
  * @module
  */
 
+import type * as adCreation_actions from "../adCreation/actions.js";
+import type * as adCreation_functions from "../adCreation/functions.js";
+import type * as adCreation_mutations from "../adCreation/mutations.js";
+import type * as adCreation_queries from "../adCreation/queries.js";
 import type * as ads_functions from "../ads/functions.js";
 import type * as advertisers_functions from "../advertisers/functions.js";
 import type * as agents_actions from "../agents/actions.js";
@@ -39,6 +43,10 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "adCreation/actions": typeof adCreation_actions;
+  "adCreation/functions": typeof adCreation_functions;
+  "adCreation/mutations": typeof adCreation_mutations;
+  "adCreation/queries": typeof adCreation_queries;
   "ads/functions": typeof ads_functions;
   "advertisers/functions": typeof advertisers_functions;
   "agents/actions": typeof agents_actions;

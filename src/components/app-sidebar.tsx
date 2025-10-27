@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Search, BookmarkCheck, User } from "lucide-react"
+import { Search, BookmarkCheck, User, FileText, Database } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 
@@ -32,6 +32,20 @@ const data = {
       ],
     },
     {
+      title: "Ad Creation",
+      url: "/ads",
+      items: [
+        {
+          title: "My Ads",
+          url: "/ads",
+        },
+        {
+          title: "Create New Ad",
+          url: "/ads/new",
+        },
+      ],
+    },
+    {
       title: "AI Chat",
       url: "/ai-chat",
       items: [
@@ -58,6 +72,16 @@ const data = {
         {
           title: "Profile",
           url: "/profile",
+        },
+      ],
+    },
+    {
+      title: "Admin",
+      url: "/admin/seed",
+      items: [
+        {
+          title: "Seed Data",
+          url: "/admin/seed",
         },
       ],
     },
