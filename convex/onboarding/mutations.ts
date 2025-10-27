@@ -272,3 +272,91 @@ export const handleWorkflowComplete = internalMutation({
     }
   },
 });
+
+/**
+ * Upsert target desires (batch replace)
+ * Internal mutation - called from generation actions
+ */
+export const upsertTargetDesires = internalMutation({
+  args: {
+    profileId: v.id("onboardingProfiles"),
+    organizationId: v.string(),
+    items: v.array(
+      v.object({
+        text: v.string(),
+        category: v.optional(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    console.log(`[upsertTargetDesires] Replacing desires for profile ${args.profileId}`);
+
+    // Delete all existing desires
+    const existing = await ctx.db
+      .query("targetDesires")
+      .withIndex("by_profile", (q) => q.eq("profileId", args.profileId))
+      .collect();
+
+    await Promise.all(existing.map((item) => ctx.db.delete(item._id)));
+
+    console.log(`[upsertTargetDesires] Deleted ${existing.length} existing desires`);
+
+    // Insert new batch
+    await Promise.all(
+      args.items.map((item) =>
+        ctx.db.insert("targetDesires", {
+          organizationId: args.organizationId,
+          profileId: args.profileId,
+          text: item.text,
+          category: item.category,
+        })
+      )
+    );
+
+    console.log(`[upsertTargetDesires] ✅ Inserted ${args.items.length} new desires`);
+  },
+});
+
+/**
+ * Upsert target beliefs (batch replace)
+ * Internal mutation - called from generation actions
+ */
+export const upsertTargetBeliefs = internalMutation({
+  args: {
+    profileId: v.id("onboardingProfiles"),
+    organizationId: v.string(),
+    items: v.array(
+      v.object({
+        text: v.string(),
+        category: v.optional(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    console.log(`[upsertTargetBeliefs] Replacing beliefs for profile ${args.profileId}`);
+
+    // Delete all existing beliefs
+    const existing = await ctx.db
+      .query("targetBeliefs")
+      .withIndex("by_profile", (q) => q.eq("profileId", args.profileId))
+      .collect();
+
+    await Promise.all(existing.map((item) => ctx.db.delete(item._id)));
+
+    console.log(`[upsertTargetBeliefs] Deleted ${existing.length} existing beliefs`);
+
+    // Insert new batch
+    await Promise.all(
+      args.items.map((item) =>
+        ctx.db.insert("targetBeliefs", {
+          organizationId: args.organizationId,
+          profileId: args.profileId,
+          text: item.text,
+          category: item.category,
+        })
+      )
+    );
+
+    console.log(`[upsertTargetBeliefs] ✅ Inserted ${args.items.length} new beliefs`);
+  },
+});

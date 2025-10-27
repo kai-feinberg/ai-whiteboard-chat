@@ -165,3 +165,84 @@ export const getDocumentByTypeInternal = internalQuery({
       .first();
   },
 });
+
+/**
+ * Internal query to get completed documents by profile (for enriched context)
+ */
+export const getGeneratedDocumentsByProfile = internalQuery({
+  args: { profileId: v.id("onboardingProfiles") },
+  handler: async (ctx, args) => {
+    const documents = await ctx.db
+      .query("generatedDocuments")
+      .withIndex("by_profile", (q) => q.eq("onboardingProfileId", args.profileId))
+      .filter((q) => q.eq(q.field("status"), "completed"))
+      .collect();
+    return documents;
+  },
+});
+
+/**
+ * Get target desires for a profile
+ * Public query - checks organization ownership
+ */
+export const getTargetDesires = query({
+  args: { profileId: v.id("onboardingProfiles") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Verify profile belongs to current organization
+    const profile = await ctx.db.get(args.profileId);
+    if (!profile || profile.organizationId !== organizationId) {
+      throw new Error("Unauthorized - profile belongs to different organization");
+    }
+
+    // Fetch desires in insertion order
+    const desires = await ctx.db
+      .query("targetDesires")
+      .withIndex("by_profile", (q) => q.eq("profileId", args.profileId))
+      .collect();
+
+    return desires;
+  },
+});
+
+/**
+ * Get target beliefs for a profile
+ * Public query - checks organization ownership
+ */
+export const getTargetBeliefs = query({
+  args: { profileId: v.id("onboardingProfiles") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Verify profile belongs to current organization
+    const profile = await ctx.db.get(args.profileId);
+    if (!profile || profile.organizationId !== organizationId) {
+      throw new Error("Unauthorized - profile belongs to different organization");
+    }
+
+    // Fetch beliefs in insertion order
+    const beliefs = await ctx.db
+      .query("targetBeliefs")
+      .withIndex("by_profile", (q) => q.eq("profileId", args.profileId))
+      .collect();
+
+    return beliefs;
+  },
+});

@@ -1,7 +1,11 @@
 finish advanced onboarding
 - table for beliefs/desires/etc
-- migrate from open router to anthropic
-- creation prompt
+- creation for ads and pipeline flow
+- breadcrumbs in navigation
+- change where onboarding analysis view is
+- improve onboarding analysis UI
+
+show tool calls better
 
 onboarding form:
 - scrape links, accept voice notes, fill out doc

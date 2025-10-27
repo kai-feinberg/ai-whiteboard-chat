@@ -191,4 +191,24 @@ export default defineSchema({
     .index("by_organization", ["organizationId"])
     .index("by_profile", ["onboardingProfileId"])
     .index("by_profile_and_type", ["onboardingProfileId", "documentType"]),
+
+  // Target Desires - AI-generated list of customer desires
+  targetDesires: defineTable({
+    organizationId: v.string(), // Clerk organization ID
+    profileId: v.id("onboardingProfiles"), // Foreign key to profile
+    text: v.string(), // Desire statement (5-15 words)
+    category: v.optional(v.string()), // "status" | "security" | "achievement" | "belonging" | "freedom" | "growth"
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_profile", ["profileId"]),
+
+  // Target Beliefs - AI-generated list of customer beliefs
+  targetBeliefs: defineTable({
+    organizationId: v.string(), // Clerk organization ID
+    profileId: v.id("onboardingProfiles"), // Foreign key to profile
+    text: v.string(), // Belief statement (5-15 words)
+    category: v.optional(v.string()), // "self_identity" | "worldview" | "solutions" | "obstacles" | "values"
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_profile", ["profileId"]),
 });

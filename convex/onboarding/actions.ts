@@ -500,3 +500,222 @@ export const analyzeDocument = internalAction({
     }
   },
 });
+
+/**
+ * BUILD ENRICHED PROFILE CONTEXT
+ * Helper function to build context from profile + completed documents
+ */
+function buildProfileContext(profile: any): string {
+  return `
+PRODUCT DESCRIPTION:
+${profile.productDescription}
+
+MARKET DESCRIPTION:
+${profile.marketDescription}
+
+TARGET BUYER:
+${profile.targetBuyerDescription}
+${profile.websiteUrl ? `\nWEBSITE: ${profile.websiteUrl}` : ""}
+${profile.additionalIdeas ? `\n\nADDITIONAL IDEAS/NOTES:\n${profile.additionalIdeas}` : ""}
+${profile.vslTranscript ? `\n\nVSL/SALES LETTER TRANSCRIPT:\n${profile.vslTranscript}` : ""}
+`.trim();
+}
+
+/**
+ * TARGET DESIRES & BELIEFS GENERATION
+ * Generates structured lists using completed document context
+ */
+
+const desiresSchema = z.object({
+  items: z.array(
+    z.object({
+      text: z.string().describe("Single desire statement (5-15 words)"),
+      category: z.enum(["status", "security", "achievement", "belonging", "freedom", "growth"])
+        .describe("Primary psychological category"),
+    })
+  ).min(10).max(15).describe("Generate 10-15 desires"),
+});
+
+const beliefsSchema = z.object({
+  items: z.array(
+    z.object({
+      text: z.string().describe("Single belief statement (5-15 words)"),
+      category: z.enum(["self_identity", "worldview", "solutions", "obstacles", "values"])
+        .describe("Primary belief category"),
+    })
+  ).min(10).max(15).describe("Generate 10-15 beliefs"),
+});
+
+const DESIRES_PROMPT = `You are a marketing psychologist analyzing target customer desires.
+
+Based on the product information, buyer persona analysis, and pain/wound insights, generate 10-15 core desires the target customer wants to fulfill.
+
+Focus on:
+- Emotional outcomes and identity-level aspirations
+- What they want to BECOME or FEEL
+- Deep psychological drivers revealed in the pain analysis
+- Aspirational states mentioned in the buyer persona
+
+Categorize each as: status, security, achievement, belonging, freedom, or growth.
+
+Examples:
+- "Feel respected by peers" (status)
+- "Achieve financial independence" (security)
+- "Reclaim lost time for what matters" (freedom)
+- "Master my chaotic schedule" (achievement)
+
+Use the documents below for deep context about the customer psyche.`;
+
+const BELIEFS_PROMPT = `You are a marketing psychologist analyzing target customer beliefs.
+
+Based on the product information, buyer persona analysis, and pain/wound insights, generate 10-15 beliefs the target customer holds.
+
+Focus on:
+- Self-perception and identity (how they see themselves)
+- Views about the world/market revealed in the documents
+- Beliefs about solutions and what works/doesn't work
+- Core values and principles they hold
+- Limiting beliefs and obstacles they perceive
+
+Categorize each as: self_identity, worldview, solutions, obstacles, or values.
+
+Examples:
+- "I'm too busy for manual task management" (self_identity)
+- "Quality tools justify premium pricing" (values)
+- "Traditional productivity apps always fail me" (solutions)
+- "Automation is the only scalable solution" (worldview)
+- "I lack the discipline for complex systems" (obstacles)
+
+Use the documents below for deep context about the customer psyche.`;
+
+/**
+ * Generate Target Desires
+ */
+export const generateTargetDesires = internalAction({
+  args: { profileId: v.id("onboardingProfiles") },
+  handler: async (ctx, args): Promise<void> => {
+    try {
+      console.log(`[generateTargetDesires] Starting generation for profile ${args.profileId}`);
+
+      // Fetch profile data
+      const profile = await ctx.runQuery(
+        internal.onboarding.queries.getProfileById,
+        { profileId: args.profileId }
+      );
+
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+
+      // Fetch completed documents for enriched context
+      const documents = await ctx.runQuery(
+        internal.onboarding.queries.getGeneratedDocumentsByProfile,
+        { profileId: args.profileId }
+      );
+
+      const buildABuyer = documents.find(d => d.documentType === "build_a_buyer");
+      const painCoreWound = documents.find(d => d.documentType === "pain_core_wound");
+      const offerBrief = documents.find(d => d.documentType === "offer_brief");
+
+      // Build enriched context
+      const baseContext = buildProfileContext(profile);
+      const enrichedContext = `
+${baseContext}
+
+${buildABuyer?.content ? `\nBUILD-A-BUYER DOCUMENT:\n${buildABuyer.content}` : ""}
+${painCoreWound?.content ? `\nPAIN & CORE WOUND ANALYSIS:\n${painCoreWound.content}` : ""}
+${offerBrief?.content ? `\nOFFER BRIEF:\n${offerBrief.content}` : ""}
+`.trim();
+
+      console.log(`[generateTargetDesires] Calling AI model with ${documents.length} completed documents...`);
+
+      // Call AI with generateObject
+      const result = await generateObject({
+        model,
+        schema: desiresSchema,
+        prompt: `${DESIRES_PROMPT}\n\n--- CONTEXT ---\n${enrichedContext}`,
+        temperature: 0.7,
+      });
+
+      console.log(`[generateTargetDesires] Generated ${result.object.items.length} desires`);
+
+      // Save to database
+      await ctx.runMutation(internal.onboarding.mutations.upsertTargetDesires, {
+        profileId: args.profileId,
+        organizationId: profile.organizationId,
+        items: result.object.items,
+      });
+
+      console.log(`[generateTargetDesires] ✅ Completed successfully`);
+    } catch (error) {
+      console.error(`[generateTargetDesires] ❌ Generation failed:`, error);
+      throw error;
+    }
+  },
+});
+
+/**
+ * Generate Target Beliefs
+ */
+export const generateTargetBeliefs = internalAction({
+  args: { profileId: v.id("onboardingProfiles") },
+  handler: async (ctx, args): Promise<void> => {
+    try {
+      console.log(`[generateTargetBeliefs] Starting generation for profile ${args.profileId}`);
+
+      // Fetch profile data
+      const profile = await ctx.runQuery(
+        internal.onboarding.queries.getProfileById,
+        { profileId: args.profileId }
+      );
+
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+
+      // Fetch completed documents for enriched context
+      const documents = await ctx.runQuery(
+        internal.onboarding.queries.getGeneratedDocumentsByProfile,
+        { profileId: args.profileId }
+      );
+
+      const buildABuyer = documents.find(d => d.documentType === "build_a_buyer");
+      const painCoreWound = documents.find(d => d.documentType === "pain_core_wound");
+      const offerBrief = documents.find(d => d.documentType === "offer_brief");
+
+      // Build enriched context
+      const baseContext = buildProfileContext(profile);
+      const enrichedContext = `
+${baseContext}
+
+${buildABuyer?.content ? `\nBUILD-A-BUYER DOCUMENT:\n${buildABuyer.content}` : ""}
+${painCoreWound?.content ? `\nPAIN & CORE WOUND ANALYSIS:\n${painCoreWound.content}` : ""}
+${offerBrief?.content ? `\nOFFER BRIEF:\n${offerBrief.content}` : ""}
+`.trim();
+
+      console.log(`[generateTargetBeliefs] Calling AI model with ${documents.length} completed documents...`);
+
+      // Call AI with generateObject
+      const result = await generateObject({
+        model,
+        schema: beliefsSchema,
+        prompt: `${BELIEFS_PROMPT}\n\n--- CONTEXT ---\n${enrichedContext}`,
+        temperature: 0.7,
+      });
+
+      console.log(`[generateTargetBeliefs] Generated ${result.object.items.length} beliefs`);
+
+      // Save to database
+      await ctx.runMutation(internal.onboarding.mutations.upsertTargetBeliefs, {
+        profileId: args.profileId,
+        organizationId: profile.organizationId,
+        items: result.object.items,
+      });
+
+      console.log(`[generateTargetBeliefs] ✅ Completed successfully`);
+    } catch (error) {
+      console.error(`[generateTargetBeliefs] ❌ Generation failed:`, error);
+      throw error;
+    }
+  },
+});

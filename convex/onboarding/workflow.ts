@@ -170,7 +170,23 @@ export const documentGenerationWorkflow = workflow.define({
       ),
     ]);
 
-    // Step 4: Mark profile as completed (regardless of individual failures)
+    // Step 4: Generate target desires & beliefs in parallel
+    // Uses completed documents for enriched context
+    await Promise.all([
+      step.runAction(
+        internal.onboarding.actions.generateTargetDesires,
+        { profileId: args.onboardingProfileId },
+        { name: "generate-target-desires", retry: true }
+      ),
+
+      step.runAction(
+        internal.onboarding.actions.generateTargetBeliefs,
+        { profileId: args.onboardingProfileId },
+        { name: "generate-target-beliefs", retry: true }
+      ),
+    ]);
+
+    // Step 5: Mark profile as completed (regardless of individual failures)
     await step.runMutation(
       internal.onboarding.mutations.markProfileCompleted,
       { profileId: args.onboardingProfileId },

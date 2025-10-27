@@ -12,9 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, FileText, CheckCircle2, XCircle, Clock, File, AlertTriangle, Lightbulb, Target, ArrowRight } from "lucide-react";
+import { Loader2, FileText, CheckCircle2, XCircle, Clock, File, AlertTriangle, Lightbulb, Target, ArrowRight, Heart, Brain } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "@tanstack/react-router";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authed/onboarding")({
   component: OnboardingPage,
@@ -34,6 +35,14 @@ function OnboardingPage() {
   const profile = useQuery(api.onboarding.queries.getOnboardingProfile);
   const documents = useQuery(
     api.onboarding.queries.getGeneratedDocuments,
+    profile ? { profileId: profile._id } : "skip"
+  );
+  const targetDesires = useQuery(
+    api.onboarding.queries.getTargetDesires,
+    profile ? { profileId: profile._id } : "skip"
+  );
+  const targetBeliefs = useQuery(
+    api.onboarding.queries.getTargetBeliefs,
     profile ? { profileId: profile._id } : "skip"
   );
 
@@ -306,6 +315,73 @@ function OnboardingPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Target Desires & Beliefs */}
+      {targetDesires && targetBeliefs && (targetDesires.length > 0 || targetBeliefs.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Target Desires */}
+          {targetDesires.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-pink-500" />
+                  <CardTitle>Target Desires</CardTitle>
+                </div>
+                <CardDescription>
+                  Core emotional outcomes your customer wants to achieve
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {targetDesires.map((desire) => (
+                    <div key={desire._id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex-1">
+                        <p className="text-sm">{desire.text}</p>
+                      </div>
+                      {desire.category && (
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                          {desire.category}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Target Beliefs */}
+          {targetBeliefs.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Brain className="h-5 w-5 text-blue-500" />
+                  <CardTitle>Target Beliefs</CardTitle>
+                </div>
+                <CardDescription>
+                  Core beliefs your customer holds about themselves and the world
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {targetBeliefs.map((belief) => (
+                    <div key={belief._id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex-1">
+                        <p className="text-sm">{belief.text}</p>
+                      </div>
+                      {belief.category && (
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                          {belief.category}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
     </div>
   );
