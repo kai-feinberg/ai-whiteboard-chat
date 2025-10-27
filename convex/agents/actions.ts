@@ -101,7 +101,8 @@ export const sendMessage = action({
       // Get current document text to provide context to the AI
       const documentId = args.documentId || `playground-doc-${organizationId}`;
       const currentDocumentText = await getCurrentDocumentText(ctx, documentId);
-      // console.log("[sendMessage] Current document text:", currentDocumentText ? `${currentDocumentText.substring(0, 100)}...` : "empty");
+      console.log("[sendMessage] Document ID:", documentId);
+      console.log("[sendMessage] Current document text length:", currentDocumentText?.length ?? 0);
 
       // Store documentId in action context so tools can access it
       (ctx as any).activeDocumentId = documentId;
@@ -109,10 +110,11 @@ export const sendMessage = action({
       // Build system message with document context (not shown to user)
       // NOTE: Document context is provided to give the AI awareness of what's in the editor
       // This allows the AI to reference and edit the document content
+      
       // TODO: PULL IN CONTEXT FROM ONBOARDING PROFILE
       const systemMessage = currentDocumentText
         ? `
-        
+
         You are a helpful AI assistant that can help users write and edit documents collaboratively.
 
         You have access to a collaborative document that you can read and edit. When users ask you to write something,
@@ -121,12 +123,14 @@ export const sendMessage = action({
         Guidelines:
         - Be helpful and creative when generating content
         - Always respond to the user's message in the chat before and after calling the tools
-        - When asked to write something, generate complete, well-structured content 
-        
+        - When asked to write something, generate complete, well-structured content
+
         Here is the current document content:\n\`\`\`\n${currentDocumentText}\n\`\`\`\n\nThe user can see this document in their editor. When they ask you to modify it, use the setDocumentText tool.
-        
+
         `
         : undefined;
+
+      console.log("[sendMessage] Starting AI stream with threadId:", threadId);
 
       // Stream AI response with delta saving for async streaming
       const result = await canvasAgent.streamText(
@@ -142,15 +146,18 @@ export const sendMessage = action({
             throttleMs: 100,  // Save deltas every 100ms to balance responsiveness and bandwidth
           },
         },
-        
+
       );
+
+      console.log("[sendMessage] Stream started, awaiting completion...");
 
       // streamText returns a StreamTextResult where text is a promise
       // The message is already saved by the Agent component with streaming deltas
       // We need to await the text property to get the final complete text
       const responseText = await result.text;
 
-      console.log("[sendMessage] AI response streamed:", responseText.substring(0, 100));
+      console.log("[sendMessage] AI response completed. Length:", responseText.length);
+      console.log("[sendMessage] Response preview:", responseText.substring(0, 100));
 
       // Store AI response (this is still saved for the final complete message)
       await ctx.runMutation(internal.agents.mutations.saveAssistantMessage, {

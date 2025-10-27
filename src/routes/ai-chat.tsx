@@ -6,7 +6,7 @@ import { api } from "../../convex/_generated/api";
 import { CanvasLayout } from "@/features/ai-chat/components/CanvasLayout";
 import { CanvasEditor } from "@/features/ai-chat/components/CanvasEditor";
 import { ChatPanel } from "@/features/ai-chat/components/ChatPanel";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/tanstack-react-start";
 import { useUIMessages } from "@convex-dev/agent/react";
@@ -32,7 +32,7 @@ function AIChat() {
   const documentId = orgId ? `playground-doc-${orgId}` : "playground-doc-default";
 
   // Use the useUIMessages hook for streaming support
-  const { results: messages } = useUIMessages(
+  const { results: messages, streams } = useUIMessages(
     api.agents.actions.listThreadMessages,
     threadId ? { threadId } : "skip",
     {
@@ -41,8 +41,46 @@ function AIChat() {
     }
   );
 
+  // Debug logging for streams
+  useEffect(() => {
+    if (streams && streams.length > 0) {
+      console.log("[AIChat] Streams updated:", {
+        count: streams.length,
+        streams: streams.map((s: any) => ({
+          messageId: s.messageId,
+          deltas: s.deltas?.map((d: any) => ({
+            type: d.type,
+            toolCallId: d.toolCallId,
+            toolName: d.toolName,
+            inputTextDelta: d.inputTextDelta
+          }))
+        }))
+      });
+    }
+  }, [streams]);
+
+  // Debug logging for messages state changes
+  useEffect(() => {
+    console.log("[AIChat] Messages updated:", {
+      count: messages?.length ?? 0,
+      messages: messages?.map(m => ({
+        id: m.id,
+        role: m.role,
+        status: m.status,
+        textLength: m.text?.length ?? 0,
+        hasParts: !!m.parts,
+        partsCount: m.parts?.length ?? 0,
+        parts: m.parts?.map((p: any) => ({ type: p.type, toolName: p.toolName }))
+      }))
+    });
+  }, [messages]);
+
   // Check if we're currently streaming (any message has streaming status)
   const isStreaming = messages?.some((m) => m.status === "streaming") ?? false;
+
+  useEffect(() => {
+    console.log("[AIChat] isStreaming changed:", isStreaming);
+  }, [isStreaming]);
 
   const handleSendMessage = async (message: string) => {
     console.log("[AIChat] Sending message:", message);
@@ -88,6 +126,7 @@ function AIChat() {
           messages={messages ?? []}
           onSendMessage={handleSendMessage}
           isStreaming={isStreaming}
+          streams={streams ?? []}
         />
       }
     />
