@@ -11,9 +11,10 @@ import { PanelRightClose, PanelRightOpen } from "lucide-react";
 interface CanvasLayoutProps {
   documentPanel: ReactNode;
   chatPanel: ReactNode;
+  documentHeader?: ReactNode;
 }
 
-export function CanvasLayout({ documentPanel, chatPanel }: CanvasLayoutProps) {
+export function CanvasLayout({ documentPanel, chatPanel, documentHeader }: CanvasLayoutProps) {
   const [isChatVisible, setIsChatVisible] = useState(true);
 
   return (
@@ -23,7 +24,11 @@ export function CanvasLayout({ documentPanel, chatPanel }: CanvasLayoutProps) {
         <Panel defaultSize={isChatVisible ? 60 : 100} minSize={30}>
           <div className="h-full flex flex-col border-r">
             <div className="border-b p-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Document</h2>
+              {documentHeader ? (
+                documentHeader
+              ) : (
+                <h2 className="text-lg font-semibold">Document</h2>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

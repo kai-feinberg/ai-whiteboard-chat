@@ -105,8 +105,7 @@ function parseInlineMarkdown(text: string): any[] {
  * Helper function to get current document text
  * Exported so it can be used by the agent to provide context
  */
-export async function getCurrentDocumentText(ctx: any, organizationId: string): Promise<string | null> {
-  const documentId = `playground-doc-${organizationId}`;
+export async function getCurrentDocumentText(ctx: any, documentId: string): Promise<string | null> {
   const schema = getSchema(extensions);
 
   try {
@@ -170,8 +169,8 @@ export const setDocumentText = createTool({
       return "❌ Error: No organization context";
     }
 
-    // Use hardcoded document ID for playground
-    const documentId = `playground-doc-${organizationId}`;
+    // Use document ID from action context if available, otherwise fallback to playground
+    const documentId = (ctx as any).activeDocumentId || `playground-doc-${organizationId}`;
 
     console.log('[setDocumentText] Using document ID:', documentId);
 

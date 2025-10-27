@@ -386,14 +386,22 @@ export const sendAdMessage = action({
       throw new Error("Ad not found or unauthorized");
     }
 
-    // Get thread ID (find or create thread for this ad)
-    // For now, we'll reuse the existing sendMessage pattern from agents/actions.ts
-    // This is a simplified implementation - full version would fetch threadId from mapping
+    // Get thread ID for this ad
+    const threadData = await ctx.runQuery(api.adCreation.functions.getAdThreadId, {
+      adId: args.adId,
+    });
 
-    // TODO: Implement proper thread retrieval and document context injection
-    // For MVP, we can pass through to the existing sendMessage action
+    if (!threadData || !threadData.threadId) {
+      throw new Error("Thread not found for this ad. Please try refreshing the page.");
+    }
+
+    console.log(`[sendAdMessage] Using thread ${threadData.threadId} and document ${args.activeDocumentId}`);
+
+    // Call sendMessage with ad-specific thread and document
     const result = await ctx.runAction(api.agents.actions.sendMessage, {
       message: args.message,
+      threadId: threadData.threadId as any,
+      documentId: args.activeDocumentId,
     });
 
     return result;

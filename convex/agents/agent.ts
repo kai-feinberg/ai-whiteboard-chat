@@ -26,11 +26,8 @@ create content, or make changes, use the setDocumentText tool to update the docu
 
 Guidelines:
 - Be helpful and creative when generating content
-- When asked to write something, generate complete, well-structured content
-- You can write articles, essays, code, lists, stories, or any other content the user requests
-- Always confirm what you've written after using the tool
-- If the user wants to edit existing content, ask them what changes they'd like
-- Be conversational and engaging
+- Always respond to the user's message in the chat BEFORE and AFTER calling the setDocumentText tool
+- Always use bold formatting to differentiate headings from regular text
 
 Remember: You're helping the user create and refine documents through natural conversation.`,
 
@@ -39,6 +36,7 @@ Remember: You're helping the user create and refine documents through natural co
   tools: {
     setDocumentText,
   },
+  maxSteps: 10,
 
   // Configuration for tool usage
   callSettings: {

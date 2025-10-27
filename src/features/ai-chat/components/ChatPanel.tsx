@@ -137,8 +137,8 @@ export function ChatPanel({ messages, onSendMessage, isStreaming }: ChatPanelPro
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <Conversation className="flex-1">
+    <div className="flex flex-col h-full overflow-hidden">
+      <Conversation className="flex-1 min-h-0">
         <ConversationContent>
           {messages.length === 0 ? (
             <ConversationEmptyState
@@ -155,19 +155,18 @@ export function ChatPanel({ messages, onSendMessage, isStreaming }: ChatPanelPro
         <ConversationScrollButton />
       </Conversation>
 
-      <PromptInput
-        onSubmit={handleSubmit}
-        className="mt-4 w-full relative border-t pt-4 px-4"
-      >
-        <PromptInputTextarea
-          placeholder="Ask the AI to write something... (Shift+Enter for new line)"
-          className="pr-12"
-        />
-        <PromptInputSubmit
-          status={isStreaming ? "streaming" : "ready"}
-          className="absolute bottom-5 right-5"
-        />
-      </PromptInput>
+      <div className="shrink-0 border-t p-4">
+        <PromptInput onSubmit={handleSubmit} className="w-full relative">
+          <PromptInputTextarea
+            placeholder="Ask the AI to write something... (Shift+Enter for new line)"
+            className="pr-12"
+          />
+          <PromptInputSubmit
+            status={isStreaming ? "streaming" : "ready"}
+            className="absolute bottom-2 right-2"
+          />
+        </PromptInput>
+      </div>
 
       {/* Voice input implementation - commented out for now
       <PromptInput

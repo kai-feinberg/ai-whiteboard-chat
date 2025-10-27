@@ -51,9 +51,9 @@ function AdsIndex() {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="p-12 space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold mb-2">My Ads</h1>
           <p className="text-muted-foreground">

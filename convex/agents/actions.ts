@@ -57,11 +57,13 @@ export const getOrCreatePlaygroundThread = internalAction({
 export const sendMessage = action({
   args: {
     message: v.string(),
-    threadId: v.optional(v.id("threads")),
+    threadId: v.optional(v.string()),
+    documentId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     console.log("[sendMessage] Received message:", args.message);
     console.log("[sendMessage] Args.threadId:", args.threadId, "Type:", typeof args.threadId);
+    console.log("[sendMessage] Args.documentId:", args.documentId);
 
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -97,14 +99,33 @@ export const sendMessage = action({
 
     try {
       // Get current document text to provide context to the AI
-      const currentDocumentText = await getCurrentDocumentText(ctx, organizationId as string);
+      const documentId = args.documentId || `playground-doc-${organizationId}`;
+      const currentDocumentText = await getCurrentDocumentText(ctx, documentId);
       // console.log("[sendMessage] Current document text:", currentDocumentText ? `${currentDocumentText.substring(0, 100)}...` : "empty");
+
+      // Store documentId in action context so tools can access it
+      (ctx as any).activeDocumentId = documentId;
 
       // Build system message with document context (not shown to user)
       // NOTE: Document context is provided to give the AI awareness of what's in the editor
       // This allows the AI to reference and edit the document content
+      // TODO: PULL IN CONTEXT FROM ONBOARDING PROFILE
       const systemMessage = currentDocumentText
-        ? `You are assisting the user with a document. Here is the current document content:\n\`\`\`\n${currentDocumentText}\n\`\`\`\n\nThe user can see this document in their editor. When they ask you to modify it, use the setDocumentText tool.`
+        ? `
+        
+        You are a helpful AI assistant that can help users write and edit documents collaboratively.
+
+        You have access to a collaborative document that you can read and edit. When users ask you to write something,
+        create content, or make changes, use the setDocumentText tool to update the document.
+
+        Guidelines:
+        - Be helpful and creative when generating content
+        - Always respond to the user's message in the chat before and after calling the tools
+        - When asked to write something, generate complete, well-structured content 
+        
+        Here is the current document content:\n\`\`\`\n${currentDocumentText}\n\`\`\`\n\nThe user can see this document in their editor. When they ask you to modify it, use the setDocumentText tool.
+        
+        `
         : undefined;
 
       // Stream AI response with delta saving for async streaming
@@ -120,7 +141,8 @@ export const sendMessage = action({
             chunking: "word", // Stream word by word for smooth rendering
             throttleMs: 100,  // Save deltas every 100ms to balance responsiveness and bandwidth
           },
-        }
+        },
+        
       );
 
       // streamText returns a StreamTextResult where text is a promise

@@ -99,52 +99,47 @@ function AdChat() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header with ad name */}
-      <div className="border-b px-6 py-4">
-        <h1 className="text-xl font-semibold">{ad.name}</h1>
-        <p className="text-sm text-muted-foreground">
-          {ad.concept?.name} • {ad.angle?.name} • {ad.style?.name}
-        </p>
-      </div>
-
-      {/* Document tabs */}
-      <div className="border-b px-6 py-2">
-        <Tabs value={activeDocType} onValueChange={(value) => setActiveDocType(value as DocumentType)}>
-          <TabsList>
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="copy">Copy</TabsTrigger>
-            <TabsTrigger value="asset_brief">Asset Brief</TabsTrigger>
-            <TabsTrigger value="notes">Notes</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      {/* Main chat layout */}
-      <div className="flex-1 overflow-hidden">
-        <CanvasLayout
-          documentPanel={
-            activeDocument ? (
-              <CanvasEditor
-                key={activeDocument.documentId} // Force remount on document change
-                documentId={activeDocument.documentId}
-                documentVersion={activeDocument.documentVersion}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Loading document...</p>
-              </div>
-            )
-          }
-          chatPanel={
-            <ChatPanel
-              messages={messages ?? []}
-              onSendMessage={handleSendMessage}
-              isStreaming={isStreaming}
-            />
-          }
+    <CanvasLayout
+      documentHeader={
+        <div className="flex-1">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-xl font-semibold">{ad.name}</h1>
+              <p className="text-sm text-muted-foreground">
+                {ad.concept?.name} • {ad.angle?.name} • {ad.style?.name}
+              </p>
+            </div>
+            <Tabs value={activeDocType} onValueChange={(value) => setActiveDocType(value as DocumentType)}>
+              <TabsList>
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="copy">Copy</TabsTrigger>
+                <TabsTrigger value="asset_brief">Asset Brief</TabsTrigger>
+                <TabsTrigger value="notes">Notes</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
+      }
+      documentPanel={
+        activeDocument ? (
+          <CanvasEditor
+            key={activeDocument.documentId} // Force remount on document change
+            documentId={activeDocument.documentId}
+            documentVersion={activeDocument.documentVersion}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">Loading document...</p>
+          </div>
+        )
+      }
+      chatPanel={
+        <ChatPanel
+          messages={messages ?? []}
+          onSendMessage={handleSendMessage}
+          isStreaming={isStreaming}
         />
-      </div>
-    </div>
+      }
+    />
   );
 }
