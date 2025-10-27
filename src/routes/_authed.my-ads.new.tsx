@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Search, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
+import { AdBreadcrumb } from "@/components/AdBreadcrumb";
 
 export const Route = createFileRoute("/_authed/my-ads/new")({
   component: NewAdWizard,
@@ -136,6 +137,13 @@ function NewAdWizard() {
 
   return (
     <div className="container mx-auto py-8 max-w-6xl">
+      <AdBreadcrumb
+        segments={[
+          { label: "My Ads", href: "/my-ads" },
+          { label: "New Ad" },
+        ]}
+      />
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Create New Ad</h1>

@@ -11,6 +11,7 @@ import { useAuth } from "@clerk/tanstack-react-start";
 import { useUIMessages } from "@convex-dev/agent/react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Id } from "../../convex/_generated/dataModel";
+import { AdBreadcrumb } from "@/components/AdBreadcrumb";
 
 export const Route = createFileRoute("/_authed/my-ads/$adId_/chat")({
   component: AdChat,
@@ -101,16 +102,25 @@ function AdChat() {
   return (
     <CanvasLayout
       documentHeader={
-        <div className="flex-1 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">{ad.name}</h1>
-          <Tabs value={activeDocType} onValueChange={(value) => setActiveDocType(value as DocumentType)}>
-            <TabsList>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="copy">Copy</TabsTrigger>
-              <TabsTrigger value="asset_brief">Asset Brief</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
-            </TabsList>
-          </Tabs>
+        <div className="flex-1 flex flex-col gap-2">
+          <AdBreadcrumb
+            segments={[
+              { label: "My Ads", href: "/my-ads" },
+              { label: ad.name, href: `/my-ads/${adId}` },
+              { label: "Chat" },
+            ]}
+          />
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-semibold">{ad.name}</h1>
+            <Tabs value={activeDocType} onValueChange={(value) => setActiveDocType(value as DocumentType)}>
+              <TabsList>
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="copy">Copy</TabsTrigger>
+                <TabsTrigger value="asset_brief">Asset Brief</TabsTrigger>
+                <TabsTrigger value="notes">Notes</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
       }
       documentPanel={

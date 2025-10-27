@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Search, BookmarkCheck, User, FileText, Database } from "lucide-react"
+import { LayoutDashboard, Pencil, Lightbulb, User, FlaskConical, Eye, Plus, Target, Bell, UserCircle, Database, MessageSquare, Search } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 
@@ -24,64 +24,75 @@ const data = {
     {
       title: "Dashboard",
       url: "/",
+      icon: LayoutDashboard,
       items: [
         {
-          title: "All Ads",
+          title: "Overview",
           url: "/",
+          icon: Eye,
         },
       ],
     },
     {
       title: "Ad Creation",
       url: "/my-ads",
+      icon: Pencil,
       items: [
         {
           title: "My Ads",
           url: "/my-ads",
+          icon: Target,
         },
         {
           title: "Create New Ad",
           url: "/my-ads/new",
+          icon: Plus,
         },
       ],
     },
     {
-      title: "AI Chat",
-      url: "/ai-chat",
+      title: "Inspiration",
+      url: "/competitor-ads",
+      icon: Lightbulb,
       items: [
         {
-          title: "Document Playground",
-          url: "/ai-chat",
+          title: "Competitor Ads",
+          url: "/competitor-ads",
+          icon: Eye,
         },
-      ],
-    },
-    {
-      title: "Subscriptions",
-      url: "/subscriptions",
-      items: [
         {
           title: "Manage Subscriptions",
           url: "/subscriptions",
+          icon: Bell,
         },
       ],
     },
     {
       title: "Account",
       url: "/profile",
+      icon: User,
       items: [
         {
           title: "Profile",
           url: "/profile",
+          icon: UserCircle,
         },
       ],
     },
     {
-      title: "Admin",
+      title: "Testing",
       url: "/admin/seed",
+      icon: FlaskConical,
       items: [
         {
           title: "Seed Data",
           url: "/admin/seed",
+          icon: Database,
+        },
+        {
+          title: "Document Playground",
+          url: "/ai-chat",
+          icon: MessageSquare,
         },
       ],
     },
@@ -111,26 +122,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {data.navMain.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild>
-                  <Link to={item.url} className="font-medium">
-                    {item.title}
-                  </Link>
-                </SidebarMenuButton>
-                {item.items?.length ? (
-                  <SidebarMenuSub>
-                    {item.items.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild>
-                          <Link to={subItem.url}>{subItem.title}</Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                ) : null}
-              </SidebarMenuItem>
-            ))}
+            {data.navMain.map((item) => {
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link to={item.url} className="font-medium">
+                      {item.title}
+                    </Link>
+                  </SidebarMenuButton>
+                  {item.items?.length ? (
+                    <SidebarMenuSub>
+                      {item.items.map((subItem) => {
+                        const SubIcon = subItem.icon;
+                        return (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <SidebarMenuSubButton asChild>
+                              <Link to={subItem.url}>
+                                <SubIcon className="h-4 w-4" />
+                                {subItem.title}
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  ) : null}
+                </SidebarMenuItem>
+              );
+            })}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

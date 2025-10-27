@@ -16,6 +16,7 @@ import { Route as AiChatRouteImport } from './routes/ai-chat'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedOnboardingRouteImport } from './routes/_authed.onboarding'
+import { Route as AuthedCompetitorAdsRouteImport } from './routes/_authed.competitor-ads'
 import { Route as AuthedAdvancedOnboardingRouteImport } from './routes/_authed.advanced-onboarding'
 import { Route as AuthedMyAdsIndexRouteImport } from './routes/_authed.my-ads.index'
 import { Route as AuthedMyAdsNewRouteImport } from './routes/_authed.my-ads.new'
@@ -57,6 +58,11 @@ const AuthedOnboardingRoute = AuthedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedCompetitorAdsRoute = AuthedCompetitorAdsRouteImport.update({
+  id: '/competitor-ads',
+  path: '/competitor-ads',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedAdvancedOnboardingRoute =
   AuthedAdvancedOnboardingRouteImport.update({
     id: '/advanced-onboarding',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
   '/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
+  '/competitor-ads': typeof AuthedCompetitorAdsRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/admin/seed': typeof AuthedAdminSeedRoute
   '/my-ads/$adId': typeof AuthedMyAdsAdIdRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
   '/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
+  '/competitor-ads': typeof AuthedCompetitorAdsRoute
   '/onboarding': typeof AuthedOnboardingRoute
   '/admin/seed': typeof AuthedAdminSeedRoute
   '/my-ads/$adId': typeof AuthedMyAdsAdIdRoute
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/subscriptions': typeof SubscriptionsRoute
   '/_authed/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
+  '/_authed/competitor-ads': typeof AuthedCompetitorAdsRoute
   '/_authed/onboarding': typeof AuthedOnboardingRoute
   '/_authed/admin/seed': typeof AuthedAdminSeedRoute
   '/_authed/my-ads/$adId': typeof AuthedMyAdsAdIdRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/subscriptions'
     | '/advanced-onboarding'
+    | '/competitor-ads'
     | '/onboarding'
     | '/admin/seed'
     | '/my-ads/$adId'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/subscriptions'
     | '/advanced-onboarding'
+    | '/competitor-ads'
     | '/onboarding'
     | '/admin/seed'
     | '/my-ads/$adId'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/subscriptions'
     | '/_authed/advanced-onboarding'
+    | '/_authed/competitor-ads'
     | '/_authed/onboarding'
     | '/_authed/admin/seed'
     | '/_authed/my-ads/$adId'
@@ -239,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedOnboardingRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/competitor-ads': {
+      id: '/_authed/competitor-ads'
+      path: '/competitor-ads'
+      fullPath: '/competitor-ads'
+      preLoaderRoute: typeof AuthedCompetitorAdsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/advanced-onboarding': {
       id: '/_authed/advanced-onboarding'
       path: '/advanced-onboarding'
@@ -286,6 +305,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthedRouteChildren {
   AuthedAdvancedOnboardingRoute: typeof AuthedAdvancedOnboardingRoute
+  AuthedCompetitorAdsRoute: typeof AuthedCompetitorAdsRoute
   AuthedOnboardingRoute: typeof AuthedOnboardingRoute
   AuthedAdminSeedRoute: typeof AuthedAdminSeedRoute
   AuthedMyAdsAdIdRoute: typeof AuthedMyAdsAdIdRoute
@@ -296,6 +316,7 @@ interface AuthedRouteChildren {
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAdvancedOnboardingRoute: AuthedAdvancedOnboardingRoute,
+  AuthedCompetitorAdsRoute: AuthedCompetitorAdsRoute,
   AuthedOnboardingRoute: AuthedOnboardingRoute,
   AuthedAdminSeedRoute: AuthedAdminSeedRoute,
   AuthedMyAdsAdIdRoute: AuthedMyAdsAdIdRoute,

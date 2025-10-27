@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { MessageSquare, ArrowLeft } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
+import { AdBreadcrumb } from "@/components/AdBreadcrumb";
 
 export const Route = createFileRoute("/_authed/my-ads/$adId")({
   component: AdDetail,
@@ -60,13 +61,12 @@ function AdDetail() {
 
   return (
     <div className="container mx-auto py-8 max-w-5xl">
-      {/* Back button */}
-      <Link to="/my-ads">
-        <Button variant="ghost" className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Ads
-        </Button>
-      </Link>
+      <AdBreadcrumb
+        segments={[
+          { label: "My Ads", href: "/my-ads" },
+          { label: ad.name },
+        ]}
+      />
 
       {/* Header */}
       <div className="flex justify-between items-start mb-8">

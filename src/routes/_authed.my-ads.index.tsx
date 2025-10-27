@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { Plus, MessageSquare, Eye } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
+import { AdBreadcrumb } from "@/components/AdBreadcrumb";
 
 export const Route = createFileRoute("/_authed/my-ads/")({
   component: AdsIndex,
@@ -57,6 +58,8 @@ function AdsIndex() {
 
   return (
     <div className="p-12 space-y-8">
+      <AdBreadcrumb segments={[{ label: "My Ads" }]} />
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
