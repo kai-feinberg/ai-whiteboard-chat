@@ -6,7 +6,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 // Helper function to generate media URLs selectively (skip videos for bandwidth optimization)
 async function generateMediaUrlsSelectively(
   ctx: QueryCtx,
-  ad: Doc<"ads">,
+  ad: Doc<"competitorAds">,
   includeVideos: boolean = false
 ) {
   // Generate thumbnail URL (always include, usually an image)
@@ -50,7 +50,7 @@ async function generateMediaUrlsSelectively(
 // Get video URL on-demand (lazy loading for bandwidth optimization)
 export const getVideoUrl = mutation({
   args: {
-    adId: v.id("ads"),
+    adId: v.id("competitorAds"),
     storageId: v.id("_storage"),
   },
   handler: async (ctx, args) => {
@@ -112,7 +112,7 @@ export const getByUser = query({
     }
 
     let adsQuery = ctx.db
-      .query("ads")
+      .query("competitorAds")
       .withIndex("by_organization", (q) => q.eq("organizationId", orgId));
 
     const ads = await adsQuery.collect();
@@ -184,7 +184,7 @@ export const getByUser = query({
 
 // Get a single ad by ID
 export const getById = query({
-  args: { id: v.id("ads") },
+  args: { id: v.id("competitorAds") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (identity === null) {
@@ -261,7 +261,7 @@ export const getBySubscription = query({
     }
 
     const ads = await ctx.db
-      .query("ads")
+      .query("competitorAds")
       .withIndex("by_subscription", (q) =>
         q.eq("subscriptionId", args.subscriptionId)
       )
@@ -519,7 +519,7 @@ export const createExamples = mutation({
     ];
 
     const ids = await Promise.all(
-      examples.map((example) => ctx.db.insert("ads", example))
+      examples.map((example) => ctx.db.insert("competitorAds", example))
     );
 
     return ids;
@@ -528,7 +528,7 @@ export const createExamples = mutation({
 
 // Delete an ad
 export const remove = mutation({
-  args: { id: v.id("ads") },
+  args: { id: v.id("competitorAds") },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (identity === null) {
@@ -643,7 +643,7 @@ export const insertAd = internalMutation({
     imageCount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("ads", args);
+    return await ctx.db.insert("competitorAds", args);
   },
 });
 
@@ -701,7 +701,7 @@ export const scrapeFromFacebookAdLibrary = action({
 
     // Verify subscription exists and organization owns it
     const subscription: Doc<"subscriptions"> | null = await ctx.runQuery(
-      (internal as any)["ads/functions"].getSubscriptionForAction,
+      (internal as any)["competitorAds/functions"].getSubscriptionForAction,
       {
         subscriptionId: args.subscriptionId,
         organizationId: orgId,
@@ -801,7 +801,7 @@ export const scrapeFromFacebookAdLibrary = action({
 
           // Check if ad already exists
           const exists = await ctx.runQuery(
-            (internal as any)["ads/functions"].checkAdExists,
+            (internal as any)["competitorAds/functions"].checkAdExists,
             {
               platform: "facebook",
               adId: archiveId,
@@ -818,7 +818,7 @@ export const scrapeFromFacebookAdLibrary = action({
           const profilePictureUrl = result.snapshot?.page_profile_picture_url;
           if (profilePictureUrl) {
             const profilePicResult = await ctx.runAction(
-              internal.ads.functions.storeMediaFromUrl,
+              internal.competitorAds.functions.storeMediaFromUrl,
               { url: profilePictureUrl, type: "image" }
             );
             if (profilePicResult) {
@@ -847,7 +847,7 @@ export const scrapeFromFacebookAdLibrary = action({
           if (thumbnailUrl) {
             // Thumbnail is either a video_preview_image_url or a regular image, never a video URL
             const thumbnailResult = await ctx.runAction(
-              internal.ads.functions.storeMediaFromUrl,
+              internal.competitorAds.functions.storeMediaFromUrl,
               { url: thumbnailUrl, type: "image" }
             );
             if (thumbnailResult) {
@@ -861,7 +861,7 @@ export const scrapeFromFacebookAdLibrary = action({
               // Detect media type: check if URL is in allVideoUrls array
               const isVideo = allVideoUrls.includes(url);
               return await ctx.runAction(
-                internal.ads.functions.storeMediaFromUrl,
+                internal.competitorAds.functions.storeMediaFromUrl,
                 { url, type: isVideo ? "video" : "image" }
               );
             })
@@ -922,8 +922,8 @@ export const scrapeFromFacebookAdLibrary = action({
             images.length + (processedCards?.filter((c: any) => c.imageUrl).length || 0);
 
           // STEP 6: Create ad record with all new fields including storage IDs
-          const adId: Id<"ads"> = await ctx.runMutation(
-            (internal as any)["ads/functions"].insertAd,
+          const adId: Id<"competitorAds"> = await ctx.runMutation(
+            (internal as any)["competitorAds/functions"].insertAd,
             {
               userId,
               organizationId: orgId,
@@ -1014,7 +1014,7 @@ export const checkAdExists = internalQuery({
   },
   handler: async (ctx, args) => {
     const existingAd = await ctx.db
-      .query("ads")
+      .query("competitorAds")
       .withIndex("by_platform_and_ad_id", (q) =>
         q.eq("platform", args.platform).eq("adId", args.adId)
       )

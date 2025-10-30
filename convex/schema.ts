@@ -33,8 +33,8 @@ export default defineSchema({
     .index("by_page_id_and_platform", ["pageId", "platform"])
     .index("by_platform", ["platform"]),
 
-  // Ads - Scraped ad data
-  ads: defineTable({
+  // Competitor Ads - Scraped competitor ad data
+  competitorAds: defineTable({
     userId: v.string(), // Auth identity subject (owner)
     organizationId: v.string(), // Clerk organization ID for multi-tenancy
     subscriptionId: v.id("subscriptions"),
@@ -235,7 +235,7 @@ export default defineSchema({
   // Ad Documents - ProseMirror documents for each created ad (4 per ad)
   adDocuments: defineTable({
     organizationId: v.string(), // Clerk organization ID
-    adId: v.id("createdAds"), // Parent ad
+    adId: v.id("createdAds"), // Parent ad (note: different from competitorAds)
     documentType: v.string(), // "details" | "copy" | "asset_brief" | "notes"
     documentId: v.string(), // ProseMirror doc ID (e.g., "doc_ad_123_copy")
     documentVersion: v.number(), // Incremented by AI edits

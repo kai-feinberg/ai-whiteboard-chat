@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_authed/competitor-ads")({
 
 function CompetitorAds() {
   const { data: ads } = useSuspenseQuery(
-    convexQuery(api.ads.functions.getByUser, {})
+    convexQuery(api.competitorAds.functions.getByUser, {})
   );
   const { data: subscriptions } = useSuspenseQuery(
     convexQuery(api.subscriptions.functions.getByUser, {})
@@ -43,8 +43,8 @@ function CompetitorAds() {
     }
   }, []);
 
-  const createExampleAds = useMutation(api.ads.functions.createExamples);
-  const scrapeFacebookAds = useAction(api.ads.functions.scrapeFromFacebookAdLibrary);
+  const createExampleAds = useMutation(api.competitorAds.functions.createExamples);
+  const scrapeFacebookAds = useAction(api.competitorAds.functions.scrapeFromFacebookAdLibrary);
 
   const handleViewModeChange = (mode: "table" | "card") => {
     setViewMode(mode);

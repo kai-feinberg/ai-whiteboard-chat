@@ -26,7 +26,7 @@ export function VideoPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadVideo = useMutation(api.ads.functions.getVideoUrl);
+  const loadVideo = useMutation(api.competitorAds.functions.getVideoUrl);
 
   const handlePlayClick = async () => {
     // If URL already loaded, just play
@@ -41,7 +41,7 @@ export function VideoPlayer({
       setError(null);
       try {
         const url = await loadVideo({
-          adId: adId as Id<"ads">,
+          adId: adId as Id<"competitorAds">,
           storageId: storageId as Id<"_storage">,
         });
         setVideoUrl(url);
