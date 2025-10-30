@@ -790,8 +790,11 @@ export const scrapeFromFacebookAdLibrary = action({
           const allVideoUrls = [...videoUrls, ...cardVideoUrls];
           const mediaUrls = [...allImageUrls, ...allVideoUrls];
 
-          // Use first video as thumbnail if available, otherwise first image
-          const thumbnailUrl = allVideoUrls[0] || allImageUrls[0];
+          // Extract video preview image for thumbnail (proper static image for videos)
+          const videoPreviewUrl = videos.length > 0 ? videos[0].video_preview_image_url : undefined;
+
+          // Use video preview image as thumbnail if available, otherwise first image
+          const thumbnailUrl = videoPreviewUrl || allImageUrls[0];
 
           // Extract link
           const linkUrl = result.snapshot?.link_url;
@@ -839,13 +842,13 @@ export const scrapeFromFacebookAdLibrary = action({
             }
           );
 
-          // STEP 3: Download and store thumbnail (could be video or image)
+          // STEP 3: Download and store thumbnail (video preview images are always image type)
           let thumbnailStorageId = undefined;
           if (thumbnailUrl) {
-            const isThumbnailVideo = allVideoUrls.includes(thumbnailUrl);
+            // Thumbnail is either a video_preview_image_url or a regular image, never a video URL
             const thumbnailResult = await ctx.runAction(
               internal.ads.functions.storeMediaFromUrl,
-              { url: thumbnailUrl, type: isThumbnailVideo ? "video" : "image" }
+              { url: thumbnailUrl, type: "image" }
             );
             if (thumbnailResult) {
               thumbnailStorageId = thumbnailResult.storageId;

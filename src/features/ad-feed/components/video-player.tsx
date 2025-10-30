@@ -122,14 +122,6 @@ export function VideoPlayer({
         )}
       </div>
 
-      {/* Video label badge */}
-      {!isLoading && !error && (
-        <div className="absolute bottom-3 right-3">
-          <div className="bg-black/70 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
-            🎥 Click to load video
-          </div>
-        </div>
-      )}
     </div>
   );
 }
