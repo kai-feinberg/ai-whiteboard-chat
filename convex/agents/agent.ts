@@ -2,16 +2,6 @@
 import { Agent } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import { setDocumentText } from "./tools";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-
-// Create OpenRouter provider instance
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPEN_ROUTER_API_KEY,
-});
-
-// Create the language model using OpenRouter
-// We'll use Claude 4.5 Haiku via OpenRouter
-const languageModel = openrouter("anthropic/claude-haiku-4.5");
 
 /**
  * AI Canvas Assistant Agent
@@ -31,7 +21,7 @@ Guidelines:
 
 Remember: You're helping the user create and refine documents through natural conversation.`,
 
-  languageModel,
+  languageModel:'xai/grok-4-fast-non-reasoning',
 
   tools: {
     setDocumentText,

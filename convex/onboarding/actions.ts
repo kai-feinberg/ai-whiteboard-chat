@@ -3,18 +3,10 @@ import { v } from "convex/values";
 import { internalAction } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
-// import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import {anthropic} from "@ai-sdk/anthropic";
 import { generateText, generateObject } from "ai";
 import { z } from "zod";
 
-// const openrouter = createOpenRouter({
-//   apiKey: process.env.OPEN_ROUTER_API_KEY,
-// });
-const model = anthropic("claude-sonnet-4-5-20250929");
-
-// const model = anthropicProvider("anthropic/claude-haiku-4.5");
-
+const modelName='xai/grok-4-fast-non-reasoning'
 /**
  * System prompts for each document type
  * These are hardcoded for MVP - can be moved to database later
@@ -270,7 +262,7 @@ async function generateDocument(
 
     // Call AI to generate content
     const result = await generateText({
-      model,
+      model:modelName,
       system: systemPrompt,
       prompt: userPrompt,
       temperature: 0.7,
@@ -464,7 +456,7 @@ export const analyzeDocument = internalAction({
 
       // Use generateObject for structured analysis
       const result = await generateObject({
-        model,
+        model:modelName,
         schema: analysisSchema,
         prompt: `${analysisPrompt}\n\n--- DOCUMENT TO ANALYZE ---\n${document.content}\n\nProvide a thorough, objective analysis.`,
         temperature: 0.3, // Lower temperature for more consistent analysis
@@ -631,7 +623,7 @@ ${offerBrief?.content ? `\nOFFER BRIEF:\n${offerBrief.content}` : ""}
 
       // Call AI with generateObject
       const result = await generateObject({
-        model,
+        model:modelName,
         schema: desiresSchema,
         prompt: `${DESIRES_PROMPT}\n\n--- CONTEXT ---\n${enrichedContext}`,
         temperature: 0.7,
@@ -697,7 +689,7 @@ ${offerBrief?.content ? `\nOFFER BRIEF:\n${offerBrief.content}` : ""}
 
       // Call AI with generateObject
       const result = await generateObject({
-        model,
+        model:modelName,
         schema: beliefsSchema,
         prompt: `${BELIEFS_PROMPT}\n\n--- CONTEXT ---\n${enrichedContext}`,
         temperature: 0.7,
