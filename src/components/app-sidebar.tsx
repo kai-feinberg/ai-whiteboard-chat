@@ -1,5 +1,5 @@
 import * as React from "react"
-import { LayoutDashboard, Pencil, Lightbulb, User, FlaskConical, Eye, Plus, Target, Bell, UserCircle, Database, MessageSquare, Search } from "lucide-react"
+import { LayoutDashboard, Eye, MessageSquare, Search } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 
@@ -18,7 +18,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar"
 
-// Navigation data for AdScout app
+// Navigation data - simplified to core routes
 const data = {
   navMain: [
     {
@@ -34,61 +34,10 @@ const data = {
       ],
     },
     {
-      title: "Ad Creation",
-      url: "/my-ads",
-      icon: Pencil,
+      title: "AI Chat",
+      url: "/ai-chat",
+      icon: MessageSquare,
       items: [
-        {
-          title: "My Ads",
-          url: "/my-ads",
-          icon: Target,
-        },
-        {
-          title: "Create New Ad",
-          url: "/my-ads/new",
-          icon: Plus,
-        },
-      ],
-    },
-    {
-      title: "Inspiration",
-      url: "/competitor-ads",
-      icon: Lightbulb,
-      items: [
-        {
-          title: "Competitor Ads",
-          url: "/competitor-ads",
-          icon: Eye,
-        },
-        {
-          title: "Manage Subscriptions",
-          url: "/subscriptions",
-          icon: Bell,
-        },
-      ],
-    },
-    {
-      title: "Account",
-      url: "/profile",
-      icon: User,
-      items: [
-        {
-          title: "Profile",
-          url: "/profile",
-          icon: UserCircle,
-        },
-      ],
-    },
-    {
-      title: "Testing",
-      url: "/admin/seed",
-      icon: FlaskConical,
-      items: [
-        {
-          title: "Seed Data",
-          url: "/admin/seed",
-          icon: Database,
-        },
         {
           title: "Document Playground",
           url: "/ai-chat",

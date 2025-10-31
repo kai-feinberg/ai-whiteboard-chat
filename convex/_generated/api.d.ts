@@ -8,27 +8,10 @@
  * @module
  */
 
-import type * as adCreation_actions from "../adCreation/actions.js";
-import type * as adCreation_functions from "../adCreation/functions.js";
-import type * as adCreation_mutations from "../adCreation/mutations.js";
-import type * as adCreation_queries from "../adCreation/queries.js";
-import type * as advertisers_functions from "../advertisers/functions.js";
 import type * as agents_actions from "../agents/actions.js";
-import type * as agents_agent from "../agents/agent.js";
-import type * as agents_canvas from "../agents/canvas.js";
 import type * as agents_mutations from "../agents/mutations.js";
 import type * as agents_queries from "../agents/queries.js";
-import type * as agents_tools from "../agents/tools.js";
-import type * as competitorAds_functions from "../competitorAds/functions.js";
-import type * as documents_functions from "../documents/functions.js";
 import type * as http from "../http.js";
-import type * as onboarding_actions from "../onboarding/actions.js";
-import type * as onboarding_functions from "../onboarding/functions.js";
-import type * as onboarding_mutations from "../onboarding/mutations.js";
-import type * as onboarding_queries from "../onboarding/queries.js";
-import type * as onboarding_workflow from "../onboarding/workflow.js";
-import type * as profile_functions from "../profile/functions.js";
-import type * as subscriptions_functions from "../subscriptions/functions.js";
 
 import type {
   ApiFromModules,
@@ -45,27 +28,10 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  "adCreation/actions": typeof adCreation_actions;
-  "adCreation/functions": typeof adCreation_functions;
-  "adCreation/mutations": typeof adCreation_mutations;
-  "adCreation/queries": typeof adCreation_queries;
-  "advertisers/functions": typeof advertisers_functions;
   "agents/actions": typeof agents_actions;
-  "agents/agent": typeof agents_agent;
-  "agents/canvas": typeof agents_canvas;
   "agents/mutations": typeof agents_mutations;
   "agents/queries": typeof agents_queries;
-  "agents/tools": typeof agents_tools;
-  "competitorAds/functions": typeof competitorAds_functions;
-  "documents/functions": typeof documents_functions;
   http: typeof http;
-  "onboarding/actions": typeof onboarding_actions;
-  "onboarding/functions": typeof onboarding_functions;
-  "onboarding/mutations": typeof onboarding_mutations;
-  "onboarding/queries": typeof onboarding_queries;
-  "onboarding/workflow": typeof onboarding_workflow;
-  "profile/functions": typeof profile_functions;
-  "subscriptions/functions": typeof subscriptions_functions;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
@@ -2911,82 +2877,6 @@ export declare const components: {
           null
         >;
       };
-    };
-  };
-  prosemirrorSync: {
-    lib: {
-      deleteDocument: FunctionReference<
-        "mutation",
-        "internal",
-        { id: string },
-        null
-      >;
-      deleteSnapshots: FunctionReference<
-        "mutation",
-        "internal",
-        { afterVersion?: number; beforeVersion?: number; id: string },
-        null
-      >;
-      deleteSteps: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          afterVersion?: number;
-          beforeTs: number;
-          deleteNewerThanLatestSnapshot?: boolean;
-          id: string;
-        },
-        null
-      >;
-      getSnapshot: FunctionReference<
-        "query",
-        "internal",
-        { id: string; version?: number },
-        { content: null } | { content: string; version: number }
-      >;
-      getSteps: FunctionReference<
-        "query",
-        "internal",
-        { id: string; version: number },
-        {
-          clientIds: Array<string | number>;
-          steps: Array<string>;
-          version: number;
-        }
-      >;
-      latestVersion: FunctionReference<
-        "query",
-        "internal",
-        { id: string },
-        null | number
-      >;
-      submitSnapshot: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          content: string;
-          id: string;
-          pruneSnapshots?: boolean;
-          version: number;
-        },
-        null
-      >;
-      submitSteps: FunctionReference<
-        "mutation",
-        "internal",
-        {
-          clientId: string | number;
-          id: string;
-          steps: Array<string>;
-          version: number;
-        },
-        | {
-            clientIds: Array<string | number>;
-            status: "needs-rebase";
-            steps: Array<string>;
-          }
-        | { status: "synced" }
-      >;
     };
   };
   workflow: {

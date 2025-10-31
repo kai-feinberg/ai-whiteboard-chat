@@ -9,36 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
-import { Route as SignInRouteImport } from './routes/sign-in'
-import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as AiChatRouteImport } from './routes/ai-chat'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthedOnboardingRouteImport } from './routes/_authed.onboarding'
-import { Route as AuthedCompetitorAdsRouteImport } from './routes/_authed.competitor-ads'
-import { Route as AuthedAdvancedOnboardingRouteImport } from './routes/_authed.advanced-onboarding'
-import { Route as AuthedMyAdsIndexRouteImport } from './routes/_authed.my-ads.index'
-import { Route as AuthedMyAdsNewRouteImport } from './routes/_authed.my-ads.new'
-import { Route as AuthedMyAdsAdIdRouteImport } from './routes/_authed.my-ads.$adId'
-import { Route as AuthedAdminSeedRouteImport } from './routes/_authed.admin.seed'
-import { Route as AuthedMyAdsAdIdChatRouteImport } from './routes/_authed.my-ads.$adId_.chat'
 
-const SubscriptionsRoute = SubscriptionsRouteImport.update({
-  id: '/subscriptions',
-  path: '/subscriptions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignInRoute = SignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AiChatRoute = AiChatRouteImport.update({
   id: '/ai-chat',
   path: '/ai-chat',
@@ -53,176 +27,37 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedOnboardingRoute = AuthedOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedCompetitorAdsRoute = AuthedCompetitorAdsRouteImport.update({
-  id: '/competitor-ads',
-  path: '/competitor-ads',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedAdvancedOnboardingRoute =
-  AuthedAdvancedOnboardingRouteImport.update({
-    id: '/advanced-onboarding',
-    path: '/advanced-onboarding',
-    getParentRoute: () => AuthedRoute,
-  } as any)
-const AuthedMyAdsIndexRoute = AuthedMyAdsIndexRouteImport.update({
-  id: '/my-ads/',
-  path: '/my-ads/',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedMyAdsNewRoute = AuthedMyAdsNewRouteImport.update({
-  id: '/my-ads/new',
-  path: '/my-ads/new',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedMyAdsAdIdRoute = AuthedMyAdsAdIdRouteImport.update({
-  id: '/my-ads/$adId',
-  path: '/my-ads/$adId',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedAdminSeedRoute = AuthedAdminSeedRouteImport.update({
-  id: '/admin/seed',
-  path: '/admin/seed',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedMyAdsAdIdChatRoute = AuthedMyAdsAdIdChatRouteImport.update({
-  id: '/my-ads/$adId_/chat',
-  path: '/my-ads/$adId/chat',
-  getParentRoute: () => AuthedRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ai-chat': typeof AiChatRoute
-  '/profile': typeof ProfileRoute
-  '/sign-in': typeof SignInRoute
-  '/subscriptions': typeof SubscriptionsRoute
-  '/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
-  '/competitor-ads': typeof AuthedCompetitorAdsRoute
-  '/onboarding': typeof AuthedOnboardingRoute
-  '/admin/seed': typeof AuthedAdminSeedRoute
-  '/my-ads/$adId': typeof AuthedMyAdsAdIdRoute
-  '/my-ads/new': typeof AuthedMyAdsNewRoute
-  '/my-ads': typeof AuthedMyAdsIndexRoute
-  '/my-ads/$adId/chat': typeof AuthedMyAdsAdIdChatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ai-chat': typeof AiChatRoute
-  '/profile': typeof ProfileRoute
-  '/sign-in': typeof SignInRoute
-  '/subscriptions': typeof SubscriptionsRoute
-  '/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
-  '/competitor-ads': typeof AuthedCompetitorAdsRoute
-  '/onboarding': typeof AuthedOnboardingRoute
-  '/admin/seed': typeof AuthedAdminSeedRoute
-  '/my-ads/$adId': typeof AuthedMyAdsAdIdRoute
-  '/my-ads/new': typeof AuthedMyAdsNewRoute
-  '/my-ads': typeof AuthedMyAdsIndexRoute
-  '/my-ads/$adId/chat': typeof AuthedMyAdsAdIdChatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authed': typeof AuthedRouteWithChildren
+  '/_authed': typeof AuthedRoute
   '/ai-chat': typeof AiChatRoute
-  '/profile': typeof ProfileRoute
-  '/sign-in': typeof SignInRoute
-  '/subscriptions': typeof SubscriptionsRoute
-  '/_authed/advanced-onboarding': typeof AuthedAdvancedOnboardingRoute
-  '/_authed/competitor-ads': typeof AuthedCompetitorAdsRoute
-  '/_authed/onboarding': typeof AuthedOnboardingRoute
-  '/_authed/admin/seed': typeof AuthedAdminSeedRoute
-  '/_authed/my-ads/$adId': typeof AuthedMyAdsAdIdRoute
-  '/_authed/my-ads/new': typeof AuthedMyAdsNewRoute
-  '/_authed/my-ads/': typeof AuthedMyAdsIndexRoute
-  '/_authed/my-ads/$adId_/chat': typeof AuthedMyAdsAdIdChatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/ai-chat'
-    | '/profile'
-    | '/sign-in'
-    | '/subscriptions'
-    | '/advanced-onboarding'
-    | '/competitor-ads'
-    | '/onboarding'
-    | '/admin/seed'
-    | '/my-ads/$adId'
-    | '/my-ads/new'
-    | '/my-ads'
-    | '/my-ads/$adId/chat'
+  fullPaths: '/' | '/ai-chat'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/ai-chat'
-    | '/profile'
-    | '/sign-in'
-    | '/subscriptions'
-    | '/advanced-onboarding'
-    | '/competitor-ads'
-    | '/onboarding'
-    | '/admin/seed'
-    | '/my-ads/$adId'
-    | '/my-ads/new'
-    | '/my-ads'
-    | '/my-ads/$adId/chat'
-  id:
-    | '__root__'
-    | '/'
-    | '/_authed'
-    | '/ai-chat'
-    | '/profile'
-    | '/sign-in'
-    | '/subscriptions'
-    | '/_authed/advanced-onboarding'
-    | '/_authed/competitor-ads'
-    | '/_authed/onboarding'
-    | '/_authed/admin/seed'
-    | '/_authed/my-ads/$adId'
-    | '/_authed/my-ads/new'
-    | '/_authed/my-ads/'
-    | '/_authed/my-ads/$adId_/chat'
+  to: '/' | '/ai-chat'
+  id: '__root__' | '/' | '/_authed' | '/ai-chat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthedRoute: typeof AuthedRouteWithChildren
+  AuthedRoute: typeof AuthedRoute
   AiChatRoute: typeof AiChatRoute
-  ProfileRoute: typeof ProfileRoute
-  SignInRoute: typeof SignInRoute
-  SubscriptionsRoute: typeof SubscriptionsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/subscriptions': {
-      id: '/subscriptions'
-      path: '/subscriptions'
-      fullPath: '/subscriptions'
-      preLoaderRoute: typeof SubscriptionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/ai-chat': {
       id: '/ai-chat'
       path: '/ai-chat'
@@ -244,97 +79,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/onboarding': {
-      id: '/_authed/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof AuthedOnboardingRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/competitor-ads': {
-      id: '/_authed/competitor-ads'
-      path: '/competitor-ads'
-      fullPath: '/competitor-ads'
-      preLoaderRoute: typeof AuthedCompetitorAdsRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/advanced-onboarding': {
-      id: '/_authed/advanced-onboarding'
-      path: '/advanced-onboarding'
-      fullPath: '/advanced-onboarding'
-      preLoaderRoute: typeof AuthedAdvancedOnboardingRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/my-ads/': {
-      id: '/_authed/my-ads/'
-      path: '/my-ads'
-      fullPath: '/my-ads'
-      preLoaderRoute: typeof AuthedMyAdsIndexRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/my-ads/new': {
-      id: '/_authed/my-ads/new'
-      path: '/my-ads/new'
-      fullPath: '/my-ads/new'
-      preLoaderRoute: typeof AuthedMyAdsNewRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/my-ads/$adId': {
-      id: '/_authed/my-ads/$adId'
-      path: '/my-ads/$adId'
-      fullPath: '/my-ads/$adId'
-      preLoaderRoute: typeof AuthedMyAdsAdIdRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/admin/seed': {
-      id: '/_authed/admin/seed'
-      path: '/admin/seed'
-      fullPath: '/admin/seed'
-      preLoaderRoute: typeof AuthedAdminSeedRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/my-ads/$adId_/chat': {
-      id: '/_authed/my-ads/$adId_/chat'
-      path: '/my-ads/$adId/chat'
-      fullPath: '/my-ads/$adId/chat'
-      preLoaderRoute: typeof AuthedMyAdsAdIdChatRouteImport
-      parentRoute: typeof AuthedRoute
-    }
   }
 }
 
-interface AuthedRouteChildren {
-  AuthedAdvancedOnboardingRoute: typeof AuthedAdvancedOnboardingRoute
-  AuthedCompetitorAdsRoute: typeof AuthedCompetitorAdsRoute
-  AuthedOnboardingRoute: typeof AuthedOnboardingRoute
-  AuthedAdminSeedRoute: typeof AuthedAdminSeedRoute
-  AuthedMyAdsAdIdRoute: typeof AuthedMyAdsAdIdRoute
-  AuthedMyAdsNewRoute: typeof AuthedMyAdsNewRoute
-  AuthedMyAdsIndexRoute: typeof AuthedMyAdsIndexRoute
-  AuthedMyAdsAdIdChatRoute: typeof AuthedMyAdsAdIdChatRoute
-}
-
-const AuthedRouteChildren: AuthedRouteChildren = {
-  AuthedAdvancedOnboardingRoute: AuthedAdvancedOnboardingRoute,
-  AuthedCompetitorAdsRoute: AuthedCompetitorAdsRoute,
-  AuthedOnboardingRoute: AuthedOnboardingRoute,
-  AuthedAdminSeedRoute: AuthedAdminSeedRoute,
-  AuthedMyAdsAdIdRoute: AuthedMyAdsAdIdRoute,
-  AuthedMyAdsNewRoute: AuthedMyAdsNewRoute,
-  AuthedMyAdsIndexRoute: AuthedMyAdsIndexRoute,
-  AuthedMyAdsAdIdChatRoute: AuthedMyAdsAdIdChatRoute,
-}
-
-const AuthedRouteWithChildren =
-  AuthedRoute._addFileChildren(AuthedRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthedRoute: AuthedRouteWithChildren,
+  AuthedRoute: AuthedRoute,
   AiChatRoute: AiChatRoute,
-  ProfileRoute: ProfileRoute,
-  SignInRoute: SignInRoute,
-  SubscriptionsRoute: SubscriptionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
