@@ -1,0 +1,365 @@
+// convex/chat/functions.ts
+import { v } from "convex/values";
+import { action, internalMutation, internalQuery, mutation, query } from "../_generated/server";
+import { internal } from "../_generated/api";
+import { createThread, listUIMessages, syncStreams, vStreamArgs } from "@convex-dev/agent";
+import { components } from "../_generated/api";
+import { paginationOptsValidator } from "convex/server";
+import { Agent } from "@convex-dev/agent";
+
+// Create agent instance
+const chatAgent = new Agent(components.agent, {
+  name: "Chat Assistant",
+  instructions: `You are a helpful AI assistant. Provide clear, concise, and accurate responses.`,
+  languageModel: 'xai/grok-4-fast-non-reasoning',
+  maxSteps: 10,
+  callSettings: {
+    maxRetries: 2,
+    temperature: 0.7,
+  },
+});
+
+/**
+ * Create a new chat thread for the organization
+ */
+export const createChatThread = action({
+  args: {
+    title: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ threadId: any; agentThreadId: string; title: string }> => {
+    // Auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const userId = identity.subject;
+    const organizationId = identity.organizationId;
+
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Create thread via Agent component
+    const agentThreadId = await createThread(ctx, components.agent);
+
+    // Generate title if not provided
+    const title = args.title || `Chat ${new Date().toLocaleDateString()}`;
+
+    // Save thread mapping in our database
+    const threadId: any = await ctx.runMutation(internal.chat.functions.saveThread, {
+      agentThreadId,
+      userId,
+      organizationId,
+      title,
+    });
+
+    return { threadId, agentThreadId, title };
+  },
+});
+
+/**
+ * Internal mutation to save thread mapping
+ */
+export const saveThread = internalMutation({
+  args: {
+    agentThreadId: v.string(),
+    userId: v.string(),
+    organizationId: v.string(),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    return await ctx.db.insert("threads", {
+      agentThreadId: args.agentThreadId,
+      userId: args.userId,
+      organizationId: args.organizationId,
+      title: args.title,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+/**
+ * List all threads for the current organization
+ */
+export const listThreads = query({
+  args: {},
+  handler: async (ctx) => {
+    // Auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Query threads by organization, sorted by most recently updated
+    const threads = await ctx.db
+      .query("threads")
+      .withIndex("by_org_updated", (q) => q.eq("organizationId", organizationId))
+      .order("desc")
+      .collect();
+
+    return threads;
+  },
+});
+
+/**
+ * Get a specific thread by ID
+ */
+export const getThread = query({
+  args: {
+    threadId: v.id("threads"),
+  },
+  handler: async (ctx, args) => {
+    // Auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Get thread
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) {
+      return null;
+    }
+
+    // Verify ownership
+    if (thread.organizationId !== organizationId) {
+      throw new Error("Thread does not belong to your organization");
+    }
+
+    return thread;
+  },
+});
+
+/**
+ * Update thread's updatedAt timestamp (called when new messages are added)
+ */
+export const touchThread = internalMutation({
+  args: {
+    threadId: v.id("threads"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.threadId, {
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Update thread title
+ */
+export const updateThreadTitle = mutation({
+  args: {
+    threadId: v.id("threads"),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Get thread
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) {
+      throw new Error("Thread not found");
+    }
+
+    // Verify ownership
+    if (thread.organizationId !== organizationId) {
+      throw new Error("Thread does not belong to your organization");
+    }
+
+    // Update title
+    await ctx.db.patch(args.threadId, {
+      title: args.title,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Delete a thread
+ */
+export const deleteThread = mutation({
+  args: {
+    threadId: v.id("threads"),
+  },
+  handler: async (ctx, args) => {
+    // Auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Get thread
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) {
+      throw new Error("Thread not found");
+    }
+
+    // Verify ownership
+    if (thread.organizationId !== organizationId) {
+      throw new Error("Thread does not belong to your organization");
+    }
+
+    // Delete thread
+    await ctx.db.delete(args.threadId);
+
+    return { success: true };
+  },
+});
+
+/**
+ * Send a message to the AI agent and get a response
+ */
+export const sendMessage = action({
+  args: {
+    threadId: v.id("threads"),
+    message: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; response: string }> => {
+    // Auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const userId = identity.subject;
+    const organizationId = identity.organizationId;
+
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Get thread and verify ownership
+    const thread: any = await ctx.runQuery(internal.chat.functions.getThreadInternal, {
+      threadId: args.threadId,
+      organizationId,
+    });
+
+    if (!thread) {
+      throw new Error("Thread not found or does not belong to your organization");
+    }
+
+    // Touch thread to update timestamp
+    await ctx.runMutation(internal.chat.functions.touchThread, {
+      threadId: args.threadId,
+    });
+
+    try {
+      // Stream AI response with delta saving
+      const result: any = await chatAgent.streamText(
+        ctx,
+        { threadId: thread.agentThreadId },
+        {
+          prompt: args.message,
+        },
+        {
+          saveStreamDeltas: {
+            chunking: "word",
+            throttleMs: 100,
+          },
+        }
+      );
+
+      // Await completion
+      const responseText: string = await result.text;
+
+      return {
+        success: true,
+        response: responseText,
+      };
+    } catch (error) {
+      console.error("[sendMessage] Error generating response:", error);
+      throw error;
+    }
+  },
+});
+
+/**
+ * Internal query to get thread (bypasses auth for internal use)
+ */
+export const getThreadInternal = internalQuery({
+  args: {
+    threadId: v.id("threads"),
+    organizationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread) {
+      return null;
+    }
+
+    // Verify ownership
+    if (thread.organizationId !== args.organizationId) {
+      return null;
+    }
+
+    return thread;
+  },
+});
+
+/**
+ * List messages for a thread with streaming support
+ * Note: threadId parameter name is required by useUIMessages hook
+ */
+export const listMessages = query({
+  args: {
+    threadId: v.string(),
+    paginationOpts: paginationOptsValidator,
+    streamArgs: vStreamArgs,
+  },
+  handler: async (ctx, args) => {
+    // Auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Fetch messages via Agent component
+    const paginated = await listUIMessages(ctx, components.agent, {
+      threadId: args.threadId,
+      paginationOpts: args.paginationOpts,
+    });
+
+    // Fetch streaming deltas
+    const streams = await syncStreams(ctx, components.agent, {
+      threadId: args.threadId,
+      streamArgs: args.streamArgs,
+    });
+
+    return { ...paginated, streams };
+  },
+});

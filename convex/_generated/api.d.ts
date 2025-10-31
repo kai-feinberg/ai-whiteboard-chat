@@ -11,6 +11,7 @@
 import type * as agents_actions from "../agents/actions.js";
 import type * as agents_mutations from "../agents/mutations.js";
 import type * as agents_queries from "../agents/queries.js";
+import type * as chat_functions from "../chat/functions.js";
 import type * as http from "../http.js";
 
 import type {
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   "agents/actions": typeof agents_actions;
   "agents/mutations": typeof agents_mutations;
   "agents/queries": typeof agents_queries;
+  "chat/functions": typeof chat_functions;
   http: typeof http;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

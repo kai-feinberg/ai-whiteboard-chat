@@ -12,11 +12,15 @@ export const saveThreadMapping = internalMutation({
     organizationId: v.string(),
   },
   handler: async (ctx, args) => {
+    const now = Date.now();
     // Store in our custom threads table for organization tracking
     await ctx.db.insert("threads", {
-      userId: args.agentThreadId, // Store agentThreadId in userId field temporarily
+      agentThreadId: args.agentThreadId,
+      userId: args.userId,
       organizationId: args.organizationId,
       title: "Playground",
+      createdAt: now,
+      updatedAt: now,
     });
   },
 });

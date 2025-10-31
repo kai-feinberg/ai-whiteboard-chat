@@ -34,13 +34,13 @@ const data = {
       ],
     },
     {
-      title: "AI Chat",
-      url: "/ai-chat",
+      title: "Chat",
+      url: "/playground",
       icon: MessageSquare,
       items: [
         {
-          title: "Document Playground",
-          url: "/ai-chat",
+          title: "Playground",
+          url: "/playground",
           icon: MessageSquare,
         },
       ],
