@@ -76,12 +76,6 @@ export const createCanvasThread = action({
 
     const title = args.title || `Chat Thread ${existingThreads + 1}`;
 
-    console.log("[createCanvasThread] Creating thread:", {
-      canvasId: args.canvasId,
-      title,
-      existingThreads,
-    });
-
     // Create thread record
     const threadId: Id<"threads"> = await ctx.runMutation(internal.canvas.threads.saveCanvasThread, {
       agentThreadId,
@@ -89,11 +83,6 @@ export const createCanvasThread = action({
       organizationId,
       canvasId: args.canvasId,
       title,
-    });
-
-    console.log("[createCanvasThread] Thread created:", {
-      threadId,
-      canvasId: args.canvasId,
     });
 
     return { threadId, agentThreadId };
@@ -171,17 +160,6 @@ export const selectThread = mutation({
 
     // Verify thread belongs to same canvas
     const thread = await ctx.db.get(args.threadId);
-
-    // Debug logging
-    console.log("[selectThread] Validation:", {
-      threadId: args.threadId,
-      chatNodeId: args.chatNodeId,
-      threadCanvasId: thread?.canvasId,
-      chatNodeCanvasId: chatNode.canvasId,
-      threadCanvasIdType: typeof thread?.canvasId,
-      chatNodeCanvasIdType: typeof chatNode.canvasId,
-      match: thread?.canvasId === chatNode.canvasId
-    });
 
     if (!thread) {
       throw new Error("Thread not found");

@@ -4,6 +4,8 @@ AI Whiteboard Chat - Claude Development Guide
 
 If you have made changes to the backend then when you are done developing make sure to run pnpm dev which will both start the dev server and run a typecheck on the backend code. After you have confirmed the check passes kill the task. DO NOT run pnpm dev:backend
 
+When you add a new node ALWAYS make sure you add it to the context gathering: getNodeContextInternal
+
 
 Quick Start Philosophy 🚀
 AI Whiteboard Chat (Poppy Clone) is an infinite canvas for AI conversations with rich context inputs. Built for SPEED over perfection.
@@ -17,7 +19,7 @@ Context-first - Make it easy to feed AI rich multi-modal context
 Tech Stack & Architecture
 Core Stack
 
-Frontend: Next.js
+Frontend: Tanstack Start
 Database: Convex (real-time, serverless)
 Auth: Clerk with Organizations
 AI: Convex AI agent component (thread management, usage tracking)

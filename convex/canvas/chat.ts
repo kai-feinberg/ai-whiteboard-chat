@@ -54,11 +54,25 @@ export const sendMessage = action({
       organizationId,
     });
 
+    console.log('[Canvas Chat] Context messages gathered:', {
+      count: contextMessages.length,
+      messageTypes: contextMessages.map((m: any) => {
+        const firstLine = m.content.split('\n')[0];
+        return firstLine.substring(0, 50);
+      }),
+    });
+
     // Build system message with context
     let systemMessage = "";
     if (contextMessages.length > 0) {
       systemMessage = contextMessages.map((msg: any) => msg.content).join("\n\n");
     }
+
+    console.log('[Canvas Chat] System prompt:', {
+      hasSystemMessage: !!systemMessage,
+      systemMessageLength: systemMessage.length,
+      systemMessagePreview: systemMessage.substring(0, 200),
+    });
 
     // Touch thread to update timestamp
     await ctx.runMutation(internal.chat.functions.touchThread, {
@@ -139,6 +153,25 @@ export const getNodeContextInternal = internalQuery({
           contextMessages.push({
             role: "system",
             content: `YouTube Video: ${title}\nURL: ${youtubeNode.url}\n\nTranscript:\n${youtubeNode.transcript}`,
+          });
+        }
+      } else if (sourceNode.nodeType === "website") {
+        const websiteNode = await ctx.db.get(sourceNode.data.nodeId as Id<"website_nodes">);
+        if (websiteNode?.markdown) {
+          const title = websiteNode.title || websiteNode.url;
+          contextMessages.push({
+            role: "system",
+            content: `Website: ${title}\nURL: ${websiteNode.url}\n\nContent:\n${websiteNode.markdown}`,
+          });
+        }
+      } else if (sourceNode.nodeType === "tiktok") {
+        const tiktokNode = await ctx.db.get(sourceNode.data.nodeId as Id<"tiktok_nodes">);
+        if (tiktokNode?.transcript) {
+          const title = tiktokNode.title || "TikTok Video";
+          const author = tiktokNode.author ? ` by @${tiktokNode.author}` : "";
+          contextMessages.push({
+            role: "system",
+            content: `TikTok Video: ${title}${author}\nURL: ${tiktokNode.url}\n\nTranscript:\n${tiktokNode.transcript}`,
           });
         }
       }
