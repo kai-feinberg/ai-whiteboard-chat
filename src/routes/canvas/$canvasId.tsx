@@ -5,6 +5,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { Canvas } from "@/components/ai-elements/canvas/canvas";
 import { Panel } from "@/components/ai-elements/canvas/panel";
+import { Edge as CustomEdge } from "@/components/ai-elements/canvas/edge";
 import { Button } from "@/components/ui/button";
 import { TextNode } from "@/features/canvas/components/TextNode";
 import { ChatNode } from "@/features/canvas/components/ChatNode";
@@ -20,6 +21,7 @@ import {
   type Edge,
   type Connection,
   type NodeTypes,
+  type EdgeTypes,
 } from "@xyflow/react";
 import { FileText, MessageSquare, Loader2, Video, Globe } from "lucide-react";
 import { toast } from "sonner";
@@ -34,6 +36,11 @@ const nodeTypes: NodeTypes = {
   chat: ChatNode,
   youtube: YouTubeNode,
   website: WebsiteNode,
+};
+
+const edgeTypes: EdgeTypes = {
+  animated: CustomEdge.Animated,
+  temporary: CustomEdge.Temporary,
 };
 
 function CanvasEditor() {
@@ -96,6 +103,7 @@ function CanvasEditor() {
       // Map database edges to ReactFlow edges
       const flowEdges: Edge[] = canvasData.edges.map((dbEdge) => ({
         id: dbEdge._id,
+        type: 'animated',
         source: dbEdge.source,
         target: dbEdge.target,
         sourceHandle: dbEdge.sourceHandle,
@@ -216,12 +224,28 @@ function CanvasEditor() {
   // Add chat node
   const handleAddChatNode = async () => {
     try {
+      const position = { x: Math.random() * 400, y: Math.random() * 400 };
       const result = await createChatNode({
         canvasId: canvasId as Id<"canvases">,
-        position: { x: Math.random() * 400, y: Math.random() * 400 },
+        position,
       });
 
-      // Reload canvas data to get the full chat node data
+      // Add to local state immediately for better UX
+      setNodes((nds) => [
+        ...nds,
+        {
+          id: result.canvasNodeId,
+          type: "chat",
+          position,
+          data: {
+            canvasNodeId: result.canvasNodeId,
+            chatNodeId: result.chatNodeId,
+            canvasId: canvasId as Id<"canvases">,
+            selectedThreadId: result.threadId,
+          },
+        },
+      ]);
+
       toast.success("Chat node created");
     } catch (error) {
       console.error("[Canvas] Error creating chat node:", error);
@@ -235,11 +259,26 @@ function CanvasEditor() {
     if (!url) return;
 
     try {
+      const position = { x: Math.random() * 400, y: Math.random() * 400 };
       const result = await createYouTubeNode({
         canvasId: canvasId as Id<"canvases">,
-        position: { x: Math.random() * 400, y: Math.random() * 400 },
+        position,
         url,
       });
+
+      // Add to local state immediately for better UX
+      setNodes((nds) => [
+        ...nds,
+        {
+          id: result.canvasNodeId,
+          type: "youtube",
+          position,
+          data: {
+            canvasNodeId: result.canvasNodeId,
+            youtubeNodeId: result.youtubeNodeId,
+          },
+        },
+      ]);
 
       toast.success("YouTube node created");
     } catch (error) {
@@ -254,11 +293,26 @@ function CanvasEditor() {
     if (!url) return;
 
     try {
+      const position = { x: Math.random() * 400, y: Math.random() * 400 };
       const result = await createWebsiteNode({
         canvasId: canvasId as Id<"canvases">,
-        position: { x: Math.random() * 400, y: Math.random() * 400 },
+        position,
         url,
       });
+
+      // Add to local state immediately for better UX
+      setNodes((nds) => [
+        ...nds,
+        {
+          id: result.canvasNodeId,
+          type: "website",
+          position,
+          data: {
+            canvasNodeId: result.canvasNodeId,
+            websiteNodeId: result.websiteNodeId,
+          },
+        },
+      ]);
 
       toast.success("Website node created");
     } catch (error) {
@@ -303,6 +357,7 @@ function CanvasEditor() {
         onNodesDelete={onNodesDelete}
         onEdgesDelete={onEdgesDelete}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
       >
         <Panel position="top-left">
           <div className="flex items-center gap-2 p-2">

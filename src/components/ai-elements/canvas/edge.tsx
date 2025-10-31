@@ -8,6 +8,7 @@ import {
   Position,
   useInternalNode,
 } from "@xyflow/react";
+import { useId } from "react";
 
 const Temporary = ({
   id,
@@ -29,11 +30,13 @@ const Temporary = ({
 
   return (
     <BaseEdge
-      className="stroke-1 stroke-ring"
       id={id}
       path={edgePath}
       style={{
-        strokeDasharray: "5, 5",
+        strokeDasharray: "8, 8",
+        strokeWidth: 6,
+        stroke: 'var(--ring)',
+        opacity: 0.6,
       }}
     />
   );
@@ -105,6 +108,7 @@ const getEdgeParams = (
 const Animated = ({ id, source, target, markerEnd, style }: EdgeProps) => {
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
+  const gradientId = useId();
 
   if (!(sourceNode && targetNode)) {
     return null;
@@ -126,8 +130,25 @@ const Animated = ({ id, source, target, markerEnd, style }: EdgeProps) => {
 
   return (
     <>
-      <BaseEdge id={id} markerEnd={markerEnd} path={edgePath} style={style} />
-      <circle fill="var(--primary)" r="4">
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="var(--chart-1)" />
+          <stop offset="50%" stopColor="var(--chart-2)" />
+          <stop offset="100%" stopColor="var(--chart-4)" />
+        </linearGradient>
+      </defs>
+      <BaseEdge
+        id={id}
+        markerEnd={markerEnd}
+        path={edgePath}
+        style={{
+          ...style,
+          strokeWidth: 8,
+          stroke: `url(#${gradientId})`,
+          strokeDasharray: "12, 8",
+        }}
+      />
+      <circle fill="var(--chart-3)" r="8">
         <animateMotion dur="2s" path={edgePath} repeatCount="indefinite" />
       </circle>
     </>

@@ -144,4 +144,31 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* React Flow handle styling - Make handles much bigger and more visible */
+  .react-flow__handle {
+    width: 20px !important;
+    height: 20px !important;
+    border-width: 3px !important;
+    background: var(--primary) !important;
+    border-color: var(--background) !important;
+    transition: all 0.2s ease;
+  }
+
+  .react-flow__handle:hover {
+    width: 24px !important;
+    height: 24px !important;
+    background: var(--chart-1) !important;
+    box-shadow: 0 0 12px var(--primary);
+  }
+
+  .react-flow__handle-connecting {
+    background: var(--chart-2) !important;
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .react-flow__handle-valid {
+    background: var(--chart-4) !important;
+  }
 }
