@@ -7,6 +7,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { NodeProps } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface YouTubeNodeData {
   canvasNodeId: Id<"canvas_nodes">;
@@ -100,9 +101,11 @@ export function YouTubeNode({ data }: NodeProps<YouTubeNodeData>) {
               </Button>
 
               {showTranscript && (
-                <div className="max-h-48 overflow-y-auto p-3 text-xs bg-muted/50 rounded border">
-                  <p className="whitespace-pre-wrap">{youtubeNode.transcript}</p>
-                </div>
+                <ScrollArea className="h-48 w-full rounded border bg-muted/50">
+                  <div className="p-3 text-xs">
+                    <p className="whitespace-pre-wrap">{youtubeNode.transcript}</p>
+                  </div>
+                </ScrollArea>
               )}
 
               <div className="text-xs text-muted-foreground">

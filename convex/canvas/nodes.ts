@@ -289,7 +289,7 @@ export const deleteNode = mutation({
     }
 
     // Delete node-specific data
-    await ctx.db.delete(canvasNode.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes">);
+    await ctx.db.delete(canvasNode.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes"> | Id<"website_nodes">);
 
     // Delete canvas node reference
     await ctx.db.delete(args.canvasNodeId);
@@ -355,6 +355,15 @@ export const getNodeContext = query({
           contextMessages.push({
             role: "system",
             content: `YouTube Video: ${title}\nURL: ${youtubeNode.url}\n\nTranscript:\n${youtubeNode.transcript}`,
+          });
+        }
+      } else if (sourceNode.nodeType === "website") {
+        const websiteNode = await ctx.db.get(sourceNode.data.nodeId as Id<"website_nodes">);
+        if (websiteNode?.markdown) {
+          const title = websiteNode.title || websiteNode.url;
+          contextMessages.push({
+            role: "system",
+            content: `Website: ${title}\nURL: ${websiteNode.url}\n\nContent:\n${websiteNode.markdown}`,
           });
         }
       }

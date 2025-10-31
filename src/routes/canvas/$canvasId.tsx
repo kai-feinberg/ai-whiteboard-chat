@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { TextNode } from "@/features/canvas/components/TextNode";
 import { ChatNode } from "@/features/canvas/components/ChatNode";
 import { YouTubeNode } from "@/features/canvas/components/YouTubeNode";
+import { WebsiteNode } from "@/features/canvas/components/WebsiteNode";
 import { useCallback, useEffect, useState } from "react";
 import {
   ReactFlow,
@@ -20,7 +21,7 @@ import {
   type Connection,
   type NodeTypes,
 } from "@xyflow/react";
-import { FileText, MessageSquare, Loader2, Video } from "lucide-react";
+import { FileText, MessageSquare, Loader2, Video, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/tanstack-react-start";
 
@@ -32,6 +33,7 @@ const nodeTypes: NodeTypes = {
   text: TextNode,
   chat: ChatNode,
   youtube: YouTubeNode,
+  website: WebsiteNode,
 };
 
 function CanvasEditor() {
@@ -47,6 +49,7 @@ function CanvasEditor() {
   const createTextNode = useMutation(api.canvas.nodes.createTextNode);
   const createChatNode = useAction(api.canvas.nodes.createChatNode);
   const createYouTubeNode = useAction(api.canvas.youtube.createYouTubeNode);
+  const createWebsiteNode = useAction(api.canvas.website.createWebsiteNode);
   const createEdge = useMutation(api.canvas.edges.createEdge);
   const deleteNode = useMutation(api.canvas.nodes.deleteNode);
   const deleteEdge = useMutation(api.canvas.edges.deleteEdge);
@@ -66,6 +69,7 @@ function CanvasEditor() {
           content: (dbNode as any).textContent,
           chatNodeId: (dbNode as any).chatNodeId,
           youtubeNodeId: (dbNode as any).youtubeNodeId,
+          websiteNodeId: (dbNode as any).websiteNodeId,
           canvasId: canvasId as Id<"canvases">, // Use canvasId from route params
           selectedThreadId: (dbNode as any).selectedThreadId,
           selectedAgentThreadId: (dbNode as any).selectedAgentThreadId,
@@ -244,6 +248,25 @@ function CanvasEditor() {
     }
   };
 
+  // Add Website node
+  const handleAddWebsiteNode = async () => {
+    const url = prompt("Enter Website URL:");
+    if (!url) return;
+
+    try {
+      const result = await createWebsiteNode({
+        canvasId: canvasId as Id<"canvases">,
+        position: { x: Math.random() * 400, y: Math.random() * 400 },
+        url,
+      });
+
+      toast.success("Website node created");
+    } catch (error) {
+      console.error("[Canvas] Error creating website node:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create website node");
+    }
+  };
+
   if (!orgId) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -309,6 +332,15 @@ function CanvasEditor() {
             >
               <Video className="h-4 w-4" />
               Add YouTube
+            </Button>
+            <Button
+              onClick={handleAddWebsiteNode}
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+            >
+              <Globe className="h-4 w-4" />
+              Add Website
             </Button>
           </div>
         </Panel>

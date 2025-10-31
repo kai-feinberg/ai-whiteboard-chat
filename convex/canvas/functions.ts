@@ -133,6 +133,12 @@ export const getCanvasWithNodes = query({
             ...node,
             youtubeNodeId: youtubeNode?._id || null,
           };
+        } else if (node.nodeType === "website") {
+          const websiteNode = await ctx.db.get(node.data.nodeId as Id<"website_nodes">);
+          return {
+            ...node,
+            websiteNodeId: websiteNode?._id || null,
+          };
         }
         return node;
       })
@@ -175,6 +181,47 @@ export const getYouTubeNode = query({
     }
 
     return youtubeNode;
+  },
+});
+
+/**
+ * Get Website node data (for UI component)
+ */
+export const getWebsiteNode = query({
+  args: {
+    websiteNodeId: v.id("website_nodes"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    const websiteNode = await ctx.db.get(args.websiteNodeId);
+    if (!websiteNode) {
+      return null;
+    }
+
+    // Verify ownership
+    if (websiteNode.organizationId !== organizationId) {
+      throw new Error("Website node does not belong to your organization");
+    }
+
+    // Get screenshot URL from storage if available
+    let screenshotUrl: string | null = null;
+    if (websiteNode.screenshotStorageId) {
+      screenshotUrl = await ctx.storage.getUrl(websiteNode.screenshotStorageId);
+    }
+
+    return {
+      ...websiteNode,
+      screenshotUrl,
+    };
   },
 });
 
@@ -299,7 +346,7 @@ export const deleteCanvas = mutation({
 
     for (const node of nodes) {
       // Delete node-specific data
-      await ctx.db.delete(node.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes">);
+      await ctx.db.delete(node.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes"> | Id<"website_nodes">);
       // Delete node reference
       await ctx.db.delete(node._id);
     }
