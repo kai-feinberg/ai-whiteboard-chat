@@ -33,13 +33,13 @@ export default defineSchema({
   canvas_nodes: defineTable({
     canvasId: v.id("canvases"),
     organizationId: v.string(),
-    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube"), v.literal("website")), // Node type
+    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube"), v.literal("website"), v.literal("tiktok")), // Node type
     position: v.object({ x: v.number(), y: v.number() }),
     width: v.number(),
     height: v.number(),
     data: v.object({
       // Reference to type-specific table
-      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes"), v.id("website_nodes")),
+      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes"), v.id("website_nodes"), v.id("tiktok_nodes")),
     }),
     notes: v.optional(v.string()), // User-added notes
     createdAt: v.number(),
@@ -108,6 +108,25 @@ export default defineSchema({
     title: v.optional(v.string()), // Page title
     markdown: v.optional(v.string()), // Scraped content in Markdown
     screenshotStorageId: v.optional(v.string()), // Convex storage ID for screenshot
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    error: v.optional(v.string()), // Error message if failed
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
+
+  // TikTok Nodes - TikTok video transcripts
+  tiktok_nodes: defineTable({
+    organizationId: v.string(),
+    url: v.string(), // Full TikTok URL
+    videoId: v.optional(v.string()), // Extracted video ID from API response
+    title: v.optional(v.string()), // Video description/caption
+    transcript: v.optional(v.string()), // Full transcript text
+    author: v.optional(v.string()), // Video author/creator
     status: v.union(
       v.literal("pending"),
       v.literal("processing"),

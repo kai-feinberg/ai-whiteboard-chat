@@ -11,6 +11,7 @@ import { TextNode } from "@/features/canvas/components/TextNode";
 import { ChatNode } from "@/features/canvas/components/ChatNode";
 import { YouTubeNode } from "@/features/canvas/components/YouTubeNode";
 import { WebsiteNode } from "@/features/canvas/components/WebsiteNode";
+import { TikTokNode } from "@/features/canvas/components/TikTokNode";
 import { useCallback, useEffect, useState } from "react";
 import {
   ReactFlow,
@@ -36,6 +37,7 @@ const nodeTypes: NodeTypes = {
   chat: ChatNode,
   youtube: YouTubeNode,
   website: WebsiteNode,
+  tiktok: TikTokNode,
 };
 
 const edgeTypes: EdgeTypes = {
@@ -57,6 +59,7 @@ function CanvasEditor() {
   const createChatNode = useAction(api.canvas.nodes.createChatNode);
   const createYouTubeNode = useAction(api.canvas.youtube.createYouTubeNode);
   const createWebsiteNode = useAction(api.canvas.website.createWebsiteNode);
+  const createTikTokNode = useAction(api.canvas.tiktok.createTikTokNode);
   const createEdge = useMutation(api.canvas.edges.createEdge);
   const deleteNode = useMutation(api.canvas.nodes.deleteNode);
   const deleteEdge = useMutation(api.canvas.edges.deleteEdge);
@@ -77,6 +80,7 @@ function CanvasEditor() {
           chatNodeId: (dbNode as any).chatNodeId,
           youtubeNodeId: (dbNode as any).youtubeNodeId,
           websiteNodeId: (dbNode as any).websiteNodeId,
+          tiktokNodeId: (dbNode as any).tiktokNodeId,
           canvasId: canvasId as Id<"canvases">, // Use canvasId from route params
           selectedThreadId: (dbNode as any).selectedThreadId,
           selectedAgentThreadId: (dbNode as any).selectedAgentThreadId,
@@ -321,6 +325,40 @@ function CanvasEditor() {
     }
   };
 
+  // Add TikTok node
+  const handleAddTikTokNode = async () => {
+    const url = prompt("Enter TikTok URL:");
+    if (!url) return;
+
+    try {
+      const position = { x: Math.random() * 400, y: Math.random() * 400 };
+      const result = await createTikTokNode({
+        canvasId: canvasId as Id<"canvases">,
+        position,
+        url,
+      });
+
+      // Add to local state immediately for better UX
+      setNodes((nds) => [
+        ...nds,
+        {
+          id: result.canvasNodeId,
+          type: "tiktok",
+          position,
+          data: {
+            canvasNodeId: result.canvasNodeId,
+            tiktokNodeId: result.tiktokNodeId,
+          },
+        },
+      ]);
+
+      toast.success("TikTok node created");
+    } catch (error) {
+      console.error("[Canvas] Error creating TikTok node:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create TikTok node");
+    }
+  };
+
   if (!orgId) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -396,6 +434,21 @@ function CanvasEditor() {
             >
               <Globe className="h-4 w-4" />
               Add Website
+            </Button>
+            <Button
+              onClick={handleAddTikTokNode}
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+            >
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+              </svg>
+              Add TikTok
             </Button>
           </div>
         </Panel>

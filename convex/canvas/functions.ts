@@ -139,6 +139,12 @@ export const getCanvasWithNodes = query({
             ...node,
             websiteNodeId: websiteNode?._id || null,
           };
+        } else if (node.nodeType === "tiktok") {
+          const tiktokNode = await ctx.db.get(node.data.nodeId as Id<"tiktok_nodes">);
+          return {
+            ...node,
+            tiktokNodeId: tiktokNode?._id || null,
+          };
         }
         return node;
       })
@@ -222,6 +228,38 @@ export const getWebsiteNode = query({
       ...websiteNode,
       screenshotUrl,
     };
+  },
+});
+
+/**
+ * Get TikTok node data (for UI component)
+ */
+export const getTikTokNode = query({
+  args: {
+    tiktokNodeId: v.id("tiktok_nodes"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    const tiktokNode = await ctx.db.get(args.tiktokNodeId);
+    if (!tiktokNode) {
+      return null;
+    }
+
+    // Verify ownership
+    if (tiktokNode.organizationId !== organizationId) {
+      throw new Error("TikTok node does not belong to your organization");
+    }
+
+    return tiktokNode;
   },
 });
 

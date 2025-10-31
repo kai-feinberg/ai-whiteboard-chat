@@ -16,6 +16,7 @@ import type * as canvas_edges from "../canvas/edges.js";
 import type * as canvas_functions from "../canvas/functions.js";
 import type * as canvas_nodes from "../canvas/nodes.js";
 import type * as canvas_threads from "../canvas/threads.js";
+import type * as canvas_tiktok from "../canvas/tiktok.js";
 import type * as canvas_website from "../canvas/website.js";
 import type * as canvas_youtube from "../canvas/youtube.js";
 import type * as chat_functions from "../chat/functions.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   "canvas/functions": typeof canvas_functions;
   "canvas/nodes": typeof canvas_nodes;
   "canvas/threads": typeof canvas_threads;
+  "canvas/tiktok": typeof canvas_tiktok;
   "canvas/website": typeof canvas_website;
   "canvas/youtube": typeof canvas_youtube;
   "chat/functions": typeof chat_functions;

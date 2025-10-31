@@ -348,6 +348,20 @@ Critical Gotchas & Fixes
 
 
 **Canvas Gotchas:**
+When adding a new node, make sure you update the fetching of context to properly fetch the context from the new node type as well as making sure the nodes appear immediately by editing the handler functions. ✅ Fix Complete
+I've successfully fixed the issue where Chat, YouTube, and Website nodes weren't appearing immediately on the canvas.
+Changes Made
+Updated src/routes/canvas/$canvasId.tsx - Modified three handler functions:
+handleAddChatNode (lines 217-246) - Now immediately adds chat node to local ReactFlow state with all required data (canvasNodeId, chatNodeId, threadId)
+handleAddYouTubeNode (lines 248-280) - Now immediately adds YouTube node to local state with placeholder data while transcript fetches in background
+handleAddWebsiteNode (lines 282-314) - Now immediately adds Website node to local state with placeholder data while scraping happens in background
+How It Works
+All three handlers now follow the same pattern as the working Text node handler
+After the backend action completes, the new node is immediately added to local ReactFlow state using setNodes()
+This ensures instant visual feedback while background processing (transcript fetching, web scraping) continues
+Convex's real-time subscriptions will update the nodes with full data as it becomes available
+
+
 - Node positions stored in canvas table, actual content in node-type tables
 - Groups need gather context to aggregate from multiple child nodes
 - trying to recreate components with react flow - everything should be an ai element canvas component found in src/components/ai-elements/canvas

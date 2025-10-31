@@ -289,7 +289,7 @@ export const deleteNode = mutation({
     }
 
     // Delete node-specific data
-    await ctx.db.delete(canvasNode.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes"> | Id<"website_nodes">);
+    await ctx.db.delete(canvasNode.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes"> | Id<"website_nodes"> | Id<"tiktok_nodes">);
 
     // Delete canvas node reference
     await ctx.db.delete(args.canvasNodeId);
@@ -364,6 +364,16 @@ export const getNodeContext = query({
           contextMessages.push({
             role: "system",
             content: `Website: ${title}\nURL: ${websiteNode.url}\n\nContent:\n${websiteNode.markdown}`,
+          });
+        }
+      } else if (sourceNode.nodeType === "tiktok") {
+        const tiktokNode = await ctx.db.get(sourceNode.data.nodeId as Id<"tiktok_nodes">);
+        if (tiktokNode?.transcript) {
+          const title = tiktokNode.title || "TikTok Video";
+          const author = tiktokNode.author ? ` by @${tiktokNode.author}` : "";
+          contextMessages.push({
+            role: "system",
+            content: `TikTok Video: ${title}${author}\nURL: ${tiktokNode.url}\n\nTranscript:\n${tiktokNode.transcript}`,
           });
         }
       }
