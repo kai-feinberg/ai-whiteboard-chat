@@ -132,6 +132,15 @@ export const getNodeContextInternal = internalQuery({
             content: `Context from connected text node:\n${textNode.content}`,
           });
         }
+      } else if (sourceNode.nodeType === "youtube") {
+        const youtubeNode = await ctx.db.get(sourceNode.data.nodeId as Id<"youtube_nodes">);
+        if (youtubeNode?.transcript) {
+          const title = youtubeNode.title || `YouTube Video ${youtubeNode.videoId}`;
+          contextMessages.push({
+            role: "system",
+            content: `YouTube Video: ${title}\nURL: ${youtubeNode.url}\n\nTranscript:\n${youtubeNode.transcript}`,
+          });
+        }
       }
 
       // Add notes if present
