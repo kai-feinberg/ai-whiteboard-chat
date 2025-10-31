@@ -11,6 +11,11 @@
 import type * as agents_actions from "../agents/actions.js";
 import type * as agents_mutations from "../agents/mutations.js";
 import type * as agents_queries from "../agents/queries.js";
+import type * as canvas_chat from "../canvas/chat.js";
+import type * as canvas_edges from "../canvas/edges.js";
+import type * as canvas_functions from "../canvas/functions.js";
+import type * as canvas_nodes from "../canvas/nodes.js";
+import type * as canvas_threads from "../canvas/threads.js";
 import type * as chat_functions from "../chat/functions.js";
 import type * as http from "../http.js";
 
@@ -32,6 +37,11 @@ declare const fullApi: ApiFromModules<{
   "agents/actions": typeof agents_actions;
   "agents/mutations": typeof agents_mutations;
   "agents/queries": typeof agents_queries;
+  "canvas/chat": typeof canvas_chat;
+  "canvas/edges": typeof canvas_edges;
+  "canvas/functions": typeof canvas_functions;
+  "canvas/nodes": typeof canvas_nodes;
+  "canvas/threads": typeof canvas_threads;
   "chat/functions": typeof chat_functions;
   http: typeof http;
 }>;

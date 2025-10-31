@@ -16,14 +16,21 @@ export type NodeProps = ComponentProps<typeof Card> & {
     target: boolean;
     source: boolean;
   };
+  width?: string;
+  height?: string;
 };
 
-export const Node = ({ handles, className, ...props }: NodeProps) => (
+export const Node = ({ handles, className, width, height, ...props }: NodeProps) => (
   <Card
     className={cn(
-      "node-container relative size-full h-auto w-sm gap-0 rounded-md p-0",
+      "node-container relative size-full h-auto gap-0 rounded-md p-0",
+      !width && "w-sm",
       className
     )}
+    style={{
+      ...(width && { width }),
+      ...(height && { height }),
+    }}
     {...props}
   >
     {handles.target && <Handle position={Position.Left} type="target" />}
