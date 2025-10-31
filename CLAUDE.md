@@ -1,27 +1,30 @@
 In all interactions, be extremely concise and sacrifice grammar for the sake of concision.
 
-AdScout - Claude Development Guide
+AI Whiteboard Chat - Claude Development Guide
 
 If you have made changes to the backend then when you are done developing make sure to run pnpm dev which will both start the dev server and run a typecheck on the backend code. After you have confirmed the check passes kill the task. DO NOT run pnpm dev:backend
 
 
 Quick Start Philosophy 🚀
-AdScout is a B2B ad intelligence platform built for SPEED over perfection.
+AI Whiteboard Chat (Poppy Clone) is an infinite canvas for AI conversations with rich context inputs. Built for SPEED over perfection.
+
 Core Principles
 
-Speed over perfection - Launch in ≤1 day, iterate based on feedback
+Speed over perfection - Launch fast, iterate based on feedback
 Simple over robust - Choose scrappiest solution that solves core problem
+Context-first - Make it easy to feed AI rich multi-modal context
 
 Tech Stack & Architecture
 Core Stack
 
-Frontend: TanStack Start (SSR React)
+Frontend: Next.js
 Database: Convex (real-time, serverless)
 Auth: Clerk with Organizations
-AI: OpenAI + Claude Sonnet
-Vector Search: Convex Vector Search (RAG)
+AI: Convex AI agent component (thread management, usage tracking)
+Canvas: AI SDK workflow elements (nodes, edges, connections)
+Scraping: Firecrawl (YouTube transcripts, social posts)
 Media Storage: Convex file storage
-Deployment: Convex deployment platform
+Pricing: Autumn pricing component
 
 File Structure Pattern
 /features/[feature-name]/
@@ -37,19 +40,24 @@ File Structure Pattern
 
 Core Features Overview
 
-Authentication - Clerk with Organizations (fully integrated)
-User Profile - User information and settings
-Subscriptions - Manage search terms and company monitoring (organization-scoped)
-Ad Dashboard - View scraped ads with filters/tags (organization-scoped)
-Search Ads - Tag-based and semantic search through ad database
-Chat - AI-powered ad analysis and variation generation
-RAG System - Vector embeddings for semantic search
+Canvas System - Infinite canvas with multiple node types (YouTube, Twitter, PDFs, voice notes, chat)
+Node Architecture - Display (what users see) vs Context (what AI gets)
+Groups - Container nodes that hold multiple nodes with combined context retrieval
+AI Chat Interface - Multiple configurable agents, full-screen view, reusable chat component
+Organizations - Team collaboration on canvases, shared chat threads
+Credit System - Org-scoped credits with live deduction, transparent usage tracking
+Content Reusability - Reuse processed nodes across canvases without re-processing
 
 Authentication System 🔐
 
 **Status**: ✅ Fully migrated to Clerk with Organizations
 
-AdScout uses Clerk for authentication with multi-tenant organization support. All data is scoped to organizations, not individual users.
+AI Whiteboard Chat uses Clerk for authentication with multi-tenant organization support. All data is scoped to organizations and canvases, not individual users.
+
+**Multi-Tenant Model:**
+- Users can have personal org + be invited to team orgs
+- Teams share canvases and continue each other's chats
+- All canvases, nodes, and chat threads scoped to organizationId + canvasId
 
 ## Backend Authentication (Convex Functions)
 
@@ -171,127 +179,157 @@ export default {
 6. **Handle missing organization** - Show helpful error when no org is selected
 
 
-Ad Scraping & Analysis System
-Scraping Flow (Automated)
+Canvas & Node System
+Node Architecture
 
-Cron job triggers based on subscription frequencies
-External API calls
-Media download and storage in Convex
-AI analysis generates tags 
-RAG system indexes content for search
+**Schema Approach:**
+- Separate table per node type (youtube_nodes, twitter_nodes, pdf_nodes, etc.)
+- Canvas table stores: node positions + references to node IDs
+- Each node has optional "notes" field users can add
+- Gather context function selects what data gets passed to AI
+- Clear UI showing what context goes to model + pricing
 
-Analysis Pipeline
+**Node Types Priority:**
+Essential:
+- Chat nodes (with threads, different agents/models, connect to other nodes)
+- Text nodes
+Priority order:
+1. YouTube videos (with Firecrawl transcript)
+2. Twitter/X posts
+3. Voice notes
+4. TikTok, Instagram, Facebook content
+5. PDF/Google Docs uploads
 
-Content extraction from ad text and media
-AI tagging
-Vector embedding generation for semantic search
-Media processing and storage optimization
+Chat Component Architecture
 
+**Reusable Component Pattern:**
+- Chat component takes `size` prop to work as canvas node AND full-screen page
+- Pass thread ID to component for consistency
+- DO NOT embed full page as node - recreate with shared component instead
+- Full-screen chat has separate URL for easier sharing/management
+- Auth check via beforeLoad hook on full-screen routes
 
-Search System Architecture
-Tag-Based Search
+Groups System
 
-Filter ads by AI-generated categories
-Company and platform filtering
-Date range and performance metrics
-User subscription scope limiting
-
-Semantic Search
-
-Vector similarity matching
-Natural language queries
-Context-aware results
-Relevance scoring
-
+Container nodes that hold multiple nodes
+Gather context function retrieves combined context from all contained nodes
+Pass aggregated context to AI
 
 Route Organization
 Core Routes
-/                          # Dashboard overview
-/profile                   # User settings & AI config
-/ad-subscriptions             # Manage search terms & companies
-
-/ads                       # Ad dashboard
-/ads/[id]                 # Ad detail view
-
-/search-ads                   # Advanced search interface
-
-/chat                     # AI chat sessions
-/chat/[sessionId]         # Individual chat
+/                          # Canvas list/dashboard
+/canvas/[id]              # Canvas editor (infinite canvas with nodes)
+/canvas/[id]/chat/[threadId]  # Full-screen chat view
+/settings                 # User settings & custom agents
 
 Convex Function Patterns
 tsx// All backend logic uses Convex functions, NOT REST APIs
-export const getByUser = query({...})        # List with filters
-export const getById = query({...})          # Single item  
-export const update = mutation({...})        # Update (subscriptions/preferences)
-export const remove = mutation({...})        # Delete
-export const scrapeAds = action({...})       # Scrape from external APIs
-export const analyzeAd = action({...})       # AI analysis and tagging
-export const searchSemantic = action({...})  # Vector search
+export const listCanvases = query({...})     # List user's canvases
+export const getCanvas = query({...})        # Get canvas + nodes
+export const createNode = mutation({...})    # Add node to canvas
+export const updateNode = mutation({...})    # Update node position/data
+export const deleteNode = mutation({...})    # Remove node
+export const getNodeContext = query({...})   # Get AI context for node
+export const scrapeContent = action({...})   # Firecrawl for YouTube/social
+export const processUpload = action({...})   # Process PDFs/files
 Use Convex patterns instead of REST:
 
 Queries - Read data from database
 Mutations - Write data to database
-Actions - Interact with external APIs (ad platforms, AI services)
+Actions - Interact with external APIs (Firecrawl, AI services, file processing)
+
+Pricing & Credits System
+
+**Credit Architecture:**
+- Organization-scoped credits (not user-scoped)
+- Live deduction using Convex real-time updates
+- Top-up purchases available
+- Transparent usage display (what context costs what)
+- Leverage Convex Thread and AI agent component for usage tracking
+- Different billing rates per model (GPT-4, Claude, Qwen, etc.)
+
+**Tiers:**
+Base: Solo or 5 people max, 3 canvases, included credits
+Higher: 20 people, unlimited canvases, more credits
+
+Custom Agents/Prompts
+
+Org-level custom bot configuration
+Preset bots (e.g., "Ideation")
+Custom bots (e.g., "VSL Writer" with custom system prompt)
+Available in chat interface dropdown
+Multiple models per agent (GPT-4, Claude Sonnet/Haiku, Grok, Qwen)
 
 ❌ Code Organization Mistakes
 
 Not checking for organizationId → Always verify `orgId` exists and is a string
+Not checking for canvasId → Most queries need both org and canvas scoping
 Not verifying organization ownership → Always check data belongs to current org
+Reusing full page in canvas node → Use shared component with size prop instead
 Cross-feature component imports → Features must be self-contained
 Manual auth in components → Use Clerk hooks and components
 Splitting functions prematurely → Keep related functions together
 God components → Single responsibility principle
-Not using vector search → Leverage Convex's built-in capabilities
 Querying without organization index → Always use `by_organization` index
+Not showing cost transparency → Users need to see what context costs
+Not implementing gather context function → Need function to select what data passes to AI
 
 Development Workflow
 Starting a New Feature
 
 Read feature README in /features/[name]/README.md for gotchas
-Check database schema in docs for table relationships
+Check database schema for table relationships
+For nodes: Implement gather context function to select AI data
 Copy existing pattern from similar feature
 Build smart hooks first with authentication built-in
 Create Convex functions following CRUD pattern
 Build UI components using smart hooks
+Consider: Can this content be reused across canvases?
 
 After Completing a Feature
 
 Update/create feature README with complete documentation
 Test authentication and real-time sync across browser tabs
-Test vector search and semantic queries
+Test canvas node positioning and connections
+Test chat component in both sizes (node + full-screen)
 Document any gotchas encountered during development
 Reflect on implementation - what worked well, what was difficult
 Propose updates to this claude.md file based on learnings
-Note performance considerations and edge cases discovered
+Note performance and credit cost implications
 
 Feature Reflection Template
 After building a feature, document:
 
 What went smoothly - patterns that worked well
 Unexpected challenges - issues not covered in documentation
-Authentication gotchas - Clerk or organization-related edge cases encountered
+Authentication gotchas - Clerk or organization-related edge cases
 Database issues - schema problems or relationship complications
-Vector search issues - embedding generation or query problems
-UI/UX discoveries - mobile responsiveness or real-time sync issues
-Performance notes - query optimization needs or bottlenecks
+Canvas/node issues - positioning, connections, gather context function problems
+AI integration issues - Convex AI component, thread management
+Credit tracking - cost transparency, usage deduction timing
+UI/UX discoveries - canvas responsiveness, chat component sizing
+Performance notes - query optimization, file processing bottlenecks
 Missing documentation - gaps in this guide that should be filled
 
 Before Implementation
 📚 REQUIRED READING:
 - /features/[feature-name]/README.md (if exists)
 - Database schema for related tables
-- Vector search documentation for semantic features
-- Routes documentation for API patterns
-- Senior Architect Prompt for trade-off decisions
+- Gather context function pattern for nodes
+- Chat component reusability pattern
+- Credit/pricing implications
 Testing Checklist
 
 Authentication works (logged in/out states)
 Real-time updates sync across tabs
-Vector search returns relevant results
+Canvas nodes position/move correctly
+Chat component works as node AND full-screen
+Gather context function returns correct data for AI
+Credits deduct correctly and transparently
 Error states handled gracefully
 Loading states handled appropriately
-Mobile responsive design
-Media files load correctly
+File uploads and scraping work
+Team collaboration (multiple users on same canvas)
 
 
 Critical Gotchas & Fixes
@@ -300,20 +338,33 @@ Critical Gotchas & Fixes
 
 **Key Points**:
 - All Convex queries/mutations MUST check for `organizationId`
+- Most queries also need `canvasId` for proper scoping
 - All database records MUST include `organizationId` field
-- Use `by_organization` index for efficient queries
+- Use `by_organization` and `by_canvas` indexes for efficient queries
 - Always verify organization ownership before mutations
+- Every node type needs gather context function to select AI data
+- Chat component must work as canvas node AND full-screen page
+- Show users what context costs before sending to AI
+
+
+**Canvas Gotchas:**
+- Node positions stored in canvas table, actual content in node-type tables
+- Groups need gather context to aggregate from multiple child nodes
+- trying to recreate components with react flow - everything should be an ai element canvas component found in src/components/ai-elements/canvas
+- Chat nodes connect to other nodes - need edge/connection system
 
 When You Get Stuck
 
 Read the feature README for known gotchas
 Check database schema for relationship issues
 Verify authentication is properly handled in smart hooks
-Test vector search with sample queries
+For nodes: Confirm gather context function returns correct data
+Test chat component at both sizes (node + full-screen)
 Test real-time updates across multiple browser tabs
+Test credit deduction and cost transparency
 Apply senior architect principles - is this over-engineered?
 
-Remember: B2B users will tolerate manual workarounds for real value. Keep it simple and ship fast! 🚀
+Remember: Users tolerate manual workarounds for real value. Ship fast, iterate based on feedback! 🚀
 
 
 ## Tool Execution Safety (TEMPORARY – Oct 2025)
