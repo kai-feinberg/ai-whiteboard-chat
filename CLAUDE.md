@@ -6,7 +6,6 @@ If you have made changes to the backend then when you are done developing make s
 
 When you add a new node ALWAYS make sure you add it to the context gathering: getNodeContextInternal
 
-
 Quick Start Philosophy 🚀
 AI Whiteboard Chat (Poppy Clone) is an infinite canvas for AI conversations with rich context inputs. Built for SPEED over perfection.
 

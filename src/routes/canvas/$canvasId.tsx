@@ -135,8 +135,8 @@ function CanvasEditor() {
           targetHandle: connection.targetHandle || undefined,
         });
 
-        // Update local state
-        setEdges((eds) => addEdge(connection, eds));
+        // Update local state with animated edge type
+        setEdges((eds) => addEdge({ ...connection, type: 'animated' }, eds));
         toast.success("Nodes connected");
       } catch (error) {
         console.error("[Canvas] Error creating edge:", error);
