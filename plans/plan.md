@@ -11,6 +11,11 @@ Step 2:
 Step 3:
 - add in other node types such as YT video, tweet, TT, etc
 
+
+tiktok and instagram nodes
+- groups, full screen chat, pricing, etc
+- migrate to scrape creators
+
 Step 4:
 - pricing plans
 - 

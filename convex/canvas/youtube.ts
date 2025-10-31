@@ -3,7 +3,6 @@ import { v } from "convex/values";
 import { action, internalAction, internalMutation, internalQuery } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
-import { Supadata } from "@supadata/js";
 
 /**
  * Extract YouTube video ID from URL
@@ -143,45 +142,45 @@ export const fetchYouTubeTranscript = internalAction({
     });
 
     try {
-      // Initialize Supadata client
-      const supadata = new Supadata({
-        apiKey: process.env.SUPADATA_API_KEY!,
-      });
+      // Fetch transcript using Scrape Creators API
+      const apiKey = process.env.SCRAPE_CREATORS_API_KEY;
+      if (!apiKey) {
+        throw new Error("SCRAPE_CREATORS_API_KEY environment variable not set");
+      }
 
-      console.log(`[YouTube] Supadata client initialized, fetching transcript...`);
+      console.log(`[YouTube] Calling Scrape Creators API for URL: ${node.url}`);
 
-      // Fetch transcript using Supadata (with text: true to get plain text)
-      const transcriptResult = await supadata.youtube.transcript({
-        url: node.url,
-        text: true, // Get plain text instead of timestamped chunks
-      });
+      const response = await fetch(
+        `https://api.scrapecreators.com/v1/youtube/video/transcript?url=${encodeURIComponent(node.url)}`,
+        {
+          method: 'GET',
+          headers: {
+            'x-api-key': apiKey,
+          },
+        }
+      );
 
-      console.log(`[YouTube] Received transcript result, type:`, typeof transcriptResult);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[YouTube] API error (${response.status}):`, errorText);
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
 
-      // transcriptResult should be a string when text: true
-      const transcript = typeof transcriptResult === 'string'
-        ? transcriptResult
-        : JSON.stringify(transcriptResult);
+      const data = await response.json();
+      console.log(`[YouTube] Received response from Scrape Creators API`);
 
-      // Check if transcript is available
+      // Extract transcript text
+      const transcript = data.transcript_only_text;
       if (!transcript || transcript.length === 0) {
         console.error(`[YouTube] No transcript available for video: ${node.videoId}`);
-        throw new Error("Transcript not available");
+        throw new Error("Transcript not available for this video");
       }
 
       console.log(`[YouTube] Transcript length: ${transcript.length} characters`);
+      console.log(`[YouTube] Transcript language: ${data.language || 'unknown'}`);
 
-      // Get video metadata for title
-      let title = `YouTube Video ${node.videoId}`;
-      try {
-        const videoData = await supadata.youtube.video({
-          id: node.videoId,
-        });
-        title = videoData.title || title;
-        console.log(`[YouTube] Got video title: ${title}`);
-      } catch (e) {
-        console.warn(`[YouTube] Could not fetch video metadata, using default title`);
-      }
+      // Use videoId from response as title fallback
+      const title = `YouTube Video ${data.videoId || node.videoId}`;
 
       // Save transcript and update to completed
       await ctx.runMutation(internal.canvas.youtube.updateYouTubeNodeInternal, {
@@ -195,11 +194,12 @@ export const fetchYouTubeTranscript = internalAction({
     } catch (error: any) {
       console.error(`[YouTube] Error fetching transcript for ${node.videoId}:`, error);
       console.error(`[YouTube] Error message: ${error?.message}`);
-      console.error(`[YouTube] Error details:`, error?.details);
 
       let errorMessage = error?.message || "Failed to fetch transcript";
-      if (error?.error) {
-        errorMessage = `${error.error}: ${errorMessage}`;
+
+      // Handle common API errors
+      if (error?.message?.includes('API request failed')) {
+        errorMessage = "API request failed. Please check your API key and video URL.";
       }
 
       // Update to failed with error message
