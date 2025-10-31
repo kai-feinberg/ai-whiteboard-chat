@@ -8,6 +8,7 @@ import { Panel } from "@/components/ai-elements/canvas/panel";
 import { Button } from "@/components/ui/button";
 import { TextNode } from "@/features/canvas/components/TextNode";
 import { ChatNode } from "@/features/canvas/components/ChatNode";
+import { YouTubeNode } from "@/features/canvas/components/YouTubeNode";
 import { useCallback, useEffect, useState } from "react";
 import {
   ReactFlow,
@@ -19,7 +20,7 @@ import {
   type Connection,
   type NodeTypes,
 } from "@xyflow/react";
-import { FileText, MessageSquare, Loader2 } from "lucide-react";
+import { FileText, MessageSquare, Loader2, Video } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/tanstack-react-start";
 
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/canvas/$canvasId")({
 const nodeTypes: NodeTypes = {
   text: TextNode,
   chat: ChatNode,
+  youtube: YouTubeNode,
 };
 
 function CanvasEditor() {
@@ -44,6 +46,7 @@ function CanvasEditor() {
   );
   const createTextNode = useMutation(api.canvas.nodes.createTextNode);
   const createChatNode = useAction(api.canvas.nodes.createChatNode);
+  const createYouTubeNode = useAction(api.canvas.youtube.createYouTubeNode);
   const createEdge = useMutation(api.canvas.edges.createEdge);
   const deleteNode = useMutation(api.canvas.nodes.deleteNode);
   const deleteEdge = useMutation(api.canvas.edges.deleteEdge);
@@ -62,6 +65,7 @@ function CanvasEditor() {
           canvasNodeId: dbNode._id,
           content: (dbNode as any).textContent,
           chatNodeId: (dbNode as any).chatNodeId,
+          youtubeNodeId: (dbNode as any).youtubeNodeId,
           canvasId: canvasId as Id<"canvases">, // Use canvasId from route params
           selectedThreadId: (dbNode as any).selectedThreadId,
           selectedAgentThreadId: (dbNode as any).selectedAgentThreadId,
@@ -221,6 +225,25 @@ function CanvasEditor() {
     }
   };
 
+  // Add YouTube node
+  const handleAddYouTubeNode = async () => {
+    const url = prompt("Enter YouTube URL:");
+    if (!url) return;
+
+    try {
+      const result = await createYouTubeNode({
+        canvasId: canvasId as Id<"canvases">,
+        position: { x: Math.random() * 400, y: Math.random() * 400 },
+        url,
+      });
+
+      toast.success("YouTube node created");
+    } catch (error) {
+      console.error("[Canvas] Error creating YouTube node:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create YouTube node");
+    }
+  };
+
   if (!orgId) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -277,6 +300,15 @@ function CanvasEditor() {
             >
               <MessageSquare className="h-4 w-4" />
               Add Chat
+            </Button>
+            <Button
+              onClick={handleAddYouTubeNode}
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+            >
+              <Video className="h-4 w-4" />
+              Add YouTube
             </Button>
           </div>
         </Panel>

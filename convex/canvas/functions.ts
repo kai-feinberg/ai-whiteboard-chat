@@ -127,6 +127,12 @@ export const getCanvasWithNodes = query({
             selectedThreadId: chatNode.selectedThreadId || null,
             selectedAgentThreadId: selectedThread?.agentThreadId || null,
           };
+        } else if (node.nodeType === "youtube") {
+          const youtubeNode = await ctx.db.get(node.data.nodeId as Id<"youtube_nodes">);
+          return {
+            ...node,
+            youtubeNodeId: youtubeNode?._id || null,
+          };
         }
         return node;
       })
@@ -137,6 +143,38 @@ export const getCanvasWithNodes = query({
       nodes: nodesWithData,
       edges,
     };
+  },
+});
+
+/**
+ * Get YouTube node data (for UI component)
+ */
+export const getYouTubeNode = query({
+  args: {
+    youtubeNodeId: v.id("youtube_nodes"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    const youtubeNode = await ctx.db.get(args.youtubeNodeId);
+    if (!youtubeNode) {
+      return null;
+    }
+
+    // Verify ownership
+    if (youtubeNode.organizationId !== organizationId) {
+      throw new Error("YouTube node does not belong to your organization");
+    }
+
+    return youtubeNode;
   },
 });
 
@@ -261,7 +299,7 @@ export const deleteCanvas = mutation({
 
     for (const node of nodes) {
       // Delete node-specific data
-      await ctx.db.delete(node.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes">);
+      await ctx.db.delete(node.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes">);
       // Delete node reference
       await ctx.db.delete(node._id);
     }

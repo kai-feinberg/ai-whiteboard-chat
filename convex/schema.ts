@@ -33,13 +33,13 @@ export default defineSchema({
   canvas_nodes: defineTable({
     canvasId: v.id("canvases"),
     organizationId: v.string(),
-    nodeType: v.union(v.literal("text"), v.literal("chat")), // Node type
+    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube")), // Node type
     position: v.object({ x: v.number(), y: v.number() }),
     width: v.number(),
     height: v.number(),
     data: v.object({
       // Reference to type-specific table
-      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes")),
+      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes")),
     }),
     notes: v.optional(v.string()), // User-added notes
     createdAt: v.number(),
@@ -80,4 +80,24 @@ export default defineSchema({
   })
     .index("by_organization", ["organizationId"])
     .index("by_canvas", ["canvasId"]),
+
+  // YouTube Nodes - YouTube video transcripts
+  youtube_nodes: defineTable({
+    organizationId: v.string(),
+    url: v.string(), // Full YouTube URL
+    videoId: v.string(), // Extracted video ID
+    title: v.optional(v.string()), // Video title
+    transcript: v.optional(v.string()), // Full transcript text
+    thumbnailUrl: v.optional(v.string()), // Video thumbnail
+    duration: v.optional(v.number()), // Video duration in seconds
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    error: v.optional(v.string()), // Error message if failed
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
 });
