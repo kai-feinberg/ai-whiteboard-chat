@@ -145,6 +145,12 @@ export const getCanvasWithNodes = query({
             ...node,
             tiktokNodeId: tiktokNode?._id || null,
           };
+        } else if (node.nodeType === "facebook_ad") {
+          const facebookAdNode = await ctx.db.get(node.data.nodeId as Id<"facebook_ads_nodes">);
+          return {
+            ...node,
+            facebookAdNodeId: facebookAdNode?._id || null,
+          };
         }
         return node;
       })
@@ -260,6 +266,56 @@ export const getTikTokNode = query({
     }
 
     return tiktokNode;
+  },
+});
+
+/**
+ * Get Facebook Ad node data (for UI component)
+ */
+export const getFacebookAdNode = query({
+  args: {
+    facebookAdNodeId: v.id("facebook_ads_nodes"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    const facebookAdNode = await ctx.db.get(args.facebookAdNodeId);
+    if (!facebookAdNode) {
+      return null;
+    }
+
+    // Verify ownership
+    if (facebookAdNode.organizationId !== organizationId) {
+      throw new Error("Facebook Ad node does not belong to your organization");
+    }
+
+    // Get image URLs from storage if available
+    let imageUrls: (string | null)[] = [];
+    if (facebookAdNode.imageStorageIds && facebookAdNode.imageStorageIds.length > 0) {
+      imageUrls = await Promise.all(
+        facebookAdNode.imageStorageIds.map((storageId) => ctx.storage.getUrl(storageId))
+      );
+    }
+
+    // Get video thumbnail URL from storage if available
+    let videoThumbnailUrl: string | null = null;
+    if (facebookAdNode.videoThumbnailStorageId) {
+      videoThumbnailUrl = await ctx.storage.getUrl(facebookAdNode.videoThumbnailStorageId);
+    }
+
+    return {
+      ...facebookAdNode,
+      imageUrls,
+      videoThumbnailUrl,
+    };
   },
 });
 

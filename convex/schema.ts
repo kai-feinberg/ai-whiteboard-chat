@@ -33,13 +33,13 @@ export default defineSchema({
   canvas_nodes: defineTable({
     canvasId: v.id("canvases"),
     organizationId: v.string(),
-    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube"), v.literal("website"), v.literal("tiktok")), // Node type
+    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube"), v.literal("website"), v.literal("tiktok"), v.literal("facebook_ad")), // Node type
     position: v.object({ x: v.number(), y: v.number() }),
     width: v.number(),
     height: v.number(),
     data: v.object({
       // Reference to type-specific table
-      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes"), v.id("website_nodes"), v.id("tiktok_nodes")),
+      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes"), v.id("website_nodes"), v.id("tiktok_nodes"), v.id("facebook_ads_nodes")),
     }),
     notes: v.optional(v.string()), // User-added notes
     createdAt: v.number(),
@@ -127,6 +127,33 @@ export default defineSchema({
     title: v.optional(v.string()), // Video description/caption
     transcript: v.optional(v.string()), // Full transcript text
     author: v.optional(v.string()), // Video author/creator
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    error: v.optional(v.string()), // Error message if failed
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
+
+  // Facebook Ads Nodes - Facebook Ad Library ads
+  facebook_ads_nodes: defineTable({
+    organizationId: v.string(),
+    adId: v.string(), // Facebook Ad Archive ID (user input)
+    adArchiveID: v.optional(v.string()), // Confirmed Ad Archive ID from API
+    url: v.optional(v.string()), // Ad Library URL
+    title: v.optional(v.string()), // Ad title (from snapshot.title or cards)
+    body: v.optional(v.string()), // Ad body text
+    linkDescription: v.optional(v.string()), // Link description
+    transcript: v.optional(v.string()), // Video transcript if available
+    mediaType: v.optional(v.union(v.literal("image"), v.literal("video"), v.literal("none"))), // Type of media
+    imageStorageIds: v.optional(v.array(v.string())), // Convex storage IDs for images
+    videoThumbnailStorageId: v.optional(v.string()), // Convex storage ID for video thumbnail
+    videoUrl: v.optional(v.string()), // HD video URL
+    pageName: v.optional(v.string()), // Page/advertiser name
+    publisherPlatform: v.optional(v.array(v.string())), // Platforms ad ran on
     status: v.union(
       v.literal("pending"),
       v.literal("processing"),

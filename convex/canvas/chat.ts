@@ -174,6 +174,38 @@ export const getNodeContextInternal = internalQuery({
             content: `TikTok Video: ${title}${author}\nURL: ${tiktokNode.url}\n\nTranscript:\n${tiktokNode.transcript}`,
           });
         }
+      } else if (sourceNode.nodeType === "facebook_ad") {
+        const facebookAdNode = await ctx.db.get(sourceNode.data.nodeId as Id<"facebook_ads_nodes">);
+        if (facebookAdNode) {
+          const title = facebookAdNode.title || "Facebook Ad";
+          const pageName = facebookAdNode.pageName ? ` by ${facebookAdNode.pageName}` : "";
+          let content = `Facebook Ad: ${title}${pageName}\n`;
+
+          if (facebookAdNode.url) {
+            content += `URL: ${facebookAdNode.url}\n`;
+          }
+
+          if (facebookAdNode.body) {
+            content += `\nAd Copy:\n${facebookAdNode.body}\n`;
+          }
+
+          if (facebookAdNode.linkDescription) {
+            content += `\nLink Description:\n${facebookAdNode.linkDescription}\n`;
+          }
+
+          if (facebookAdNode.publisherPlatform && facebookAdNode.publisherPlatform.length > 0) {
+            content += `\nPlatforms: ${facebookAdNode.publisherPlatform.join(", ")}\n`;
+          }
+
+          if (facebookAdNode.transcript) {
+            content += `\nVideo Transcript:\n${facebookAdNode.transcript}`;
+          }
+
+          contextMessages.push({
+            role: "system",
+            content,
+          });
+        }
       }
 
       // Add notes if present

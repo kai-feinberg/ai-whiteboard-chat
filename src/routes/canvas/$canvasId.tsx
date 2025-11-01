@@ -12,6 +12,7 @@ import { ChatNode } from "@/features/canvas/components/ChatNode";
 import { YouTubeNode } from "@/features/canvas/components/YouTubeNode";
 import { WebsiteNode } from "@/features/canvas/components/WebsiteNode";
 import { TikTokNode } from "@/features/canvas/components/TikTokNode";
+import { FacebookAdNode } from "@/features/canvas/components/FacebookAdNode";
 import { useCallback, useEffect, useState } from "react";
 import {
   ReactFlow,
@@ -38,6 +39,7 @@ const nodeTypes: NodeTypes = {
   youtube: YouTubeNode,
   website: WebsiteNode,
   tiktok: TikTokNode,
+  facebook_ad: FacebookAdNode,
 };
 
 const edgeTypes: EdgeTypes = {
@@ -60,6 +62,7 @@ function CanvasEditor() {
   const createYouTubeNode = useAction(api.canvas.youtube.createYouTubeNode);
   const createWebsiteNode = useAction(api.canvas.website.createWebsiteNode);
   const createTikTokNode = useAction(api.canvas.tiktok.createTikTokNode);
+  const createFacebookAdNode = useAction(api.canvas.facebook.createFacebookAdNode);
   const createEdge = useMutation(api.canvas.edges.createEdge);
   const deleteNode = useMutation(api.canvas.nodes.deleteNode);
   const deleteEdge = useMutation(api.canvas.edges.deleteEdge);
@@ -81,6 +84,7 @@ function CanvasEditor() {
           youtubeNodeId: (dbNode as any).youtubeNodeId,
           websiteNodeId: (dbNode as any).websiteNodeId,
           tiktokNodeId: (dbNode as any).tiktokNodeId,
+          facebookAdNodeId: (dbNode as any).facebookAdNodeId,
           canvasId: canvasId as Id<"canvases">, // Use canvasId from route params
           selectedThreadId: (dbNode as any).selectedThreadId,
           selectedAgentThreadId: (dbNode as any).selectedAgentThreadId,
@@ -359,6 +363,58 @@ function CanvasEditor() {
     }
   };
 
+  // Add Facebook Ad node
+  const handleAddFacebookAdNode = async () => {
+    const input = prompt("Enter Facebook Ad Library URL or Ad ID:");
+    if (!input) return;
+
+    // Parse Ad ID from URL or use input directly
+    let adId = input.trim();
+
+    // Try to extract ID from URL patterns:
+    // https://www.facebook.com/ads/library?id=123456789
+    // https://www.facebook.com/ads/library/?id=123456789
+    const urlMatch = input.match(/[?&]id=(\d+)/);
+    if (urlMatch) {
+      adId = urlMatch[1];
+    } else {
+      // If no URL pattern found, check if input is just a number
+      const numericMatch = input.match(/^\d+$/);
+      if (!numericMatch) {
+        toast.error("Please enter a valid Facebook Ad Library URL or numeric Ad ID");
+        return;
+      }
+    }
+
+    try {
+      const position = { x: Math.random() * 400, y: Math.random() * 400 };
+      const result = await createFacebookAdNode({
+        canvasId: canvasId as Id<"canvases">,
+        position,
+        adId,
+      });
+
+      // Add to local state immediately for better UX
+      setNodes((nds) => [
+        ...nds,
+        {
+          id: result.canvasNodeId,
+          type: "facebook_ad",
+          position,
+          data: {
+            canvasNodeId: result.canvasNodeId,
+            facebookAdNodeId: result.facebookAdNodeId,
+          },
+        },
+      ]);
+
+      toast.success("Facebook Ad node created");
+    } catch (error) {
+      console.error("[Canvas] Error creating Facebook Ad node:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create Facebook Ad node");
+    }
+  };
+
   if (!orgId) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -449,6 +505,21 @@ function CanvasEditor() {
                 <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
               </svg>
               Add TikTok
+            </Button>
+            <Button
+              onClick={handleAddFacebookAdNode}
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+            >
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              </svg>
+              Add Facebook Ad
             </Button>
           </div>
         </Panel>
