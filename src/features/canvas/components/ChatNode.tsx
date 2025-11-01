@@ -151,7 +151,7 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
   const isChatReady = selectedThread?.agentThreadId && messages !== undefined;
 
   return (
-    <Node handles={{ target: true, source: false }} width="800px" height="600px" className="flex flex-col">
+    <Node handles={{ target: true, source: false }} width="1000px" height="750px" className="flex flex-col">
       <NodeHeader>
         <NodeTitle className="flex items-center gap-2 text-sm">
           <MessageSquare className="h-4 w-4" />
@@ -167,21 +167,12 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
             onSelectThread={handleSelectThread}
             onCreateThread={handleCreateThread}
             onDeleteThread={handleDeleteThread}
+            contextMessages={contextMessages}
             className="w-48 border-r"
           />
 
           {/* Chat Area */}
           <div className="flex-1 flex flex-col">
-            {/* Context indicator */}
-            {contextMessages && contextMessages.length > 0 && (
-              <div className="px-3 py-2 bg-muted border-b text-xs text-muted-foreground">
-                <span className="font-medium">
-                  Context from {contextMessages.length} connected node
-                  {contextMessages.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-            )}
-
             {isChatReady ? (
               <Chat
                 key={selectedThread.agentThreadId}

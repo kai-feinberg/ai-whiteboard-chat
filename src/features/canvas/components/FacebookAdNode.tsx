@@ -58,7 +58,7 @@ export function FacebookAdNode({ data }: NodeProps<FacebookAdNodeData>) {
               {/* Video Preview */}
               {facebookAdNode.mediaType === "video" && (
                 <div
-                  className="relative w-full bg-black rounded-lg overflow-hidden cursor-pointer group"
+                  className="relative w-full max-h-[300px] bg-black rounded-lg overflow-hidden cursor-pointer group flex items-center justify-center"
                   onClick={() => facebookAdNode.url && window.open(facebookAdNode.url, '_blank')}
                 >
                   {facebookAdNode.videoThumbnailUrl ? (
@@ -66,7 +66,7 @@ export function FacebookAdNode({ data }: NodeProps<FacebookAdNodeData>) {
                       <img
                         src={facebookAdNode.videoThumbnailUrl}
                         alt="Video thumbnail"
-                        className="w-full h-auto object-contain"
+                        className="max-w-full max-h-[300px] object-contain"
                       />
                       {/* Play button overlay */}
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -104,7 +104,7 @@ export function FacebookAdNode({ data }: NodeProps<FacebookAdNodeData>) {
 
               {/* Image Preview (carousel for multiple images) */}
               {facebookAdNode.mediaType === "image" && facebookAdNode.imageUrls && facebookAdNode.imageUrls.length > 0 && (
-                <div className="relative w-full rounded-lg overflow-hidden bg-black">
+                <div className="relative w-full max-h-[300px] rounded-lg overflow-hidden bg-black flex items-center justify-center">
                   <div
                     className="cursor-pointer"
                     onClick={() => facebookAdNode.url && window.open(facebookAdNode.url, '_blank')}
@@ -113,7 +113,7 @@ export function FacebookAdNode({ data }: NodeProps<FacebookAdNodeData>) {
                       <img
                         src={facebookAdNode.imageUrls[0]}
                         alt="Ad image"
-                        className="w-full h-auto object-contain rounded-lg"
+                        className="max-w-full max-h-[300px] object-contain rounded-lg"
                       />
                     )}
                   </div>

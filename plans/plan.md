@@ -1,4 +1,18 @@
-Prep:
+Handle just pasting on the canvas
+
+fix modals and scrolling
+
+- Full screen chat
+- Pricing
+- Different models
+- Different agents/bots
+
+- resize nodes
+
+show transcript in dialog to avoid panning issue
+
+copy connected context and view token usage
+rep:
 detailed plan doc and claude.md file
 
 Step 1:

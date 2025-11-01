@@ -3,8 +3,16 @@
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { MessageSquare, Plus, Trash2 } from "lucide-react";
+import { MessageSquare, Plus, Trash2, Eye } from "lucide-react";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 export interface Thread {
@@ -21,6 +29,7 @@ export interface ThreadSidebarProps {
   onSelectThread: (threadId: Id<"threads">) => void;
   onCreateThread: () => void;
   onDeleteThread?: (threadId: Id<"threads">) => void;
+  contextMessages?: Array<{ role: "system"; content: string }>;
   className?: string;
 }
 
@@ -30,6 +39,7 @@ export function ThreadSidebar({
   onSelectThread,
   onCreateThread,
   onDeleteThread,
+  contextMessages,
   className,
 }: ThreadSidebarProps) {
   return (
@@ -95,6 +105,49 @@ export function ThreadSidebar({
           )}
         </div>
       </ScrollArea>
+
+      {/* Context Indicator */}
+      {contextMessages && contextMessages.length > 0 && (
+        <div className="p-3 border-t bg-muted/30">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              Context from {contextMessages.length} connected node
+              {contextMessages.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full">
+                <Eye className="h-3 w-3 mr-2" />
+                View Context
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[80vh]">
+              <DialogHeader>
+                <DialogTitle>Connected Node Context</DialogTitle>
+                <DialogDescription>
+                  Context from {contextMessages.length} connected node
+                  {contextMessages.length !== 1 ? "s" : ""} that will be passed to the AI
+                </DialogDescription>
+              </DialogHeader>
+              <ScrollArea className="h-[60vh] pr-4">
+                <div className="space-y-4">
+                  {contextMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-lg bg-muted/50 border"
+                    >
+                      <pre className="text-xs whitespace-pre-wrap font-mono">
+                        {msg.content}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
     </div>
   );
 }
