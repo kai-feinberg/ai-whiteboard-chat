@@ -1,13 +1,11 @@
 // src/features/canvas/components/WebsiteNode.tsx
 import { Node, NodeHeader, NodeTitle, NodeContent } from "@/components/ai-elements/canvas/node";
-import { Globe, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { Globe, Loader2, AlertCircle } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { NodeProps } from "@xyflow/react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { TranscriptDialog } from "@/components/TranscriptDialog";
 
 interface WebsiteNodeData {
   canvasNodeId: Id<"canvas_nodes">;
@@ -15,8 +13,6 @@ interface WebsiteNodeData {
 }
 
 export function WebsiteNode({ data }: NodeProps<WebsiteNodeData>) {
-  const [showContent, setShowContent] = useState(false);
-
   // Query website node data
   const websiteNode = useQuery(
     api.canvas.functions.getWebsiteNode,
@@ -93,33 +89,12 @@ export function WebsiteNode({ data }: NodeProps<WebsiteNodeData>) {
 
               {/* Markdown Content */}
               {websiteNode.markdown && (
-                <div className="space-y-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowContent(!showContent)}
-                    className="w-full justify-between text-sm"
-                  >
-                    <span>Content</span>
-                    {showContent ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-
-                  {showContent && (
-                    <ScrollArea className="h-48 w-full rounded border bg-muted/50">
-                      <div className="p-3 text-xs">
-                        <p className="whitespace-pre-wrap">{websiteNode.markdown}</p>
-                      </div>
-                    </ScrollArea>
-                  )}
-
-                  <div className="text-xs text-muted-foreground">
-                    {websiteNode.markdown.split(" ").length} words
-                  </div>
-                </div>
+                <TranscriptDialog
+                  transcript={websiteNode.markdown}
+                  title="Website Content"
+                  triggerText="View Content"
+                  triggerClassName="w-full"
+                />
               )}
 
               {!websiteNode.markdown && (

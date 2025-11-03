@@ -1,13 +1,13 @@
 // src/features/canvas/components/FacebookAdNode.tsx
 import { Node, NodeHeader, NodeTitle, NodeContent } from "@/components/ai-elements/canvas/node";
-import { Loader2, AlertCircle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { NodeProps } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { TranscriptDialog } from "@/components/TranscriptDialog";
 
 interface FacebookAdNodeData {
   canvasNodeId: Id<"canvas_nodes">;
@@ -15,7 +15,6 @@ interface FacebookAdNodeData {
 }
 
 export function FacebookAdNode({ data }: NodeProps<FacebookAdNodeData>) {
-  const [showTranscript, setShowTranscript] = useState(false);
   const [showFullCopy, setShowFullCopy] = useState(false);
 
   // Query Facebook Ad node data
@@ -226,33 +225,12 @@ export function FacebookAdNode({ data }: NodeProps<FacebookAdNodeData>) {
 
           {/* Transcript Section */}
           {facebookAdNode.status === "completed" && facebookAdNode.transcript && (
-            <div className="space-y-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowTranscript(!showTranscript)}
-                className="w-full justify-between text-sm"
-              >
-                <span>Video Transcript</span>
-                {showTranscript ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-
-              {showTranscript && (
-                <ScrollArea className="h-48 w-full rounded border bg-muted/50">
-                  <div className="p-3 text-xs">
-                    <p className="whitespace-pre-wrap">{facebookAdNode.transcript}</p>
-                  </div>
-                </ScrollArea>
-              )}
-
-              <div className="text-xs text-muted-foreground">
-                {facebookAdNode.transcript.split(" ").length} words
-              </div>
-            </div>
+            <TranscriptDialog
+              transcript={facebookAdNode.transcript}
+              title="Video Transcript"
+              triggerText="View Transcript"
+              triggerClassName="w-full"
+            />
           )}
         </div>
       </NodeContent>

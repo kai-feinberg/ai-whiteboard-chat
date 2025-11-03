@@ -1,13 +1,11 @@
 // src/features/canvas/components/TikTokNode.tsx
 import { Node, NodeHeader, NodeTitle, NodeContent } from "@/components/ai-elements/canvas/node";
-import { Loader2, AlertCircle, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { NodeProps } from "@xyflow/react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { TranscriptDialog } from "@/components/TranscriptDialog";
 
 interface TikTokNodeData {
   canvasNodeId: Id<"canvas_nodes">;
@@ -15,8 +13,6 @@ interface TikTokNodeData {
 }
 
 export function TikTokNode({ data }: NodeProps<TikTokNodeData>) {
-  const [showTranscript, setShowTranscript] = useState(false);
-
   // Query TikTok node data
   const tiktokNode = useQuery(
     api.canvas.functions.getTikTokNode,
@@ -114,33 +110,12 @@ export function TikTokNode({ data }: NodeProps<TikTokNodeData>) {
           )}
 
           {tiktokNode.status === "completed" && tiktokNode.transcript && (
-            <div className="space-y-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowTranscript(!showTranscript)}
-                className="w-full justify-between text-sm"
-              >
-                <span>Transcript</span>
-                {showTranscript ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-
-              {showTranscript && (
-                <ScrollArea className="h-48 w-full rounded border bg-muted/50">
-                  <div className="p-3 text-xs">
-                    <p className="whitespace-pre-wrap">{tiktokNode.transcript}</p>
-                  </div>
-                </ScrollArea>
-              )}
-
-              <div className="text-xs text-muted-foreground">
-                {tiktokNode.transcript.split(" ").length} words
-              </div>
-            </div>
+            <TranscriptDialog
+              transcript={tiktokNode.transcript}
+              title="TikTok Transcript"
+              triggerText="View Transcript"
+              triggerClassName="w-full"
+            />
           )}
 
           {tiktokNode.status === "completed" && !tiktokNode.transcript && (

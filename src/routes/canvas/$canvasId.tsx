@@ -28,6 +28,7 @@ import {
 import { FileText, MessageSquare, Loader2, Video, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/tanstack-react-start";
+import { UrlInputDialog } from "@/components/canvas/UrlInputDialog";
 
 export const Route = createFileRoute("/canvas/$canvasId")({
   component: CanvasEditor,
@@ -51,6 +52,12 @@ function CanvasEditor() {
   const { canvasId } = Route.useParams();
   const { orgId } = useAuth();
   const [hasLoadedFromDB, setHasLoadedFromDB] = useState(false);
+
+  // Dialog state
+  const [dialogState, setDialogState] = useState<{
+    type: "youtube" | "website" | "tiktok" | "facebook" | null;
+    open: boolean;
+  }>({ type: null, open: false });
 
   // Queries and mutations
   const canvasData = useQuery(
@@ -263,9 +270,10 @@ function CanvasEditor() {
 
   // Add YouTube node
   const handleAddYouTubeNode = async () => {
-    const url = prompt("Enter YouTube URL:");
-    if (!url) return;
+    setDialogState({ type: "youtube", open: true });
+  };
 
+  const handleYouTubeUrlSubmit = async (url: string) => {
     try {
       const position = { x: Math.random() * 400, y: Math.random() * 400 };
       const result = await createYouTubeNode({
@@ -297,9 +305,10 @@ function CanvasEditor() {
 
   // Add Website node
   const handleAddWebsiteNode = async () => {
-    const url = prompt("Enter Website URL:");
-    if (!url) return;
+    setDialogState({ type: "website", open: true });
+  };
 
+  const handleWebsiteUrlSubmit = async (url: string) => {
     try {
       const position = { x: Math.random() * 400, y: Math.random() * 400 };
       const result = await createWebsiteNode({
@@ -331,9 +340,10 @@ function CanvasEditor() {
 
   // Add TikTok node
   const handleAddTikTokNode = async () => {
-    const url = prompt("Enter TikTok URL:");
-    if (!url) return;
+    setDialogState({ type: "tiktok", open: true });
+  };
 
+  const handleTikTokUrlSubmit = async (url: string) => {
     try {
       const position = { x: Math.random() * 400, y: Math.random() * 400 };
       const result = await createTikTokNode({
@@ -365,9 +375,10 @@ function CanvasEditor() {
 
   // Add Facebook Ad node
   const handleAddFacebookAdNode = async () => {
-    const input = prompt("Enter Facebook Ad Library URL or Ad ID:");
-    if (!input) return;
+    setDialogState({ type: "facebook", open: true });
+  };
 
+  const handleFacebookAdInputSubmit = async (input: string) => {
     // Parse Ad ID from URL or use input directly
     let adId = input.trim();
 
@@ -524,6 +535,44 @@ function CanvasEditor() {
           </div>
         </Panel>
       </Canvas>
+
+      {/* URL Input Dialogs */}
+      <UrlInputDialog
+        open={dialogState.open && dialogState.type === "youtube"}
+        onOpenChange={(open) => setDialogState({ ...dialogState, open })}
+        onSubmit={handleYouTubeUrlSubmit}
+        title="Add YouTube Video"
+        description="Enter the YouTube video URL to add to your canvas"
+        placeholder="https://www.youtube.com/watch?v=..."
+      />
+
+      <UrlInputDialog
+        open={dialogState.open && dialogState.type === "website"}
+        onOpenChange={(open) => setDialogState({ ...dialogState, open })}
+        onSubmit={handleWebsiteUrlSubmit}
+        title="Add Website"
+        description="Enter the website URL to scrape and add to your canvas"
+        placeholder="https://example.com"
+      />
+
+      <UrlInputDialog
+        open={dialogState.open && dialogState.type === "tiktok"}
+        onOpenChange={(open) => setDialogState({ ...dialogState, open })}
+        onSubmit={handleTikTokUrlSubmit}
+        title="Add TikTok Video"
+        description="Enter the TikTok video URL to add to your canvas"
+        placeholder="https://www.tiktok.com/@username/video/..."
+      />
+
+      <UrlInputDialog
+        open={dialogState.open && dialogState.type === "facebook"}
+        onOpenChange={(open) => setDialogState({ ...dialogState, open })}
+        onSubmit={handleFacebookAdInputSubmit}
+        title="Add Facebook Ad"
+        description="Enter the Facebook Ad Library URL or numeric Ad ID"
+        placeholder="https://www.facebook.com/ads/library?id=... or Ad ID"
+        inputType="text"
+      />
     </div>
   );
 }

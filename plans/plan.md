@@ -12,6 +12,7 @@ fix modals and scrolling
 show transcript in dialog to avoid panning issue
 
 copy connected context and view token usage
+
 rep:
 detailed plan doc and claude.md file
 

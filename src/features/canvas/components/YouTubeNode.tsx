@@ -1,13 +1,11 @@
 // src/features/canvas/components/YouTubeNode.tsx
 import { Node, NodeHeader, NodeTitle, NodeContent } from "@/components/ai-elements/canvas/node";
-import { Video, Loader2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
+import { Video, Loader2, AlertCircle } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { NodeProps } from "@xyflow/react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { TranscriptDialog } from "@/components/TranscriptDialog";
 
 interface YouTubeNodeData {
   canvasNodeId: Id<"canvas_nodes">;
@@ -15,8 +13,6 @@ interface YouTubeNodeData {
 }
 
 export function YouTubeNode({ data }: NodeProps<YouTubeNodeData>) {
-  const [showTranscript, setShowTranscript] = useState(false);
-
   // Query YouTube node data
   const youtubeNode = useQuery(
     api.canvas.functions.getYouTubeNode,
@@ -85,33 +81,12 @@ export function YouTubeNode({ data }: NodeProps<YouTubeNodeData>) {
           )}
 
           {youtubeNode.status === "completed" && youtubeNode.transcript && (
-            <div className="space-y-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowTranscript(!showTranscript)}
-                className="w-full justify-between text-sm"
-              >
-                <span>Transcript</span>
-                {showTranscript ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-
-              {showTranscript && (
-                <ScrollArea className="h-48 w-full rounded border bg-muted/50">
-                  <div className="p-3 text-xs">
-                    <p className="whitespace-pre-wrap">{youtubeNode.transcript}</p>
-                  </div>
-                </ScrollArea>
-              )}
-
-              <div className="text-xs text-muted-foreground">
-                {youtubeNode.transcript.split(" ").length} words
-              </div>
-            </div>
+            <TranscriptDialog
+              transcript={youtubeNode.transcript}
+              title="YouTube Transcript"
+              triggerText="View Transcript"
+              triggerClassName="w-full"
+            />
           )}
 
           {youtubeNode.status === "completed" && !youtubeNode.transcript && (
