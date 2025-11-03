@@ -74,8 +74,8 @@ export function Chat({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden",
-        variant === "fullscreen" ? "h-full" : "h-96",
+        "flex flex-col nopan",
+        variant === "fullscreen" ? "h-full" : "h-full max-h-[600px]",
         className
       )}
     >

@@ -1,15 +1,15 @@
 Handle just pasting on the canvas
 
-fix modals and scrolling
+full screen chat to display same context button
+- refactor chat component to include sidebar/threads as well
 
-- Full screen chat
+scroll for chat node component
+
 - Pricing
 - Different models
 - Different agents/bots
 
 - resize nodes
-
-show transcript in dialog to avoid panning issue
 
 copy connected context and view token usage
 

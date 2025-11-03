@@ -33,20 +33,22 @@ export default defineSchema({
   canvas_nodes: defineTable({
     canvasId: v.id("canvases"),
     organizationId: v.string(),
-    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube"), v.literal("website"), v.literal("tiktok"), v.literal("facebook_ad")), // Node type
+    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube"), v.literal("website"), v.literal("tiktok"), v.literal("facebook_ad"), v.literal("group")), // Node type
     position: v.object({ x: v.number(), y: v.number() }),
     width: v.number(),
     height: v.number(),
     data: v.object({
       // Reference to type-specific table
-      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes"), v.id("website_nodes"), v.id("tiktok_nodes"), v.id("facebook_ads_nodes")),
+      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes"), v.id("website_nodes"), v.id("tiktok_nodes"), v.id("facebook_ads_nodes"), v.id("group_nodes")),
     }),
     notes: v.optional(v.string()), // User-added notes
+    parentGroupId: v.optional(v.id("canvas_nodes")), // Parent group node (for nesting)
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_canvas", ["canvasId"])
-    .index("by_organization", ["organizationId"]),
+    .index("by_organization", ["organizationId"])
+    .index("by_parent_group", ["parentGroupId"]),
 
   // Canvas Edges - Connections between nodes
   canvas_edges: defineTable({
@@ -161,6 +163,16 @@ export default defineSchema({
       v.literal("failed")
     ),
     error: v.optional(v.string()), // Error message if failed
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
+
+  // Group Nodes - Container nodes that hold multiple child nodes
+  group_nodes: defineTable({
+    organizationId: v.string(),
+    title: v.string(), // Group name/title
+    description: v.optional(v.string()), // Optional description
+    color: v.optional(v.string()), // Background color
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_organization", ["organizationId"]),

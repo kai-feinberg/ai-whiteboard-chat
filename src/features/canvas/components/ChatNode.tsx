@@ -158,8 +158,8 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
           Chat Node
         </NodeTitle>
       </NodeHeader>
-      <NodeContent className="p-0 flex-1 flex flex-col overflow-hidden">
-        <div className="flex h-full w-full">
+      <NodeContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex h-full w-full nopan overflow-hidden">
           {/* Thread Sidebar */}
           <ThreadSidebar
             threads={threads}
@@ -168,11 +168,11 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
             onCreateThread={handleCreateThread}
             onDeleteThread={handleDeleteThread}
             contextMessages={contextMessages}
-            className="w-48 border-r"
+            className="w-48 border-r overflow-y-auto"
           />
 
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {isChatReady ? (
               <Chat
                 key={selectedThread.agentThreadId}

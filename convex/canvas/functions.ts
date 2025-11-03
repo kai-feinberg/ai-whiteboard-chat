@@ -151,6 +151,12 @@ export const getCanvasWithNodes = query({
             ...node,
             facebookAdNodeId: facebookAdNode?._id || null,
           };
+        } else if (node.nodeType === "group") {
+          const groupNode = await ctx.db.get(node.data.nodeId as Id<"group_nodes">);
+          return {
+            ...node,
+            groupNodeId: groupNode?._id || null,
+          };
         }
         return node;
       })

@@ -12,7 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CanvasCanvasIdRouteImport } from './routes/canvas/$canvasId'
+import { Route as CanvasCanvasIdIndexRouteImport } from './routes/canvas/$canvasId/index'
+import { Route as CanvasCanvasIdChatRouteImport } from './routes/canvas/$canvasId/chat'
 
 const PlaygroundRoute = PlaygroundRouteImport.update({
   id: '/playground',
@@ -28,42 +29,61 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CanvasCanvasIdRoute = CanvasCanvasIdRouteImport.update({
-  id: '/canvas/$canvasId',
-  path: '/canvas/$canvasId',
+const CanvasCanvasIdIndexRoute = CanvasCanvasIdIndexRouteImport.update({
+  id: '/canvas/$canvasId/',
+  path: '/canvas/$canvasId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CanvasCanvasIdChatRoute = CanvasCanvasIdChatRouteImport.update({
+  id: '/canvas/$canvasId/chat',
+  path: '/canvas/$canvasId/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/playground': typeof PlaygroundRoute
-  '/canvas/$canvasId': typeof CanvasCanvasIdRoute
+  '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
+  '/canvas/$canvasId': typeof CanvasCanvasIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/playground': typeof PlaygroundRoute
-  '/canvas/$canvasId': typeof CanvasCanvasIdRoute
+  '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
+  '/canvas/$canvasId': typeof CanvasCanvasIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRoute
   '/playground': typeof PlaygroundRoute
-  '/canvas/$canvasId': typeof CanvasCanvasIdRoute
+  '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
+  '/canvas/$canvasId/': typeof CanvasCanvasIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/playground' | '/canvas/$canvasId'
+  fullPaths:
+    | '/'
+    | '/playground'
+    | '/canvas/$canvasId/chat'
+    | '/canvas/$canvasId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/playground' | '/canvas/$canvasId'
-  id: '__root__' | '/' | '/_authed' | '/playground' | '/canvas/$canvasId'
+  to: '/' | '/playground' | '/canvas/$canvasId/chat' | '/canvas/$canvasId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authed'
+    | '/playground'
+    | '/canvas/$canvasId/chat'
+    | '/canvas/$canvasId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRoute
   PlaygroundRoute: typeof PlaygroundRoute
-  CanvasCanvasIdRoute: typeof CanvasCanvasIdRoute
+  CanvasCanvasIdChatRoute: typeof CanvasCanvasIdChatRoute
+  CanvasCanvasIdIndexRoute: typeof CanvasCanvasIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -89,11 +109,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/canvas/$canvasId': {
-      id: '/canvas/$canvasId'
+    '/canvas/$canvasId/': {
+      id: '/canvas/$canvasId/'
       path: '/canvas/$canvasId'
       fullPath: '/canvas/$canvasId'
-      preLoaderRoute: typeof CanvasCanvasIdRouteImport
+      preLoaderRoute: typeof CanvasCanvasIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/canvas/$canvasId/chat': {
+      id: '/canvas/$canvasId/chat'
+      path: '/canvas/$canvasId/chat'
+      fullPath: '/canvas/$canvasId/chat'
+      preLoaderRoute: typeof CanvasCanvasIdChatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -103,7 +130,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRoute,
   PlaygroundRoute: PlaygroundRoute,
-  CanvasCanvasIdRoute: CanvasCanvasIdRoute,
+  CanvasCanvasIdChatRoute: CanvasCanvasIdChatRoute,
+  CanvasCanvasIdIndexRoute: CanvasCanvasIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

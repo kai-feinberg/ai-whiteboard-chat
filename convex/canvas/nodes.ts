@@ -340,70 +340,101 @@ export const getNodeContext = query({
       const sourceNode = await ctx.db.get(edge.source);
       if (!sourceNode) continue;
 
-      if (sourceNode.nodeType === "text") {
-        const textNode = await ctx.db.get(sourceNode.data.nodeId as Id<"text_nodes">);
-        if (textNode?.content) {
-          contextMessages.push({
-            role: "system",
-            content: `Context from connected text node:\n${textNode.content}`,
-          });
-        }
-      } else if (sourceNode.nodeType === "youtube") {
-        const youtubeNode = await ctx.db.get(sourceNode.data.nodeId as Id<"youtube_nodes">);
-        if (youtubeNode?.transcript) {
-          const title = youtubeNode.title || `YouTube Video ${youtubeNode.videoId}`;
-          contextMessages.push({
-            role: "system",
-            content: `YouTube Video: ${title}\nURL: ${youtubeNode.url}\n\nTranscript:\n${youtubeNode.transcript}`,
-          });
-        }
-      } else if (sourceNode.nodeType === "website") {
-        const websiteNode = await ctx.db.get(sourceNode.data.nodeId as Id<"website_nodes">);
-        if (websiteNode?.markdown) {
-          const title = websiteNode.title || websiteNode.url;
-          contextMessages.push({
-            role: "system",
-            content: `Website: ${title}\nURL: ${websiteNode.url}\n\nContent:\n${websiteNode.markdown}`,
-          });
-        }
-      } else if (sourceNode.nodeType === "tiktok") {
-        const tiktokNode = await ctx.db.get(sourceNode.data.nodeId as Id<"tiktok_nodes">);
-        if (tiktokNode?.transcript) {
-          const title = tiktokNode.title || "TikTok Video";
-          const author = tiktokNode.author ? ` by @${tiktokNode.author}` : "";
-          contextMessages.push({
-            role: "system",
-            content: `TikTok Video: ${title}${author}\nURL: ${tiktokNode.url}\n\nTranscript:\n${tiktokNode.transcript}`,
-          });
-        }
-      } else if (sourceNode.nodeType === "facebook_ad") {
-        const fbAdNode = await ctx.db.get(sourceNode.data.nodeId as Id<"facebook_ads_nodes">);
-        if (fbAdNode) {
-          const title = fbAdNode.title || `Facebook Ad ${fbAdNode.adId}`;
-          const pageName = fbAdNode.pageName ? ` by ${fbAdNode.pageName}` : "";
-          let content = `Facebook Ad: ${title}${pageName}\n`;
-          if (fbAdNode.url) content += `URL: ${fbAdNode.url}\n`;
-          if (fbAdNode.mediaType) content += `Media Type: ${fbAdNode.mediaType}\n`;
-          if (fbAdNode.publisherPlatform) content += `Platforms: ${fbAdNode.publisherPlatform.join(", ")}\n`;
-          content += `\n`;
-          if (fbAdNode.body) content += `Ad Body:\n${fbAdNode.body}\n\n`;
-          if (fbAdNode.linkDescription) content += `Link Description:\n${fbAdNode.linkDescription}\n\n`;
-          if (fbAdNode.transcript) content += `Video Transcript:\n${fbAdNode.transcript}\n`;
+      // Helper function to gather context from a single node
+      const gatherNodeContext = async (node: typeof sourceNode) => {
+        if (node.nodeType === "text") {
+          const textNode = await ctx.db.get(node.data.nodeId as Id<"text_nodes">);
+          if (textNode?.content) {
+            contextMessages.push({
+              role: "system",
+              content: `Context from connected text node:\n${textNode.content}`,
+            });
+          }
+        } else if (node.nodeType === "youtube") {
+          const youtubeNode = await ctx.db.get(node.data.nodeId as Id<"youtube_nodes">);
+          if (youtubeNode?.transcript) {
+            const title = youtubeNode.title || `YouTube Video ${youtubeNode.videoId}`;
+            contextMessages.push({
+              role: "system",
+              content: `YouTube Video: ${title}\nURL: ${youtubeNode.url}\n\nTranscript:\n${youtubeNode.transcript}`,
+            });
+          }
+        } else if (node.nodeType === "website") {
+          const websiteNode = await ctx.db.get(node.data.nodeId as Id<"website_nodes">);
+          if (websiteNode?.markdown) {
+            const title = websiteNode.title || websiteNode.url;
+            contextMessages.push({
+              role: "system",
+              content: `Website: ${title}\nURL: ${websiteNode.url}\n\nContent:\n${websiteNode.markdown}`,
+            });
+          }
+        } else if (node.nodeType === "tiktok") {
+          const tiktokNode = await ctx.db.get(node.data.nodeId as Id<"tiktok_nodes">);
+          if (tiktokNode?.transcript) {
+            const title = tiktokNode.title || "TikTok Video";
+            const author = tiktokNode.author ? ` by @${tiktokNode.author}` : "";
+            contextMessages.push({
+              role: "system",
+              content: `TikTok Video: ${title}${author}\nURL: ${tiktokNode.url}\n\nTranscript:\n${tiktokNode.transcript}`,
+            });
+          }
+        } else if (node.nodeType === "facebook_ad") {
+          const fbAdNode = await ctx.db.get(node.data.nodeId as Id<"facebook_ads_nodes">);
+          if (fbAdNode) {
+            const title = fbAdNode.title || `Facebook Ad ${fbAdNode.adId}`;
+            const pageName = fbAdNode.pageName ? ` by ${fbAdNode.pageName}` : "";
+            let content = `Facebook Ad: ${title}${pageName}\n`;
+            if (fbAdNode.url) content += `URL: ${fbAdNode.url}\n`;
+            if (fbAdNode.mediaType) content += `Media Type: ${fbAdNode.mediaType}\n`;
+            if (fbAdNode.publisherPlatform) content += `Platforms: ${fbAdNode.publisherPlatform.join(", ")}\n`;
+            content += `\n`;
+            if (fbAdNode.body) content += `Ad Body:\n${fbAdNode.body}\n\n`;
+            if (fbAdNode.linkDescription) content += `Link Description:\n${fbAdNode.linkDescription}\n\n`;
+            if (fbAdNode.transcript) content += `Video Transcript:\n${fbAdNode.transcript}\n`;
 
+            contextMessages.push({
+              role: "system",
+              content: content.trim(),
+            });
+          }
+        } else if (node.nodeType === "group") {
+          // Recursively gather context from all children in the group
+          const groupNode = await ctx.db.get(node.data.nodeId as Id<"group_nodes">);
+          if (groupNode) {
+            const children = await ctx.db
+              .query("canvas_nodes")
+              .withIndex("by_parent_group", (q) => q.eq("parentGroupId", node._id))
+              .collect();
+
+            if (children.length > 0) {
+              contextMessages.push({
+                role: "system",
+                content: `--- Group: ${groupNode.title} (${children.length} items) ---`,
+              });
+
+              // Gather context from each child
+              for (const child of children) {
+                await gatherNodeContext(child);
+              }
+
+              contextMessages.push({
+                role: "system",
+                content: `--- End of Group: ${groupNode.title} ---`,
+              });
+            }
+          }
+        }
+
+        // Add notes if present
+        if (node.notes) {
           contextMessages.push({
             role: "system",
-            content: content.trim(),
+            content: `Notes:\n${node.notes}`,
           });
         }
-      }
+      };
 
-      // Add notes if present
-      if (sourceNode.notes) {
-        contextMessages.push({
-          role: "system",
-          content: `Notes:\n${sourceNode.notes}`,
-        });
-      }
+      await gatherNodeContext(sourceNode);
     }
 
     return contextMessages;

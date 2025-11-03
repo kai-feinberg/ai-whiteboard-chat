@@ -1,8 +1,8 @@
 // src/routes/canvas/$canvasId.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { api } from "../../../../convex/_generated/api";
+import type { Id } from "../../../../convex/_generated/dataModel";
 import { Canvas } from "@/components/ai-elements/canvas/canvas";
 import { Panel } from "@/components/ai-elements/canvas/panel";
 import { Edge as CustomEdge } from "@/components/ai-elements/canvas/edge";
@@ -13,6 +13,7 @@ import { YouTubeNode } from "@/features/canvas/components/YouTubeNode";
 import { WebsiteNode } from "@/features/canvas/components/WebsiteNode";
 import { TikTokNode } from "@/features/canvas/components/TikTokNode";
 import { FacebookAdNode } from "@/features/canvas/components/FacebookAdNode";
+import { GroupNode } from "@/features/canvas/components/GroupNode";
 import { useCallback, useEffect, useState } from "react";
 import {
   ReactFlow,
@@ -25,12 +26,12 @@ import {
   type NodeTypes,
   type EdgeTypes,
 } from "@xyflow/react";
-import { FileText, MessageSquare, Loader2, Video, Globe } from "lucide-react";
+import { FileText, MessageSquare, Loader2, Video, Globe, Folder } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/tanstack-react-start";
 import { UrlInputDialog } from "@/components/canvas/UrlInputDialog";
 
-export const Route = createFileRoute("/canvas/$canvasId")({
+export const Route = createFileRoute("/canvas/$canvasId/")({
   component: CanvasEditor,
 });
 
@@ -41,6 +42,7 @@ const nodeTypes: NodeTypes = {
   website: WebsiteNode,
   tiktok: TikTokNode,
   facebook_ad: FacebookAdNode,
+  group: GroupNode,
 };
 
 const edgeTypes: EdgeTypes = {
@@ -70,6 +72,9 @@ function CanvasEditor() {
   const createWebsiteNode = useAction(api.canvas.website.createWebsiteNode);
   const createTikTokNode = useAction(api.canvas.tiktok.createTikTokNode);
   const createFacebookAdNode = useAction(api.canvas.facebook.createFacebookAdNode);
+  const createGroup = useMutation(api.canvas.groups.createGroup);
+  const addNodeToGroup = useMutation(api.canvas.groups.addNodeToGroup);
+  const removeNodeFromGroup = useMutation(api.canvas.groups.removeNodeFromGroup);
   const createEdge = useMutation(api.canvas.edges.createEdge);
   const deleteNode = useMutation(api.canvas.nodes.deleteNode);
   const deleteEdge = useMutation(api.canvas.edges.deleteEdge);
@@ -92,6 +97,7 @@ function CanvasEditor() {
           websiteNodeId: (dbNode as any).websiteNodeId,
           tiktokNodeId: (dbNode as any).tiktokNodeId,
           facebookAdNodeId: (dbNode as any).facebookAdNodeId,
+          groupNodeId: (dbNode as any).groupNodeId,
           canvasId: canvasId as Id<"canvases">, // Use canvasId from route params
           selectedThreadId: (dbNode as any).selectedThreadId,
           selectedAgentThreadId: (dbNode as any).selectedAgentThreadId,
@@ -112,6 +118,11 @@ function CanvasEditor() {
           type: dbNode.nodeType,
           position: dbNode.position,
           data: nodeData,
+          // ReactFlow parent-child relationship
+          parentNode: dbNode.parentGroupId,
+          extent: dbNode.parentGroupId ? ('parent' as const) : undefined,
+          // Groups should render behind children
+          zIndex: dbNode.nodeType === 'group' ? -1 : undefined,
         };
       });
 
@@ -157,19 +168,124 @@ function CanvasEditor() {
     [createEdge, setEdges, canvasId]
   );
 
-  // Handle node drag end (save position to DB)
+  // Helper: Check if node is inside group bounds
+  const isNodeInsideGroup = useCallback((node: Node, group: Node) => {
+    // Calculate node center point
+    const nodeCenter = {
+      x: node.position.x + ((node.width as number) || 400) / 2,
+      y: node.position.y + ((node.height as number) || 300) / 2,
+    };
+
+    // Check if center is inside group bounds
+    const groupWidth = (group.width as number) || 600;
+    const groupHeight = (group.height as number) || 400;
+
+    return (
+      nodeCenter.x >= group.position.x &&
+      nodeCenter.x <= group.position.x + groupWidth &&
+      nodeCenter.y >= group.position.y &&
+      nodeCenter.y <= group.position.y + groupHeight
+    );
+  }, []);
+
+  // Handle node drag end (save position to DB + handle grouping/ungrouping)
   const onNodeDragStop = useCallback(
     async (_event: any, node: Node) => {
       try {
+        // Don't process grouping logic for group nodes themselves
+        if (node.type !== 'group') {
+          // Check if node currently has a parent
+          if (node.parentNode) {
+            const parent = nodes.find((n) => n.id === node.parentNode);
+
+            // If node is dragged outside its parent group, ungroup it
+            if (parent && !isNodeInsideGroup(node, parent)) {
+              console.log("[Canvas] Ungrouping node:", node.id);
+
+              // Convert to absolute position
+              const absolutePosition = {
+                x: parent.position.x + node.position.x,
+                y: parent.position.y + node.position.y,
+              };
+
+              // Update local state first
+              setNodes((nds) =>
+                nds.map((n) =>
+                  n.id === node.id
+                    ? {
+                        ...n,
+                        parentNode: undefined,
+                        extent: undefined,
+                        position: absolutePosition,
+                      }
+                    : n
+                )
+              );
+
+              // Remove from group in DB
+              await removeNodeFromGroup({ canvasNodeId: node.id as Id<"canvas_nodes"> });
+
+              // Update position with absolute coords
+              await updateNodePosition({
+                canvasNodeId: node.id as Id<"canvas_nodes">,
+                position: absolutePosition,
+              });
+
+              toast.success("Node removed from group");
+              return; // Skip normal position update
+            }
+          } else {
+            // Node doesn't have a parent - check if it should be added to a group
+            const groups = nodes.filter((n) => n.type === 'group' && n.id !== node.id);
+
+            for (const group of groups) {
+              if (isNodeInsideGroup(node, group)) {
+                console.log("[Canvas] Adding node to group:", node.id, "→", group.id);
+
+                // Calculate relative position
+                const relativePosition = {
+                  x: node.position.x - group.position.x,
+                  y: node.position.y - group.position.y,
+                };
+
+                // Update local state
+                setNodes((nds) =>
+                  nds.map((n) =>
+                    n.id === node.id
+                      ? {
+                          ...n,
+                          parentNode: group.id,
+                          extent: 'parent' as const,
+                          position: relativePosition,
+                        }
+                      : n
+                  )
+                );
+
+                // Add to group in DB
+                await addNodeToGroup({
+                  canvasNodeId: node.id as Id<"canvas_nodes">,
+                  parentGroupId: group.id as Id<"canvas_nodes">,
+                });
+
+                toast.success("Node added to group");
+                return; // Skip normal position update
+              }
+            }
+          }
+        }
+
+        // Normal position update (no grouping change)
         await updateNodePosition({
           canvasNodeId: node.id as Id<"canvas_nodes">,
           position: node.position,
         });
       } catch (error) {
         console.error("[Canvas] Error updating node position:", error);
+        toast.error("Failed to update node");
       }
     },
-    [updateNodePosition]
+    [updateNodePosition, addNodeToGroup, removeNodeFromGroup, nodes, setNodes, isNodeInsideGroup]
   );
 
   // Handle node deletion
@@ -378,6 +494,38 @@ function CanvasEditor() {
     setDialogState({ type: "facebook", open: true });
   };
 
+  // Add Group node
+  const handleAddGroup = async () => {
+    try {
+      const position = { x: Math.random() * 400, y: Math.random() * 400 };
+      const result = await createGroup({
+        canvasId: canvasId as Id<"canvases">,
+        position,
+        title: "New Group",
+      });
+
+      // Add to local state immediately for better UX
+      setNodes((nds) => [
+        ...nds,
+        {
+          id: result.canvasNodeId,
+          type: "group",
+          position,
+          data: {
+            canvasNodeId: result.canvasNodeId,
+            groupNodeId: result.groupNodeId,
+          },
+          zIndex: -1, // Render behind other nodes
+        },
+      ]);
+
+      toast.success("Group created");
+    } catch (error) {
+      console.error("[Canvas] Error creating group:", error);
+      toast.error("Failed to create group");
+    }
+  };
+
   const handleFacebookAdInputSubmit = async (input: string) => {
     // Parse Ad ID from URL or use input directly
     let adId = input.trim();
@@ -466,6 +614,15 @@ function CanvasEditor() {
       >
         <Panel position="top-left">
           <div className="flex items-center gap-2 p-2">
+            <Button
+              onClick={handleAddGroup}
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+            >
+              <Folder className="h-4 w-4" />
+              Add Group
+            </Button>
             <Button
               onClick={handleAddTextNode}
               variant="ghost"
