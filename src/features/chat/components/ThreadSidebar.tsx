@@ -122,7 +122,7 @@ export function ThreadSidebar({
                 View Context
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[80vh]">
+            <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col gap-4">
               <DialogHeader>
                 <DialogTitle>Connected Node Context</DialogTitle>
                 <DialogDescription>
@@ -130,7 +130,7 @@ export function ThreadSidebar({
                   {contextMessages.length !== 1 ? "s" : ""} that will be passed to the AI
                 </DialogDescription>
               </DialogHeader>
-              <ScrollArea className="h-[60vh] pr-4">
+              <ScrollArea className="flex-1 pr-4">
                 <div className="space-y-4">
                   {contextMessages.map((msg, idx) => (
                     <div
@@ -144,6 +144,16 @@ export function ThreadSidebar({
                   ))}
                 </div>
               </ScrollArea>
+              <div className="text-xs text-muted-foreground pt-2 border-t">
+                {(() => {
+                  const totalChars = contextMessages.reduce((sum, msg) => sum + msg.content.length, 0);
+                  const wordCount = contextMessages.reduce((sum, msg) => {
+                    return sum + msg.content.split(/\s+/).filter(Boolean).length;
+                  }, 0);
+                  const estimatedTokens = Math.ceil(totalChars / 4);
+                  return `${wordCount.toLocaleString()} words • ~${estimatedTokens.toLocaleString()} tokens`;
+                })()}
+              </div>
             </DialogContent>
           </Dialog>
         </div>

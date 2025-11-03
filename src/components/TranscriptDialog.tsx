@@ -33,6 +33,7 @@ export function TranscriptDialog({
   };
 
   const wordCount = transcript.split(/\s+/).filter(Boolean).length;
+  const estimatedTokens = Math.ceil(transcript.length / 4);
 
   return (
     <Dialog>
@@ -71,7 +72,7 @@ export function TranscriptDialog({
           </div>
         </ScrollArea>
         <div className="text-xs text-muted-foreground pt-2 border-t">
-          {wordCount.toLocaleString()} words
+          {wordCount.toLocaleString()} words • ~{estimatedTokens.toLocaleString()} tokens
         </div>
       </DialogContent>
     </Dialog>

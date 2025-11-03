@@ -14,7 +14,14 @@ import { WebsiteNode } from "@/features/canvas/components/WebsiteNode";
 import { TikTokNode } from "@/features/canvas/components/TikTokNode";
 import { FacebookAdNode } from "@/features/canvas/components/FacebookAdNode";
 import { GroupNode } from "@/features/canvas/components/GroupNode";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, createContext, useContext } from "react";
+
+// Context for canvas operations (like ungrouping)
+const CanvasContext = createContext<{
+  onNodeUngrouped?: (nodeData: any) => void;
+}>({});
+
+export const useCanvasContext = () => useContext(CanvasContext);
 import {
   ReactFlow,
   useNodesState,
@@ -84,11 +91,42 @@ function CanvasEditor() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+  // Handler for when a node is ungrouped - add it back to React Flow
+  // MUST be before conditional returns to avoid hooks order issues
+  const handleNodeUngrouped = useCallback((nodeData: any) => {
+    console.log("[Canvas] Node ungrouped, adding back to React Flow:", nodeData);
+
+    // Create React Flow node from DB node data
+    const flowNode: Node = {
+      id: nodeData._id,
+      type: nodeData.nodeType,
+      position: nodeData.position,
+      data: {
+        canvasNodeId: nodeData._id,
+        // Add other data fields as needed
+        content: nodeData.textContent,
+        chatNodeId: nodeData.chatNodeId,
+        youtubeNodeId: nodeData.youtubeNodeId,
+        websiteNodeId: nodeData.websiteNodeId,
+        tiktokNodeId: nodeData.tiktokNodeId,
+        facebookAdNodeId: nodeData.facebookAdNodeId,
+        canvasId: canvasId as Id<"canvases">,
+      },
+      draggable: true,
+    };
+
+    // Add to React Flow
+    setNodes((nds) => [...nds, flowNode]);
+  }, [setNodes, canvasId]);
+
   // Load canvas data from DB on mount
   useEffect(() => {
     if (!hasLoadedFromDB && canvasData?.nodes && canvasData?.edges) {
       // Map database nodes to ReactFlow nodes
-      const flowNodes: Node[] = canvasData.nodes.map((dbNode) => {
+      // FILTER OUT nodes that are inside groups - groups render them internally
+      const flowNodes: Node[] = canvasData.nodes
+        .filter((dbNode) => !dbNode.parentGroupId)
+        .map((dbNode) => {
         const nodeData = {
           canvasNodeId: dbNode._id,
           content: (dbNode as any).textContent,
@@ -118,11 +156,10 @@ function CanvasEditor() {
           type: dbNode.nodeType,
           position: dbNode.position,
           data: nodeData,
-          // ReactFlow parent-child relationship (no extent to allow visibility)
-          parentNode: dbNode.parentGroupId,
-          // Groups should render behind children
+          // NO parent-child relationship - groups render children internally
+          // parentNode: dbNode.parentGroupId,  // REMOVED
+          // Groups should render behind other nodes
           zIndex: dbNode.nodeType === 'group' ? -1 : undefined,
-          // Ensure child nodes are draggable
           draggable: true,
         };
       });
@@ -189,87 +226,35 @@ function CanvasEditor() {
     );
   }, []);
 
-  // Handle node drag end (save position to DB + handle grouping/ungrouping)
+  // Handle node drag end (save position to DB + handle grouping)
   const onNodeDragStop = useCallback(
     async (_event: any, node: Node) => {
       try {
         // Don't process grouping logic for group nodes themselves
         if (node.type !== 'group') {
-          // Check if node currently has a parent
-          if (node.parentNode) {
-            const parent = nodes.find((n) => n.id === node.parentNode);
+          // Check if node should be added to a group
+          const groups = nodes.filter((n) => n.type === 'group' && n.id !== node.id);
 
-            // If node is dragged outside its parent group, ungroup it
-            if (parent && !isNodeInsideGroup(node, parent)) {
-              console.log("[Canvas] Ungrouping node:", node.id);
+          for (const group of groups) {
+            if (isNodeInsideGroup(node, group)) {
+              console.log("[Canvas] Adding node to group:", node.id, "→", group.id);
 
-              // Convert to absolute position
-              const absolutePosition = {
-                x: parent.position.x + node.position.x,
-                y: parent.position.y + node.position.y,
-              };
-
-              // Update local state first
-              setNodes((nds) =>
-                nds.map((n) =>
-                  n.id === node.id
-                    ? {
-                        ...n,
-                        parentNode: undefined,
-                        position: absolutePosition,
-                      }
-                    : n
-                )
-              );
-
-              // Remove from group in DB
-              await removeNodeFromGroup({ canvasNodeId: node.id as Id<"canvas_nodes"> });
-
-              // Update position with absolute coords
-              await updateNodePosition({
+              // Add to group in DB (backend calculates grid position)
+              await addNodeToGroup({
                 canvasNodeId: node.id as Id<"canvas_nodes">,
-                position: absolutePosition,
+                parentGroupId: group.id as Id<"canvas_nodes">,
               });
 
-              toast.success("Node removed from group");
+              // REMOVE node from React Flow state - group will render it internally
+              setNodes((nds) => nds.filter((n) => n.id !== node.id));
+
+              toast.success("Node added to group");
               return; // Skip normal position update
-            }
-          } else {
-            // Node doesn't have a parent - check if it should be added to a group
-            const groups = nodes.filter((n) => n.type === 'group' && n.id !== node.id);
-
-            for (const group of groups) {
-              if (isNodeInsideGroup(node, group)) {
-                console.log("[Canvas] Adding node to group:", node.id, "→", group.id);
-
-                // Add to group in DB (backend calculates grid position)
-                const result = await addNodeToGroup({
-                  canvasNodeId: node.id as Id<"canvas_nodes">,
-                  parentGroupId: group.id as Id<"canvas_nodes">,
-                }) as { success: boolean; gridPosition: { x: number; y: number } };
-
-                // Update local state with grid position from backend
-                setNodes((nds) =>
-                  nds.map((n) =>
-                    n.id === node.id
-                      ? {
-                          ...n,
-                          parentNode: group.id,
-                          position: result.gridPosition,
-                          draggable: true,
-                        }
-                      : n
-                  )
-                );
-
-                toast.success("Node added to group");
-                return; // Skip normal position update
-              }
             }
           }
         }
 
-        // Normal position update (no grouping change)
+        // Normal position update (no grouping)
         await updateNodePosition({
           canvasNodeId: node.id as Id<"canvas_nodes">,
           position: node.position,
@@ -279,7 +264,7 @@ function CanvasEditor() {
         toast.error("Failed to update node");
       }
     },
-    [updateNodePosition, addNodeToGroup, removeNodeFromGroup, nodes, setNodes, isNodeInsideGroup]
+    [updateNodePosition, addNodeToGroup, nodes, setNodes, isNodeInsideGroup]
   );
 
   // Handle node deletion
@@ -593,8 +578,9 @@ function CanvasEditor() {
   }
 
   return (
-    <div className="h-screen w-full">
-      <Canvas
+    <CanvasContext.Provider value={{ onNodeUngrouped: handleNodeUngrouped }}>
+      <div className="h-screen w-full">
+        <Canvas
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -724,6 +710,7 @@ function CanvasEditor() {
         placeholder="https://www.facebook.com/ads/library?id=... or Ad ID"
         inputType="text"
       />
-    </div>
+      </div>
+    </CanvasContext.Provider>
   );
 }

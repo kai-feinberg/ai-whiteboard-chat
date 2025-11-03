@@ -177,10 +177,12 @@ export const addNodeToGroup = mutation({
 
 /**
  * Remove a node from its parent group
+ * Returns the node data so it can be re-added to React Flow
  */
 export const removeNodeFromGroup = mutation({
   args: {
     canvasNodeId: v.id("canvas_nodes"),
+    newPosition: v.optional(v.object({ x: v.number(), y: v.number() })),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -199,18 +201,44 @@ export const removeNodeFromGroup = mutation({
       throw new Error("Node not found or unauthorized");
     }
 
-    // Remove parent reference
+    // Get parent group to calculate absolute position
+    let newPosition = args.newPosition;
+    if (!newPosition && canvasNode.parentGroupId) {
+      const parentGroup = await ctx.db.get(canvasNode.parentGroupId);
+      if (parentGroup) {
+        // Convert relative position to absolute
+        newPosition = {
+          x: parentGroup.position.x + canvasNode.position.x,
+          y: parentGroup.position.y + canvasNode.position.y,
+        };
+      } else {
+        newPosition = canvasNode.position; // Fallback
+      }
+    } else {
+      newPosition = newPosition || canvasNode.position;
+    }
+
+    // Remove parent reference and update position
     await ctx.db.patch(args.canvasNodeId, {
       parentGroupId: undefined,
+      position: newPosition,
       updatedAt: Date.now(),
     });
 
-    return { success: true };
+    // Return node data for React Flow
+    return {
+      success: true,
+      node: {
+        ...canvasNode,
+        position: newPosition,
+        parentGroupId: undefined,
+      },
+    };
   },
 });
 
 /**
- * Get all child nodes of a group
+ * Get all child nodes of a group with their full data
  */
 export const getGroupChildren = query({
   args: {
@@ -243,7 +271,56 @@ export const getGroupChildren = query({
       .withIndex("by_parent_group", (q) => q.eq("parentGroupId", args.canvasNodeId))
       .collect();
 
-    return children;
+    // Load full data for each child node
+    const childrenWithData = await Promise.all(
+      children.map(async (child) => {
+        if (child.nodeType === "text") {
+          const textNode = await ctx.db.get(child.data.nodeId as Id<"text_nodes">);
+          return {
+            ...child,
+            textContent: textNode?.content || "",
+          };
+        } else if (child.nodeType === "chat") {
+          const chatNode = await ctx.db.get(child.data.nodeId as Id<"chat_nodes">);
+          return {
+            ...child,
+            chatNodeId: chatNode?._id || null,
+          };
+        } else if (child.nodeType === "youtube") {
+          const youtubeNode = await ctx.db.get(child.data.nodeId as Id<"youtube_nodes">);
+          return {
+            ...child,
+            youtubeTitle: youtubeNode?.title || "",
+            youtubeUrl: youtubeNode?.url || "",
+            youtubeThumbnail: youtubeNode?.thumbnailUrl || "",
+          };
+        } else if (child.nodeType === "website") {
+          const websiteNode = await ctx.db.get(child.data.nodeId as Id<"website_nodes">);
+          return {
+            ...child,
+            websiteTitle: websiteNode?.title || "",
+            websiteUrl: websiteNode?.url || "",
+          };
+        } else if (child.nodeType === "tiktok") {
+          const tiktokNode = await ctx.db.get(child.data.nodeId as Id<"tiktok_nodes">);
+          return {
+            ...child,
+            tiktokTitle: tiktokNode?.title || "",
+            tiktokAuthor: tiktokNode?.author || "",
+          };
+        } else if (child.nodeType === "facebook_ad") {
+          const facebookAdNode = await ctx.db.get(child.data.nodeId as Id<"facebook_ads_nodes">);
+          return {
+            ...child,
+            facebookAdTitle: facebookAdNode?.title || "",
+            facebookAdPageName: facebookAdNode?.pageName || "",
+          };
+        }
+        return child;
+      })
+    );
+
+    return childrenWithData;
   },
 });
 
