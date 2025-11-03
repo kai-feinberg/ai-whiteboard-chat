@@ -98,7 +98,7 @@ export function TextNode({ data }: NodeProps<TextNodeData>) {
 
   return (
     <Node handles={{ target: false, source: true }}>
-      <NodeHeader>
+      <NodeHeader variant="text">
         <NodeTitle className="flex items-center gap-2 text-sm">
           <FileText className="h-4 w-4" />
           Text Node

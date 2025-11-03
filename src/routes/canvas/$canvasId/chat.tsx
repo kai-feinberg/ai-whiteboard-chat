@@ -72,15 +72,19 @@ function FullScreenChat() {
   const messages = messagesQuery.results;
   const isStreaming = messages?.some((m) => m.status === "streaming") ?? false;
 
+  // Find first chat node on canvas for context gathering
+  const chatNode = canvasData?.nodes?.find((node) => node.nodeType === "chat");
+
+  // Get context from connected nodes (using first chat node)
+  const contextMessages = useQuery(
+    api.canvas.nodes.getNodeContext,
+    chatNode ? { canvasNodeId: chatNode._id } : "skip"
+  );
+
   // Actions
   const createThread = useAction(api.canvas.threads.createCanvasThread);
   const deleteThreadMutation = useMutation(api.chat.functions.deleteThread);
   const sendMessage = useAction(api.canvas.chat.sendMessage);
-
-  // Note: For full-screen chat, we don't have a specific chat node ID
-  // Context gathering would require selecting which chat node or using canvas-level context
-  // For now, we'll pass null for canvasNodeId and not gather context
-  // This can be enhanced later to select a chat node or gather canvas-wide context
 
   const handleCreateThread = async () => {
     if (!canvasId) {
@@ -186,6 +190,7 @@ function FullScreenChat() {
           onSelectThread={handleSelectThread}
           onCreateThread={handleCreateThread}
           onDeleteThread={handleDeleteThread}
+          contextMessages={contextMessages}
           className="w-64 border-r"
         />
 

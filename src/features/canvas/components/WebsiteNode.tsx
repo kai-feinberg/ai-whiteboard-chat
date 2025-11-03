@@ -22,7 +22,7 @@ export function WebsiteNode({ data }: NodeProps<WebsiteNodeData>) {
   if (!websiteNode) {
     return (
       <Node handles={{ target: false, source: true }}>
-        <NodeHeader>
+        <NodeHeader variant="website">
           <NodeTitle className="flex items-center gap-2 text-sm">
             <Globe className="h-4 w-4" />
             Website
@@ -39,7 +39,7 @@ export function WebsiteNode({ data }: NodeProps<WebsiteNodeData>) {
 
   return (
     <Node handles={{ target: false, source: true }}>
-      <NodeHeader>
+      <NodeHeader variant="website">
         <NodeTitle className="flex items-center gap-2 text-sm">
           <Globe className="h-4 w-4" />
           Website

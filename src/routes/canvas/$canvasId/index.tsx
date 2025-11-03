@@ -118,11 +118,12 @@ function CanvasEditor() {
           type: dbNode.nodeType,
           position: dbNode.position,
           data: nodeData,
-          // ReactFlow parent-child relationship
+          // ReactFlow parent-child relationship (no extent to allow visibility)
           parentNode: dbNode.parentGroupId,
-          extent: dbNode.parentGroupId ? ('parent' as const) : undefined,
           // Groups should render behind children
           zIndex: dbNode.nodeType === 'group' ? -1 : undefined,
+          // Ensure child nodes are draggable
+          draggable: true,
         };
       });
 
@@ -215,7 +216,6 @@ function CanvasEditor() {
                     ? {
                         ...n,
                         parentNode: undefined,
-                        extent: undefined,
                         position: absolutePosition,
                       }
                     : n
@@ -242,31 +242,25 @@ function CanvasEditor() {
               if (isNodeInsideGroup(node, group)) {
                 console.log("[Canvas] Adding node to group:", node.id, "→", group.id);
 
-                // Calculate relative position
-                const relativePosition = {
-                  x: node.position.x - group.position.x,
-                  y: node.position.y - group.position.y,
-                };
+                // Add to group in DB (backend calculates grid position)
+                const result = await addNodeToGroup({
+                  canvasNodeId: node.id as Id<"canvas_nodes">,
+                  parentGroupId: group.id as Id<"canvas_nodes">,
+                }) as { success: boolean; gridPosition: { x: number; y: number } };
 
-                // Update local state
+                // Update local state with grid position from backend
                 setNodes((nds) =>
                   nds.map((n) =>
                     n.id === node.id
                       ? {
                           ...n,
                           parentNode: group.id,
-                          extent: 'parent' as const,
-                          position: relativePosition,
+                          position: result.gridPosition,
+                          draggable: true,
                         }
                       : n
                   )
                 );
-
-                // Add to group in DB
-                await addNodeToGroup({
-                  canvasNodeId: node.id as Id<"canvas_nodes">,
-                  parentGroupId: group.id as Id<"canvas_nodes">,
-                });
 
                 toast.success("Node added to group");
                 return; // Skip normal position update

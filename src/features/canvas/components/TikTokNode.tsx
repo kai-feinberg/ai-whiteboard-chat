@@ -22,7 +22,7 @@ export function TikTokNode({ data }: NodeProps<TikTokNodeData>) {
   if (!tiktokNode) {
     return (
       <Node handles={{ target: false, source: true }}>
-        <NodeHeader>
+        <NodeHeader variant="tiktok">
           <NodeTitle className="flex items-center gap-2 text-sm">
             <TikTokIcon />
             TikTok
@@ -39,7 +39,7 @@ export function TikTokNode({ data }: NodeProps<TikTokNodeData>) {
 
   return (
     <Node handles={{ target: false, source: true }}>
-      <NodeHeader>
+      <NodeHeader variant="tiktok">
         <NodeTitle className="flex items-center gap-2 text-sm">
           <TikTokIcon />
           TikTok

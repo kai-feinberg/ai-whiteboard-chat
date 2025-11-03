@@ -26,7 +26,7 @@ export function FacebookAdNode({ data }: NodeProps<FacebookAdNodeData>) {
   if (!facebookAdNode) {
     return (
       <Node handles={{ target: false, source: true }}>
-        <NodeHeader>
+        <NodeHeader variant="facebook">
           <NodeTitle className="flex items-center gap-2 text-sm">
             <FacebookIcon />
             Facebook Ad
@@ -43,7 +43,7 @@ export function FacebookAdNode({ data }: NodeProps<FacebookAdNodeData>) {
 
   return (
     <Node handles={{ target: false, source: true }}>
-      <NodeHeader>
+      <NodeHeader variant="facebook">
         <NodeTitle className="flex items-center gap-2 text-sm">
           <FacebookIcon />
           Facebook Ad

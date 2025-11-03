@@ -64,15 +64,15 @@ export function GroupNode({ data }: NodeProps<GroupNodeData>) {
       handles={{ target: true, source: true }}
       className="border-2 border-dashed border-primary/30 bg-primary/5"
       style={{
-        // Groups should be larger and act as containers
-        minWidth: "600px",
-        minHeight: "400px",
+        // Groups should be larger and act as containers - fixed size for grid layout
+        width: "900px",
+        height: "700px",
       }}
     >
-      <NodeHeader className="bg-primary/10">
+      <NodeHeader variant="group">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
-            <Folder className="h-4 w-4 text-primary" />
+            <Folder className="h-4 w-4" />
             {isEditingTitle ? (
               <input
                 ref={inputRef}
@@ -115,7 +115,7 @@ export function GroupNode({ data }: NodeProps<GroupNodeData>) {
           </Button>
         </div>
       </NodeHeader>
-      <NodeContent className="flex items-center justify-center text-muted-foreground text-xs min-h-[300px]">
+      <NodeContent className="flex items-center justify-center text-muted-foreground text-xs" style={{ minHeight: "620px" }}>
         {childCount === 0 ? (
           <div className="text-center">
             <p>Drag nodes here to group them</p>

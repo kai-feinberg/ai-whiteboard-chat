@@ -1,7 +1,6 @@
 Handle just pasting on the canvas
 
 full screen chat to display same context button
-- refactor chat component to include sidebar/threads as well
 
 scroll for chat node component
 

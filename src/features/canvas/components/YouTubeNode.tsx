@@ -22,7 +22,7 @@ export function YouTubeNode({ data }: NodeProps<YouTubeNodeData>) {
   if (!youtubeNode) {
     return (
       <Node handles={{ target: false, source: true }}>
-        <NodeHeader>
+        <NodeHeader variant="youtube">
           <NodeTitle className="flex items-center gap-2 text-sm">
             <Video className="h-4 w-4" />
             YouTube
@@ -39,7 +39,7 @@ export function YouTubeNode({ data }: NodeProps<YouTubeNodeData>) {
 
   return (
     <Node handles={{ target: false, source: true }}>
-      <NodeHeader>
+      <NodeHeader variant="youtube">
         <NodeTitle className="flex items-center gap-2 text-sm">
           <Video className="h-4 w-4" />
           YouTube

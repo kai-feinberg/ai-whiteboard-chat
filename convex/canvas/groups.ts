@@ -47,8 +47,8 @@ export const createGroup = mutation({
       organizationId,
       nodeType: "group",
       position: args.position,
-      width: 600, // Default group width
-      height: 400, // Default group height
+      width: 900, // Wider to fit 2 columns with gaps
+      height: 700, // Taller to fit multiple rows
       data: { nodeId: groupNodeId },
       createdAt: now,
       updatedAt: now,
@@ -102,7 +102,7 @@ export const updateGroupTitle = mutation({
 });
 
 /**
- * Add a node to a group (set parent relationship)
+ * Add a node to a group (set parent relationship) and auto-arrange in grid
  */
 export const addNodeToGroup = mutation({
   args: {
@@ -141,13 +141,37 @@ export const addNodeToGroup = mutation({
       throw new Error("Cannot add a group to itself");
     }
 
-    // Update node to have parent
+    // Get all existing children to calculate grid position
+    const existingChildren = await ctx.db
+      .query("canvas_nodes")
+      .withIndex("by_parent_group", (q) => q.eq("parentGroupId", args.parentGroupId))
+      .collect();
+
+    // Grid layout config
+    const COLS = 2; // 2 nodes per row
+    const NODE_WIDTH = 420; // Slightly larger than default 400 for spacing
+    const NODE_HEIGHT = 320; // Slightly larger than default 300 for spacing
+    const PADDING = 20; // Padding from group edges
+    const GAP = 20; // Gap between nodes
+
+    // Calculate grid position for new node
+    const childIndex = existingChildren.length; // Current child will be at this index
+    const row = Math.floor(childIndex / COLS);
+    const col = childIndex % COLS;
+
+    const gridPosition = {
+      x: PADDING + col * (NODE_WIDTH + GAP),
+      y: PADDING + row * (NODE_HEIGHT + GAP),
+    };
+
+    // Update node to have parent and grid position
     await ctx.db.patch(args.canvasNodeId, {
       parentGroupId: args.parentGroupId,
+      position: gridPosition,
       updatedAt: Date.now(),
     });
 
-    return { success: true };
+    return { success: true, gridPosition };
   },
 });
 

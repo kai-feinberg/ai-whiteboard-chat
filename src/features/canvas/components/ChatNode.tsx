@@ -2,15 +2,16 @@
 import { Node, NodeHeader, NodeTitle, NodeContent } from "@/components/ai-elements/canvas/node";
 import { Chat } from "@/features/chat/components/Chat";
 import { ThreadSidebar } from "@/features/chat/components/ThreadSidebar";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Maximize2, Loader2 } from "lucide-react";
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { useUIMessages } from "@convex-dev/agent/react";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 import type { NodeProps } from "@xyflow/react";
 import { useState, useEffect } from "react";
+import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 
 interface ChatNodeData {
   canvasNodeId: Id<"canvas_nodes">;
@@ -152,14 +153,19 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
 
   return (
     <Node handles={{ target: true, source: false }} width="1000px" height="750px" className="flex flex-col">
-      <NodeHeader>
+      <NodeHeader variant="chat" className="flex items-center justify-between">
         <NodeTitle className="flex items-center gap-2 text-sm">
           <MessageSquare className="h-4 w-4" />
           Chat Node
         </NodeTitle>
+        <Link to="/canvas/$canvasId/chat" params={{ canvasId: data.canvasId }}>
+          <Button variant="ghost" size="sm" className="h-7 px-2 hover:bg-purple-200/50 transition-colors">
+            <Maximize2 className="h-3.5 w-3.5" />
+          </Button>
+        </Link>
       </NodeHeader>
       <NodeContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="flex h-full w-full nopan overflow-hidden">
+        <div className="flex h-full w-full nowheel overflow-hidden">
           {/* Thread Sidebar */}
           <ThreadSidebar
             threads={threads}
@@ -172,7 +178,7 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
           />
 
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 flex flex-col">
             {isChatReady ? (
               <Chat
                 key={selectedThread.agentThreadId}

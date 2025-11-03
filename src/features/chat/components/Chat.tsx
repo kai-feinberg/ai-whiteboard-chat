@@ -74,12 +74,11 @@ export function Chat({
   return (
     <div
       className={cn(
-        "flex flex-col nopan",
-        variant === "fullscreen" ? "h-full" : "h-full max-h-[600px]",
+        "flex flex-col nopan nowheel h-full",
         className
       )}
     >
-      <Conversation className="flex-1 min-h-0">
+      <Conversation className="flex-1">
         <ConversationContent>
           {messages.length === 0 ? (
             <ConversationEmptyState
