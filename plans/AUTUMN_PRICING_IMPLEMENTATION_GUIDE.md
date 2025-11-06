@@ -199,21 +199,10 @@ export const aiCredits = feature({
 });
 
 // Individual token metering features (these feed into credits)
-export const gpt4Tokens = feature({
-  id: "gpt4_tokens",
-  name: "GPT-4 Tokens",
-  type: "single_use",
-});
 
 export const claudeTokens = feature({
   id: "claude_tokens",
   name: "Claude Tokens",
-  type: "single_use",
-});
-
-export const qwenTokens = feature({
-  id: "qwen_tokens",
-  name: "Qwen Tokens",
   type: "single_use",
 });
 

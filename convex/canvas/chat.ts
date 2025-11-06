@@ -6,17 +6,40 @@ import { Agent } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 
-// Create agent instance for canvas chat
-const canvasChatAgent = new Agent(components.agent, {
-  name: "Canvas Chat Assistant",
-  instructions: `You are a helpful AI assistant in an infinite canvas workspace. Users may provide context from connected nodes - use this context to inform your responses.`,
-  languageModel: 'xai/grok-4-fast-non-reasoning',
-  maxSteps: 10,
-  callSettings: {
-    maxRetries: 2,
-    temperature: 0.7,
-  },
-});
+// Create a function that returns an agent with a usageHandler that has access to user/org context
+function createCanvasChatAgent(userId: string, organizationId: string) {
+  return new Agent(components.agent, {
+    name: "Canvas Chat Assistant",
+    instructions: `You are a helpful AI assistant in an infinite canvas workspace. Users may provide context from connected nodes - use this context to inform your responses.`,
+    languageModel: 'xai/grok-4-fast-non-reasoning',
+    maxSteps: 10,
+    callSettings: {
+      maxRetries: 2,
+      temperature: 0.7,
+    },
+    usageHandler: async (ctx, args) => {
+      const {
+        // Who used the tokens
+        threadId, agentName,
+        // What LLM was used
+        model, provider,
+        // How many tokens were used
+        usage, providerMetadata
+      } = args;
+
+      console.log('[Canvas Chat Usage]', {
+        userId, // from closure
+        organizationId, // from closure
+        threadId,
+        agentName,
+        model,
+        provider,
+        usage,
+        providerMetadata,
+      });
+    },
+  });
+}
 
 /**
  * Send a message in a canvas chat node with context from connected nodes
@@ -33,6 +56,7 @@ export const sendMessage = action({
       throw new Error("Not authenticated");
     }
 
+    const userId = identity.subject;
     const organizationId = identity.organizationId;
     if (!organizationId || typeof organizationId !== "string") {
       throw new Error("No organization selected. Please select an organization to continue.");
@@ -47,6 +71,9 @@ export const sendMessage = action({
     if (!thread) {
       throw new Error("Thread not found or does not belong to your organization");
     }
+
+    // Create agent with user context for usage tracking
+    const canvasChatAgent = createCanvasChatAgent(userId, organizationId);
 
     // Gather context from connected nodes
     const contextMessages: any[] = await ctx.runQuery(internal.canvas.chat.getNodeContextInternal, {

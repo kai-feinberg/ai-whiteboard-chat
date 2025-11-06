@@ -595,15 +595,6 @@ function CanvasEditor() {
         <Panel position="top-left">
           <div className="flex items-center gap-2 p-2">
             <Button
-              onClick={handleAddGroup}
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-            >
-              <Folder className="h-4 w-4" />
-              Add Group
-            </Button>
-            <Button
               onClick={handleAddTextNode}
               variant="ghost"
               size="sm"
