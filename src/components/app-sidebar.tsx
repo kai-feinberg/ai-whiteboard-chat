@@ -1,7 +1,9 @@
 import * as React from "react"
-import { LayoutDashboard, Eye, MessageSquare, Search } from "lucide-react"
+import { LayoutDashboard, Eye, MessageSquare, Search, CreditCard, Sparkles } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
+import { useCustomer } from "autumn-js/react"
+import { Badge } from "@/components/ui/badge"
 
 import {
   Sidebar,
@@ -45,7 +47,64 @@ const data = {
         },
       ],
     },
+    {
+      title: "Pricing",
+      url: "/pricing",
+      icon: CreditCard,
+      items: [
+        {
+          title: "Plans",
+          url: "/pricing",
+          icon: CreditCard,
+        },
+      ],
+    },
   ],
+}
+
+function TierBadge() {
+  const { customer } = useCustomer();
+
+  // Get current product - check products array
+  const currentProduct = customer?.products?.[0];
+  const productName = currentProduct?.name || "Free";
+
+  // Get canvas feature - features is an object keyed by feature ID
+  const canvasFeature = customer?.features?.canvases;
+  const usedCanvases = canvasFeature?.usage || 0;
+  const limitCanvases = canvasFeature?.included_usage || 3;
+  const isUnlimited = canvasFeature?.unlimited || limitCanvases >= 999999;
+
+  const isPro = productName === "Pro";
+
+  return (
+    <div className="px-2 py-3 border-t border-sidebar-border">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          {isPro ? (
+            <Sparkles className="h-4 w-4 text-yellow-500" />
+          ) : (
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          )}
+          <span className="text-sm font-medium">{productName}</span>
+        </div>
+        <Badge variant={isPro ? "default" : "secondary"} className="text-xs">
+          {isPro ? "Active" : "Free"}
+        </Badge>
+      </div>
+      <div className="text-xs text-muted-foreground">
+        {usedCanvases} / {isUnlimited ? "∞" : limitCanvases} canvases
+      </div>
+      {!isPro && (
+        <Link
+          to="/pricing"
+          className="text-xs text-primary hover:underline mt-1 inline-block"
+        >
+          Upgrade to Pro →
+        </Link>
+      )}
+    </div>
+  );
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -104,6 +163,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <div className="flex flex-col gap-2 p-2">
+          <TierBadge />
           <OrganizationSwitcher
             hidePersonal={false}
             afterCreateOrganizationUrl={() => window.location.href = '/'}

@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CanvasCanvasIdIndexRouteImport } from './routes/canvas/$canvasId/index'
 import { Route as CanvasCanvasIdChatRouteImport } from './routes/canvas/$canvasId/chat'
 
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlaygroundRoute = PlaygroundRouteImport.update({
   id: '/playground',
   path: '/playground',
@@ -43,12 +49,14 @@ const CanvasCanvasIdChatRoute = CanvasCanvasIdChatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/playground': typeof PlaygroundRoute
+  '/pricing': typeof PricingRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId': typeof CanvasCanvasIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/playground': typeof PlaygroundRoute
+  '/pricing': typeof PricingRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId': typeof CanvasCanvasIdIndexRoute
 }
@@ -57,6 +65,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRoute
   '/playground': typeof PlaygroundRoute
+  '/pricing': typeof PricingRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId/': typeof CanvasCanvasIdIndexRoute
 }
@@ -65,15 +74,22 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/playground'
+    | '/pricing'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/playground' | '/canvas/$canvasId/chat' | '/canvas/$canvasId'
+  to:
+    | '/'
+    | '/playground'
+    | '/pricing'
+    | '/canvas/$canvasId/chat'
+    | '/canvas/$canvasId'
   id:
     | '__root__'
     | '/'
     | '/_authed'
     | '/playground'
+    | '/pricing'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId/'
   fileRoutesById: FileRoutesById
@@ -82,12 +98,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRoute
   PlaygroundRoute: typeof PlaygroundRoute
+  PricingRoute: typeof PricingRoute
   CanvasCanvasIdChatRoute: typeof CanvasCanvasIdChatRoute
   CanvasCanvasIdIndexRoute: typeof CanvasCanvasIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/playground': {
       id: '/playground'
       path: '/playground'
@@ -130,6 +154,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRoute,
   PlaygroundRoute: PlaygroundRoute,
+  PricingRoute: PricingRoute,
   CanvasCanvasIdChatRoute: CanvasCanvasIdChatRoute,
   CanvasCanvasIdIndexRoute: CanvasCanvasIdIndexRoute,
 }

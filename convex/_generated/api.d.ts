@@ -11,6 +11,7 @@
 import type * as agents_actions from "../agents/actions.js";
 import type * as agents_mutations from "../agents/mutations.js";
 import type * as agents_queries from "../agents/queries.js";
+import type * as autumn from "../autumn.js";
 import type * as canvas_chat from "../canvas/chat.js";
 import type * as canvas_edges from "../canvas/edges.js";
 import type * as canvas_facebook from "../canvas/facebook.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   "agents/actions": typeof agents_actions;
   "agents/mutations": typeof agents_mutations;
   "agents/queries": typeof agents_queries;
+  autumn: typeof autumn;
   "canvas/chat": typeof canvas_chat;
   "canvas/edges": typeof canvas_edges;
   "canvas/facebook": typeof canvas_facebook;
@@ -3096,4 +3098,5 @@ export declare const components: {
       >;
     };
   };
+  autumn: {};
 };

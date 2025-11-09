@@ -23,12 +23,14 @@ import * as React from 'react'
 import { auth } from '@clerk/tanstack-react-start/server'
 import appCss from '~/styles/app.css?url'
 import { ConvexQueryClient } from '@convex-dev/react-query'
-import { ConvexReactClient } from 'convex/react'
+import { ConvexReactClient, useConvex } from 'convex/react'
 import { ConvexProviderWithClerk } from 'convex/react-clerk'
 import { Toaster } from '@/components/ui/sonner'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 import { Separator } from '@/components/ui/separator'
+import { AutumnProvider } from 'autumn-js/react'
+import { api } from '../../convex/_generated/api'
 
 const fetchClerkAuth = createServerFn({ method: 'GET' }).handler(async () => {
   const authData = await auth()
@@ -108,34 +110,36 @@ function RootComponent() {
   return (
     <ClerkProvider>
       <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
-        <RootDocument>
-          <SignedIn>
-            <AuthenticatedContent />
-          </SignedIn>
-          <SignedOut>
-            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-              <div className="w-full max-w-md space-y-8 p-8">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold tracking-tight">AdScout</h1>
-                  <p className="mt-2 text-lg text-muted-foreground">
-                    Ad Intelligence Platform
-                  </p>
-                  <p className="mt-4 text-sm text-muted-foreground">
-                    Sign in to track, analyze, and discover winning ad campaigns
-                  </p>
-                </div>
-                <div className="mt-8 flex justify-center">
-                  <SignInButton mode="modal">
-                    <button className="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-                      Sign In
-                    </button>
-                  </SignInButton>
+        <AutumnWrapper>
+          <RootDocument>
+            <SignedIn>
+              <AuthenticatedContent />
+            </SignedIn>
+            <SignedOut>
+              <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+                <div className="w-full max-w-md space-y-8 p-8">
+                  <div className="text-center">
+                    <h1 className="text-4xl font-bold tracking-tight">AdScout</h1>
+                    <p className="mt-2 text-lg text-muted-foreground">
+                      Ad Intelligence Platform
+                    </p>
+                    <p className="mt-4 text-sm text-muted-foreground">
+                      Sign in to track, analyze, and discover winning ad campaigns
+                    </p>
+                  </div>
+                  <div className="mt-8 flex justify-center">
+                    <SignInButton mode="modal">
+                      <button className="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                        Sign In
+                      </button>
+                    </SignInButton>
+                  </div>
                 </div>
               </div>
-            </div>
-          </SignedOut>
-          <Toaster />
-        </RootDocument>
+            </SignedOut>
+            <Toaster />
+          </RootDocument>
+        </AutumnWrapper>
       </ConvexProviderWithClerk>
     </ClerkProvider>
   )
@@ -229,5 +233,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  )
+}
+
+function AutumnWrapper({ children }: { children: React.ReactNode }) {
+  const convex = useConvex()
+
+  return (
+    <AutumnProvider convex={convex} convexApi={(api as any).autumn}>
+      {children}
+    </AutumnProvider>
   )
 }

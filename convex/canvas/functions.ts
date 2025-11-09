@@ -1,7 +1,9 @@
 // convex/canvas/functions.ts
 import { v } from "convex/values";
-import { query, mutation } from "../_generated/server";
+import { query, mutation, action, internalMutation } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
+import { autumn } from "../autumn";
+import { internal } from "../_generated/api";
 
 /**
  * List all canvases for the current organization
@@ -327,13 +329,14 @@ export const getFacebookAdNode = query({
 
 /**
  * Create a new canvas
+ * ACTION (not mutation) because it needs to call Autumn API (uses fetch)
  */
-export const createCanvas = mutation({
+export const createCanvas = action({
   args: {
     title: v.optional(v.string()),
     description: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ canvasId: Id<"canvases">; title: string }> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
@@ -346,19 +349,63 @@ export const createCanvas = mutation({
       throw new Error("No organization selected. Please select an organization to continue.");
     }
 
+    // ========== CHECK CANVAS LIMIT (Backend enforcement) ==========
+    const { data: checkData, error: checkError } = await autumn.check(ctx, {
+      featureId: "canvases",
+    });
+
+    if (checkError || !checkData?.allowed) {
+      throw new Error(
+        "Canvas limit reached. Upgrade to Pro for unlimited canvases."
+      );
+    }
+
     const now = Date.now();
     const title = args.title || `Canvas ${new Date().toLocaleDateString()}`;
 
-    const canvasId = await ctx.db.insert("canvases", {
+    // ========== CREATE CANVAS (via runMutation for transactional safety) ==========
+    const canvasId: Id<"canvases"> = await ctx.runMutation(internal.canvas.functions.createCanvasMutation, {
       organizationId,
+      userId,
       title,
       description: args.description,
-      createdAt: now,
-      updatedAt: now,
-      createdBy: userId,
+      now,
+    });
+
+    // ========== TRACK USAGE ==========
+    // Track canvas creation (increment by 1)
+    await autumn.track(ctx, {
+      featureId: "canvases",
+      value: 1,
     });
 
     return { canvasId, title };
+  },
+});
+
+/**
+ * Internal mutation for creating canvas (called by action)
+ * Separated for transactional database operations
+ */
+export const createCanvasMutation = internalMutation({
+  args: {
+    organizationId: v.string(),
+    userId: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    now: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const canvasId = await ctx.db.insert("canvases", {
+      organizationId: args.organizationId,
+      title: args.title,
+      description: args.description,
+      createdAt: args.now,
+      updatedAt: args.now,
+      createdBy: args.userId,
+    });
+
+    return canvasId;
   },
 });
 
@@ -412,8 +459,9 @@ export const updateCanvas = mutation({
 
 /**
  * Delete a canvas and all its nodes/edges
+ * ACTION (not mutation) because it needs to call Autumn API (uses fetch)
  */
-export const deleteCanvas = mutation({
+export const deleteCanvas = action({
   args: {
     canvasId: v.id("canvases"),
   },
@@ -428,13 +476,40 @@ export const deleteCanvas = mutation({
       throw new Error("No organization selected. Please select an organization to continue.");
     }
 
+    // ========== DELETE CANVAS (via runMutation) ==========
+    await ctx.runMutation(internal.canvas.functions.deleteCanvasMutation, {
+      canvasId: args.canvasId,
+      organizationId,
+    });
+
+    // ========== TRACK USAGE ==========
+    // Track canvas deletion (decrement by -1)
+    await autumn.track(ctx, {
+      featureId: "canvases",
+      value: -1,
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Internal mutation for deleting canvas (called by action)
+ * Separated for transactional database operations
+ */
+export const deleteCanvasMutation = internalMutation({
+  args: {
+    canvasId: v.id("canvases"),
+    organizationId: v.string(),
+  },
+  handler: async (ctx, args) => {
     // Get canvas and verify ownership
     const canvas = await ctx.db.get(args.canvasId);
     if (!canvas) {
       throw new Error("Canvas not found");
     }
 
-    if (canvas.organizationId !== organizationId) {
+    if (canvas.organizationId !== args.organizationId) {
       throw new Error("Canvas does not belong to your organization");
     }
 

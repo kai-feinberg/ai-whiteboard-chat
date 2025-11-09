@@ -1,11 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Plus, Layout, Calendar, Trash2 } from "lucide-react";
+import { Plus, Layout, Calendar, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/tanstack-react-start";
+import { useCustomer, CheckoutDialog } from "autumn-js/react";
+import { Progress } from "@/components/ui/progress";
+import * as React from "react";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -15,19 +18,57 @@ function Dashboard() {
   const navigate = useNavigate();
   const { orgId } = useAuth();
   const canvases = useQuery(api.canvas.functions.listCanvases) ?? [];
-  const createCanvas = useMutation(api.canvas.functions.createCanvas);
-  const deleteCanvas = useMutation(api.canvas.functions.deleteCanvas);
+  const createCanvas = useAction(api.canvas.functions.createCanvas);
+  const deleteCanvas = useAction(api.canvas.functions.deleteCanvas);
+  const { customer, check, checkout } = useCustomer();
+
+  // Get current product - check products array
+  const currentProduct = customer?.products?.[0];
+  const productName = currentProduct?.name || "Free";
+  const isPro = productName === "Pro";
+
+  // Get canvas feature - features is an object keyed by feature ID
+  const canvasFeature = customer?.features?.canvases;
+  const usedCanvases = canvasFeature?.usage || 0;
+  const limitCanvases = canvasFeature?.included_usage || 3;
+  const isUnlimited = canvasFeature?.unlimited || limitCanvases >= 999999;
 
   const handleCreateCanvas = async () => {
     try {
+      // Optional: Proactive UX - warn user before hitting backend limit
+      if (usedCanvases >= limitCanvases && !isUnlimited) {
+        const upgradeResult = await checkout({
+          productId: "pro",
+          dialog: CheckoutDialog,
+        });
+
+        // If user didn't upgrade, don't proceed
+        if (!upgradeResult) {
+          return;
+        }
+      }
+
+      // Backend enforces limit securely - this will throw if limit reached
       const result = await createCanvas({});
       toast.success("Canvas created");
       navigate({ to: `/canvas/${result.canvasId}` });
     } catch (error) {
       console.error("[Dashboard] Error creating canvas:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create canvas"
-      );
+
+      // Show specific error message from backend
+      const errorMessage = error instanceof Error ? error.message : "Failed to create canvas";
+
+      // If it's a limit error, offer upgrade
+      if (errorMessage.includes("limit reached") || errorMessage.includes("Upgrade to Pro")) {
+        toast.error(errorMessage, {
+          action: {
+            label: "Upgrade",
+            onClick: () => checkout({ productId: "pro", dialog: CheckoutDialog }),
+          },
+        });
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
@@ -68,17 +109,65 @@ function Dashboard() {
 
   return (
     <div className="p-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Canvases</h1>
-          <p className="text-muted-foreground mt-1">
-            Create and manage your infinite canvas workspaces
-          </p>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold">Canvases</h1>
+            <p className="text-muted-foreground mt-1">
+              Create and manage your infinite canvas workspaces
+            </p>
+          </div>
+          <Button onClick={handleCreateCanvas} size="lg">
+            <Plus className="h-5 w-5 mr-2" />
+            New Canvas
+          </Button>
         </div>
-        <Button onClick={handleCreateCanvas} size="lg">
-          <Plus className="h-5 w-5 mr-2" />
-          New Canvas
-        </Button>
+
+        {/* Usage Display */}
+        <Card className="max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Layout className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Canvas Usage</span>
+              </div>
+              {isPro && (
+                <div className="flex items-center gap-1 text-xs text-yellow-600">
+                  <Sparkles className="h-3 w-3" />
+                  <span>Pro</span>
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {usedCanvases} / {isUnlimited ? "Unlimited" : limitCanvases} canvases
+                </span>
+                {!isUnlimited && (
+                  <span className="text-xs text-muted-foreground">
+                    {Math.round((usedCanvases / limitCanvases) * 100)}%
+                  </span>
+                )}
+              </div>
+              {!isUnlimited && (
+                <Progress value={(usedCanvases / limitCanvases) * 100} className="h-2" />
+              )}
+              {!isPro && usedCanvases >= limitCanvases - 1 && (
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate({ to: "/pricing" })}
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Upgrade to Pro for Unlimited
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {canvases.length === 0 ? (

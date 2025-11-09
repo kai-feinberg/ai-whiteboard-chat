@@ -1,20 +1,73 @@
 # Autumn Pricing Component - Implementation Guide for AI Whiteboard Chat
 
+## 📋 Autumn Features Required
+
+You need to configure these features in Autumn to implement the pricing strategy:
+
+| Feature ID | Feature Name | Type | Purpose | Free Tier | Pro Tier |
+|------------|--------------|------|---------|-----------|----------|
+| `canvases` | Canvases | `continuous_use` | Limit number of canvases per org | 1 | Unlimited |
+| `nodes_per_canvas` | Nodes Per Canvas | `continuous_use` | Limit nodes per canvas | 5 (any type) | Unlimited |
+| `ai_credits` | AI Credits | `single_use` | Meter AI usage (4000 credits = $1) | 8,000/month | 60,000/month |
+| `custom_agents` | Custom Agents | `continuous_use` | Gate custom agent creation | 0 (presets only) | Unlimited |
+| `team_seats` | Team Seats | `continuous_use` | Control team size | 1 | 5 (+$5/seat) |
+
+### Credit Conversion Formula
+- **4,000 credits = $1.00** (customer-facing)
+- Backend conversion: `creditsUsed = Math.ceil(costInDollars * 4000)`
+- Rationale: More generous-sounding numbers, still transparent
+
+---
+
 ## Overview
 
 This guide details how to implement Autumn's Convex component to add:
-1. **Token usage metering** - Track AI message token consumption
+1. **AI credit metering** - Track AI usage with transparent pricing (4000 credits = $1)
 2. **Canvas limits** - Restrict number of canvases per organization
-3. **Credit system** - Org-scoped credits for usage
-4. **Pricing tiers** - Different plans with different limits
+3. **Node limits** - Restrict number of nodes per canvas (Free tier only)
+4. **Custom agents** - Gate custom agent creation by tier
+5. **Team seats** - Control team size per organization
+6. **Pricing tiers** - Free and Pro plans with clear upgrade paths
 
 ## Why Autumn for Your App
 
 - **Org-scoped billing** - Perfect for multi-tenant with Clerk organizations
-- **Real-time metering** - Track token usage as it happens
+- **Real-time metering** - Track AI usage as it happens with cost passthrough
 - **Convex integration** - Native integration with your existing Convex backend
-- **Credit system** - Flexible credits that map to multiple features (different token costs per model)
-- **Canvas limits** - Gate features like canvas creation based on plan
+- **Transparent pricing** - Credits map to dollars (4000 credits = $1)
+- **Feature gating** - Canvas, node, and custom agent limits by tier
+- **Profitable margins** - Base subscription fee + AI credits at cost
+
+---
+
+## Pricing Strategy
+
+### Competitive Positioning
+- **vs. Poppy AI ($300/year):** More customizable (custom agents), transparent pricing, monthly option, free tier
+- **vs. Competitors:** Unlimited nodes (all types), generous free tier, team collaboration built-in
+
+### Value Proposition
+- "Transparent AI canvases for modern teams"
+- "Unlimited context inputs (nodes). Pay for AI usage at cost."
+- "4,000 credits = $1. No hidden markups."
+
+### Pricing Tiers Summary
+
+| | **Free** | **Pro Monthly** | **Pro Annual** |
+|---|----------|-----------------|----------------|
+| **Price** | $0 | $30/month | $300/year |
+| **Canvases** | 1 | Unlimited | Unlimited |
+| **Nodes/Canvas** | 5 (all types) | Unlimited | Unlimited |
+| **AI Credits** | 8,000/month ($2) | 60,000/month ($15) | 720,000/year ($180) |
+| **Overage** | - | $1 per 4,000 credits | $1 per 4,000 credits |
+| **Custom Agents** | Presets only | Unlimited | Unlimited |
+| **Team Seats** | 1 | 5 (+$5/seat) | 5 (+$5/seat) |
+| **Reset** | Monthly | Monthly | Yearly |
+
+**Profit Margins:**
+- **Pro Monthly:** $30 price - $15 credits = **$15/month profit** (50% margin)
+- **Pro Annual:** $300 price - $180 credits = **$120/year profit** (40% margin)
+- **Overage:** At-cost passthrough (no markup on AI usage)
 
 ---
 
@@ -101,47 +154,44 @@ export const {
 } = autumn.api();
 ```
 
+✅ **Implementation Complete** - See [convex/autumn.ts](../convex/autumn.ts)
+
 ### 5. Setup Frontend Provider
 
 **File: `src/routes/__root.tsx`** (or wherever you have your providers)
 
 ```typescript
 import { AutumnProvider } from "autumn-js/react";
-import { api } from "../convex/_generated/api";
-import { useAuth } from "@clerk/tanstack-react-start";
+import { api } from "../../convex/_generated/api";
+import { useConvex } from "convex/react";
 
 function AutumnWrapper({ children }: { children: React.ReactNode }) {
-  const { getToken, isLoaded } = useAuth();
-
-  if (!isLoaded) return <p>Loading...</p>;
+  const convex = useConvex();
 
   return (
-    <AutumnProvider
-      convexApi={(api as any).autumn}
-      convexUrl={import.meta.env.VITE_CONVEX_URL}
-      getBearerToken={async () => {
-        try {
-          return (await getToken({ template: "convex" })) || "";
-        } catch (error) {
-          console.error("Failed to get fresh token:", error);
-          return null;
-        }
-      }}
-    >
+    <AutumnProvider convex={convex} convexApi={(api as any).autumn}>
       {children}
     </AutumnProvider>
   );
 }
 
 // Wrap in your provider tree:
-<ClerkProvider publishableKey={...}>
-  <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+<ClerkProvider>
+  <ConvexProviderWithClerk client={convexClient} useAuth={useAuth}>
     <AutumnWrapper>
       {children}
     </AutumnWrapper>
   </ConvexProviderWithClerk>
 </ClerkProvider>
 ```
+
+**Key Points:**
+- Use `useConvex()` hook to get the Convex client instance (not URL-based approach)
+- Pass `convex={convex}` and `convexApi={(api as any).autumn}` props
+- Place `AutumnWrapper` inside `ConvexProviderWithClerk` so Convex context is available
+- No need for manual token management - uses existing Convex auth
+
+✅ **Implementation Complete** - See [src/routes/__root.tsx](../src/routes/__root.tsx)
 
 ---
 
@@ -174,36 +224,36 @@ import {
 export const canvases = feature({
   id: "canvases",
   name: "Canvases",
-  type: "continuous_use", // User "uses" a fixed number of canvases
+  type: "continuous_use",
+});
+
+// Node limit per canvas (Free tier only)
+export const nodesPerCanvas = feature({
+  id: "nodes_per_canvas",
+  name: "Nodes Per Canvas",
+  type: "continuous_use",
 });
 
 // AI Credits for token usage (single_use = consumed and gone)
+// 4000 credits = $1 (4x multiplier for better perceived value)
 export const aiCredits = feature({
   id: "ai_credits",
   name: "AI Credits",
-  type: "credit_system", // Credit system that maps to multiple metered features
-  credit_schema: [
-    {
-      metered_feature_id: "gpt4_tokens",
-      credit_cost: 10, // 10 credits per 1000 GPT-4 tokens
-    },
-    {
-      metered_feature_id: "claude_tokens",
-      credit_cost: 8, // 8 credits per 1000 Claude tokens
-    },
-    {
-      metered_feature_id: "qwen_tokens",
-      credit_cost: 2, // 2 credits per 1000 Qwen tokens
-    },
-  ],
+  type: "single_use", // Direct consumption, no complex credit_schema
 });
 
-// Individual token metering features (these feed into credits)
+// Custom agents limit
+export const customAgents = feature({
+  id: "custom_agents",
+  name: "Custom Agents",
+  type: "continuous_use",
+});
 
-export const claudeTokens = feature({
-  id: "claude_tokens",
-  name: "Claude Tokens",
-  type: "single_use",
+// Team seats limit
+export const teamSeats = feature({
+  id: "team_seats",
+  name: "Team Seats",
+  type: "continuous_use",
 });
 
 // ==================== PRODUCTS ====================
@@ -213,57 +263,43 @@ export const free = product({
   id: "free",
   name: "Free",
   items: [
-    // 3 canvases included
+    // 1 canvas
     featureItem({
       feature_id: canvases.id,
-      included_usage: 3,
+      included_usage: 1,
     }),
-    // 1000 AI credits included
+    // 5 nodes per canvas (any type)
+    featureItem({
+      feature_id: nodesPerCanvas.id,
+      included_usage: 5,
+    }),
+    // $2 in AI credits (8,000 credits at 4000:1 ratio)
     featureItem({
       feature_id: aiCredits.id,
-      included_usage: 1000,
-    }),
-  ],
-});
-
-// Base tier ($20/month)
-export const base = product({
-  id: "base",
-  name: "Base",
-  items: [
-    // $20/month flat fee
-    priceItem({
-      price: 20,
-      interval: "month",
-    }),
-    // 3 canvases included
-    featureItem({
-      feature_id: canvases.id,
-      included_usage: 3,
-    }),
-    // 5000 AI credits included
-    featureItem({
-      feature_id: aiCredits.id,
-      included_usage: 5000,
+      included_usage: 8000, // $2 worth (4000 credits = $1)
       interval: "month", // Resets monthly
     }),
-    // $0.01 per 100 additional credits
-    pricedFeatureItem({
-      feature_id: aiCredits.id,
-      price: 0.01,
-      billing_units: 100, // Price is per 100 credits
+    // No custom agents (preset only)
+    featureItem({
+      feature_id: customAgents.id,
+      included_usage: 0, // 0 = preset agents only
+    }),
+    // 1 team seat (solo only)
+    featureItem({
+      feature_id: teamSeats.id,
+      included_usage: 1,
     }),
   ],
 });
 
-// Pro tier ($50/month)
-export const pro = product({
-  id: "pro",
-  name: "Pro",
+// Pro tier (Monthly)
+export const proMonthly = product({
+  id: "pro_monthly",
+  name: "Pro (Monthly)",
   items: [
-    // $50/month flat fee
+    // $30/month flat fee
     priceItem({
-      price: 50,
+      price: 30,
       interval: "month",
     }),
     // Unlimited canvases
@@ -271,17 +307,77 @@ export const pro = product({
       feature_id: canvases.id,
       included_usage: 999999, // Effectively unlimited
     }),
-    // 20000 AI credits included
+    // Unlimited nodes per canvas
+    featureItem({
+      feature_id: nodesPerCanvas.id,
+      included_usage: 999999, // No limit
+    }),
+    // $15 in AI credits included (60,000 credits at 4000:1 ratio)
     featureItem({
       feature_id: aiCredits.id,
-      included_usage: 20000,
-      interval: "month",
+      included_usage: 60000, // $15 worth (4000 credits = $1)
+      interval: "month", // Resets monthly
     }),
-    // $0.008 per 100 additional credits (20% discount)
+    // Overage pricing: $1 per 4,000 credits (at-cost passthrough)
     pricedFeatureItem({
       feature_id: aiCredits.id,
-      price: 0.008,
-      billing_units: 100,
+      price: 0.00025, // $0.00025 per credit = $1 per 4000 credits
+      billing_units: 1, // Price per individual credit
+    }),
+    // Unlimited custom agents
+    featureItem({
+      feature_id: customAgents.id,
+      included_usage: 999999,
+    }),
+    // 5 team seats included
+    featureItem({
+      feature_id: teamSeats.id,
+      included_usage: 5,
+    }),
+  ],
+});
+
+// Pro tier (Annual - same as Poppy price)
+export const proAnnual = product({
+  id: "pro_annual",
+  name: "Pro (Annual)",
+  items: [
+    // $300/year (same as Poppy AI)
+    priceItem({
+      price: 300,
+      interval: "year",
+    }),
+    // Unlimited canvases
+    featureItem({
+      feature_id: canvases.id,
+      included_usage: 999999,
+    }),
+    // Unlimited nodes per canvas
+    featureItem({
+      feature_id: nodesPerCanvas.id,
+      included_usage: 999999,
+    }),
+    // $180 in AI credits for the year (720,000 credits at 4000:1 ratio)
+    featureItem({
+      feature_id: aiCredits.id,
+      included_usage: 720000, // $180 worth (4000 credits = $1)
+      interval: "year",
+    }),
+    // Same overage pricing
+    pricedFeatureItem({
+      feature_id: aiCredits.id,
+      price: 0.00025,
+      billing_units: 1,
+    }),
+    // Unlimited custom agents
+    featureItem({
+      feature_id: customAgents.id,
+      included_usage: 999999,
+    }),
+    // 5 team seats included
+    featureItem({
+      feature_id: teamSeats.id,
+      included_usage: 5,
     }),
   ],
 });
@@ -291,19 +387,36 @@ export const creditTopUp = product({
   id: "credit_topup",
   name: "Credit Top-Up",
   items: [
-    // $5 for 1000 credits (one-time, no interval)
+    // $10 for 40,000 credits (never expires)
     pricedFeatureItem({
       feature_id: aiCredits.id,
+      price: 10,
+      billing_units: 40000, // $10 worth (4000 credits = $1)
+      usage_model: "prepaid", // One-time purchase, no expiry
+    }),
+  ],
+});
+
+// Additional seat add-on
+export const additionalSeat = product({
+  id: "additional_seat",
+  name: "Additional Seat",
+  items: [
+    // $5/month per additional seat (after 5)
+    priceItem({
       price: 5,
-      billing_units: 1000,
-      usage_model: "prepaid", // One-time purchase
+      interval: "month",
+    }),
+    featureItem({
+      feature_id: teamSeats.id,
+      included_usage: 1,
     }),
   ],
 });
 
 export default {
-  features: [canvases, aiCredits, gpt4Tokens, claudeTokens, qwenTokens],
-  products: [free, base, pro, creditTopUp],
+  features: [canvases, nodesPerCanvas, aiCredits, customAgents, teamSeats],
+  products: [free, proMonthly, proAnnual, creditTopUp, additionalSeat],
 };
 ```
 
@@ -321,11 +434,12 @@ This syncs your local config to Autumn's platform.
 
 ### Backend: Check Canvas Limit Before Creation
 
-**File: `convex/canvases/functions.ts`**
+**File: `convex/canvas/functions.ts`**
 
 ```typescript
 import { mutation } from "../_generated/server";
 import { autumn } from "../autumn";
+import { v } from "convex/values";
 
 export const createCanvas = mutation({
   args: {
@@ -344,15 +458,6 @@ export const createCanvas = mutation({
     }
 
     // ========== CHECK CANVAS LIMIT ==========
-    // First, get current canvas count
-    const currentCanvases = await ctx.db
-      .query("canvases")
-      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
-      .collect();
-
-    const currentCount = currentCanvases.length;
-
-    // Check if organization can create another canvas
     const { data: checkData, error: checkError } = await autumn.check(ctx, {
       featureId: "canvases",
     });
@@ -360,7 +465,7 @@ export const createCanvas = mutation({
     if (checkError || !checkData?.allowed) {
       throw new Error(
         checkData?.preview?.message ||
-        "Canvas limit reached. Please upgrade your plan."
+        "Canvas limit reached. Upgrade to Pro for unlimited canvases."
       );
     }
 
@@ -375,10 +480,16 @@ export const createCanvas = mutation({
     });
 
     // ========== TRACK USAGE ==========
-    // Set canvas count (overwrites previous value)
+    // Get current count
+    const currentCanvases = await ctx.db
+      .query("canvases")
+      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+      .collect();
+
+    // Set absolute count
     await autumn.usage(ctx, {
       featureId: "canvases",
-      value: currentCount + 1,
+      value: currentCanvases.length,
     });
 
     return canvasId;
@@ -423,23 +534,23 @@ export const deleteCanvas = mutation({
 
 ### Frontend: Display Canvas Limit
 
+**Important**: The `customer.features` object is a **dictionary/object keyed by feature ID**, not an array.
+
 ```typescript
 import { useCustomer } from "autumn-js/react";
 
 export function CanvasDashboard() {
   const { customer, check, checkout } = useCustomer();
 
-  // Get canvas feature usage
-  const canvasFeature = customer?.features?.find(
-    (f) => f.feature_id === "canvases"
-  );
+  // Get canvas feature usage - features is an object, not array!
+  const canvasFeature = customer?.features?.canvases; // Direct key access
 
   const usedCanvases = canvasFeature?.usage || 0;
-  const limitCanvases = canvasFeature?.limit || 3;
+  const limitCanvases = canvasFeature?.included_usage || 1;
 
   return (
     <div>
-      <p>Canvases: {usedCanvases} / {limitCanvases}</p>
+      <p>Canvases: {usedCanvases} / {limitCanvases === 999999 ? "Unlimited" : limitCanvases}</p>
 
       <button
         onClick={async () => {
@@ -450,7 +561,7 @@ export function CanvasDashboard() {
           if (!data.allowed) {
             // Show upgrade dialog
             await checkout({
-              productId: "pro",
+              productId: "pro_monthly",
               dialog: CheckoutDialog, // Import from autumn-js/react
             });
           } else {
@@ -468,22 +579,154 @@ export function CanvasDashboard() {
 
 ---
 
-## Implementation: Token Usage Metering
+## Implementation: Node Limits (Free Tier Only)
 
-### Backend: Track Tokens After AI Message
+### Backend: Check Node Limit Before Adding Node
 
-**File: `convex/ai/functions.ts`** (or wherever you handle AI chat)
+**File: `convex/canvas/nodes.ts`**
 
 ```typescript
-import { action } from "../_generated/server";
+import { mutation } from "../_generated/server";
 import { autumn } from "../autumn";
-import { internal } from "../_generated/api";
+import { v } from "convex/values";
 
-export const sendChatMessage = action({
+export const addNodeToCanvas = mutation({
+  args: {
+    canvasId: v.id("canvases"),
+    nodeType: v.string(),
+    // ... other node args
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const organizationId = identity.organizationId;
+    if (!organizationId) throw new Error("No organization selected");
+
+    // ========== CHECK NODE LIMIT (Free tier only) ==========
+    const { data: checkData, error: checkError } = await autumn.check(ctx, {
+      featureId: "nodes_per_canvas",
+    });
+
+    // Get current node count for this canvas
+    const currentNodes = await ctx.db
+      .query("canvas_nodes")
+      .withIndex("by_canvas", (q) => q.eq("canvasId", args.canvasId))
+      .collect();
+
+    const nodeLimit = checkData?.limit || 5;
+
+    if (currentNodes.length >= nodeLimit && nodeLimit < 999999) {
+      throw new Error(
+        `Node limit reached (${nodeLimit} nodes per canvas on Free tier). Upgrade to Pro for unlimited nodes.`
+      );
+    }
+
+    // ========== CREATE NODE ==========
+    // ... your existing node creation logic
+
+    // ========== TRACK USAGE (Optional - for analytics) ==========
+    await autumn.usage(ctx, {
+      featureId: "nodes_per_canvas",
+      value: currentNodes.length + 1,
+    });
+
+    return nodeId;
+  },
+});
+```
+
+### Frontend: Display Node Limit
+
+```typescript
+import { useCustomer } from "autumn-js/react";
+
+export function NodeLimitBadge({ canvasId }: { canvasId: string }) {
+  const { customer } = useCustomer();
+  const nodes = useQuery(api.canvas.nodes.listNodes, { canvasId });
+
+  const nodeFeature = customer?.features?.find(
+    (f) => f.feature_id === "nodes_per_canvas"
+  );
+
+  const nodeLimit = nodeFeature?.limit || 5;
+  const nodeCount = nodes?.length || 0;
+
+  if (nodeLimit >= 999999) return null; // Pro tier, no limit
+
+  return (
+    <div className="text-sm text-muted-foreground">
+      Nodes: {nodeCount} / {nodeLimit}
+      {nodeCount >= nodeLimit && (
+        <span className="text-red-500 ml-2">
+          Limit reached. <a href="/pricing">Upgrade to Pro</a>
+        </span>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Implementation: AI Credit Metering (1:1 Passthrough)
+
+### Backend: Track AI Usage with Provider Metadata
+
+**File: `convex/canvas/chat.ts`**
+
+```typescript
+import { Agent } from "@convex-dev/agent";
+import { components } from "../_generated/api";
+import { autumn } from "../autumn";
+
+function createCanvasChatAgent(userId: string, organizationId: string) {
+  return new Agent(components.agent, {
+    name: "Canvas Chat Assistant",
+    languageModel: 'xai/grok-4-fast-non-reasoning',
+    usageHandler: async (ctx, args) => {
+      const {
+        threadId,
+        model,
+        provider,
+        usage,
+        providerMetadata
+      } = args;
+
+      // Get actual cost from provider metadata (in dollars)
+      const costInDollars = providerMetadata?.cost || 0;
+
+      // Convert to credits (4000 credits = $1)
+      const creditsUsed = Math.ceil(costInDollars * 4000);
+
+      console.log('[Canvas Chat Usage]', {
+        userId,
+        organizationId,
+        threadId,
+        model,
+        costInDollars,
+        creditsUsed,
+      });
+
+      // Track in Autumn (deduct from balance)
+      await autumn.track(ctx, {
+        featureId: "ai_credits",
+        value: creditsUsed,
+        idempotency_key: `thread_${threadId}_${Date.now()}`, // Prevent double-charging
+      });
+    },
+  });
+}
+```
+
+### Backend: Check Credits Before Sending Message
+
+```typescript
+export const sendMessage = action({
   args: {
     threadId: v.id("threads"),
+    canvasNodeId: v.id("canvas_nodes"),
     message: v.string(),
-    modelId: v.string(), // "gpt-4", "claude-sonnet", "qwen"
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -499,33 +742,13 @@ export const sendChatMessage = action({
 
     if (!checkData?.allowed) {
       throw new Error(
-        "Insufficient AI credits. Please upgrade or purchase credits."
+        "Insufficient AI credits. Please upgrade or purchase a credit top-up."
       );
     }
 
-    // ========== SEND MESSAGE TO AI ==========
-    // Your existing AI logic here...
-    const response = await sendToAI(args.message, args.modelId);
-
-    // Calculate tokens used (prompt + completion)
-    const tokensUsed = response.usage.prompt_tokens + response.usage.completion_tokens;
-
-    // ========== TRACK TOKEN USAGE ==========
-    // Map model to feature ID
-    let featureId = "gpt4_tokens";
-    if (args.modelId.includes("claude")) {
-      featureId = "claude_tokens";
-    } else if (args.modelId.includes("qwen")) {
-      featureId = "qwen_tokens";
-    }
-
-    // Track tokens (this automatically deducts credits based on credit_schema)
-    await autumn.track(ctx, {
-      featureId,
-      value: Math.ceil(tokensUsed / 1000), // Track per 1k tokens
-    });
-
-    return response;
+    // ========== SEND MESSAGE ==========
+    // ... your existing AI logic
+    // Note: Credits are automatically tracked in usageHandler
   },
 });
 ```
@@ -536,25 +759,38 @@ export const sendChatMessage = action({
 import { useCustomer } from "autumn-js/react";
 
 export function CreditDisplay() {
-  const { customer, refetch } = useCustomer();
+  const { customer, checkout } = useCustomer();
 
   const creditFeature = customer?.features?.find(
     (f) => f.feature_id === "ai_credits"
   );
 
   const usedCredits = creditFeature?.usage || 0;
-  const limitCredits = creditFeature?.limit || 1000;
+  const limitCredits = creditFeature?.limit || 8000;
   const remainingCredits = limitCredits - usedCredits;
+
+  // Convert to dollars for display (4000 credits = $1)
+  const remainingDollars = (remainingCredits / 4000).toFixed(2);
+  const usedDollars = (usedCredits / 4000).toFixed(2);
+  const limitDollars = (limitCredits / 4000).toFixed(2);
 
   return (
     <div>
       <h3>AI Credits</h3>
-      <p>{remainingCredits.toLocaleString()} credits remaining</p>
-      <progress value={usedCredits} max={limitCredits} />
+      <p className="text-2xl font-bold">
+        {remainingCredits.toLocaleString()} credits remaining
+      </p>
+      <p className="text-sm text-muted-foreground">
+        ${remainingDollars} of ${limitDollars} (4,000 credits = $1)
+      </p>
+      <progress value={usedCredits} max={limitCredits} className="w-full" />
 
-      {remainingCredits < 100 && (
-        <button onClick={() => checkout({ productId: "credit_topup" })}>
-          Buy More Credits
+      {remainingCredits < 4000 && (
+        <button
+          onClick={() => checkout({ productId: "credit_topup" })}
+          className="mt-2"
+        >
+          Buy 40,000 Credits ($10)
         </button>
       )}
     </div>
@@ -562,40 +798,166 @@ export function CreditDisplay() {
 }
 ```
 
-### Frontend: Real-time Usage Dashboard with Analytics
+### Frontend: Cost Preview Before Sending
 
 ```typescript
-import { useAnalytics } from "autumn-js/react";
-import { useState } from "react";
+export function ChatInput() {
+  const { customer } = useCustomer();
+  const [message, setMessage] = useState("");
 
-export function UsageDashboard() {
-  const [timeRange, setTimeRange] = useState("30d");
+  const creditFeature = customer?.features?.find(
+    (f) => f.feature_id === "ai_credits"
+  );
 
-  const { data, isLoading, error } = useAnalytics({
-    featureId: ["gpt4_tokens", "claude_tokens", "qwen_tokens"],
-    range: timeRange,
-  });
+  const remainingCredits = (creditFeature?.limit || 0) - (creditFeature?.usage || 0);
+  const remainingDollars = (remainingCredits / 4000).toFixed(2);
 
-  if (isLoading) return <div>Loading usage data...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  // Estimate cost based on message length (rough approximation)
+  const estimatedTokens = message.length * 0.75; // ~0.75 tokens per char
+  const estimatedCostDollars = (estimatedTokens / 1000) * 0.01; // ~$0.01 per 1k tokens
+  const estimatedCostCredits = Math.ceil(estimatedCostDollars * 4000);
 
   return (
     <div>
-      <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
-        <option value="24h">Last 24 Hours</option>
-        <option value="7d">Last 7 Days</option>
-        <option value="30d">Last 30 Days</option>
-        <option value="last_cycle">Current Billing Cycle</option>
-      </select>
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Type your message..."
+      />
 
-      {data?.map((point) => (
-        <div key={point.period}>
-          <h4>{new Date(point.period).toLocaleDateString()}</h4>
-          <p>GPT-4: {point.gpt4_tokens || 0}k tokens</p>
-          <p>Claude: {point.claude_tokens || 0}k tokens</p>
-          <p>Qwen: {point.qwen_tokens || 0}k tokens</p>
+      <div className="flex justify-between items-center">
+        <span className="text-sm text-muted-foreground">
+          Est. cost: ~{estimatedCostCredits.toLocaleString()} credits (${estimatedCostDollars.toFixed(3)})
+        </span>
+        <span className="text-sm">
+          {remainingCredits.toLocaleString()} credits (${remainingDollars}) remaining
+        </span>
+      </div>
+
+      <button
+        disabled={estimatedCostCredits > remainingCredits}
+        onClick={handleSend}
+      >
+        Send Message
+      </button>
+    </div>
+  );
+}
+```
+
+---
+
+## Implementation: Custom Agents Gating
+
+### Backend: Check Custom Agent Limit
+
+**File: `convex/agents/mutations.ts`**
+
+```typescript
+import { mutation } from "../_generated/server";
+import { autumn } from "../autumn";
+import { v } from "convex/values";
+
+export const createCustomAgent = mutation({
+  args: {
+    name: v.string(),
+    systemPrompt: v.string(),
+    model: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const organizationId = identity.organizationId;
+    if (!organizationId) throw new Error("No organization selected");
+
+    // ========== CHECK CUSTOM AGENT LIMIT ==========
+    const { data: checkData } = await autumn.check(ctx, {
+      featureId: "custom_agents",
+    });
+
+    if (checkData?.limit === 0) {
+      throw new Error(
+        "Custom agents are not available on Free tier. Upgrade to Pro to create custom agents."
+      );
+    }
+
+    // Get current custom agent count
+    const currentAgents = await ctx.db
+      .query("custom_agents")
+      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+      .collect();
+
+    if (currentAgents.length >= (checkData?.limit || 0)) {
+      throw new Error(
+        "Custom agent limit reached. Upgrade to Pro for unlimited custom agents."
+      );
+    }
+
+    // ========== CREATE CUSTOM AGENT ==========
+    const agentId = await ctx.db.insert("custom_agents", {
+      organizationId,
+      name: args.name,
+      systemPrompt: args.systemPrompt,
+      model: args.model,
+      createdBy: identity.subject,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    // ========== TRACK USAGE ==========
+    await autumn.usage(ctx, {
+      featureId: "custom_agents",
+      value: currentAgents.length + 1,
+    });
+
+    return agentId;
+  },
+});
+```
+
+### Frontend: Display Custom Agent Limit
+
+```typescript
+import { useCustomer } from "autumn-js/react";
+
+export function CustomAgentsList() {
+  const { customer, checkout } = useCustomer();
+  const agents = useQuery(api.agents.queries.listCustomAgents);
+
+  const agentFeature = customer?.features?.find(
+    (f) => f.feature_id === "custom_agents"
+  );
+
+  const agentLimit = agentFeature?.limit || 0;
+  const agentCount = agents?.length || 0;
+
+  const canCreateAgent = agentLimit > agentCount || agentLimit >= 999999;
+
+  return (
+    <div>
+      <h2>Custom Agents</h2>
+
+      {agentLimit === 0 && (
+        <div className="bg-yellow-100 p-4 rounded mb-4">
+          <p>Custom agents are available on Pro tier only.</p>
+          <button onClick={() => checkout({ productId: "pro_monthly" })}>
+            Upgrade to Pro
+          </button>
         </div>
-      ))}
+      )}
+
+      {agentLimit > 0 && agentLimit < 999999 && (
+        <p className="text-sm text-muted-foreground mb-2">
+          {agentCount} / {agentLimit} custom agents
+        </p>
+      )}
+
+      <button disabled={!canCreateAgent} onClick={handleCreateAgent}>
+        Create Custom Agent
+      </button>
+
+      {/* List of agents */}
     </div>
   );
 }
@@ -608,113 +970,74 @@ export function UsageDashboard() {
 ### Frontend: Display Pricing Options
 
 ```typescript
-import { PricingTable, CheckoutDialog } from "autumn-js/react";
+import { PricingTable } from "autumn-js/react";
 
 export function PricingPage() {
   return (
     <div>
-      <h1>Pricing Plans</h1>
+      <h1>Transparent Pricing</h1>
+      <p className="subtitle">
+        Unlimited nodes. Pay for AI usage at cost. 4,000 credits = $1.
+      </p>
 
-      {/* Option 1: Use Autumn's default component */}
-      <PricingTable />
-
-      {/* Option 2: Customize with productDetails */}
       <PricingTable
         productDetails={[
           {
             id: "free",
             description: "Perfect for trying out AI Whiteboard Chat",
+            features: [
+              "1 canvas",
+              "5 nodes per canvas (all types)",
+              "8,000 AI credits/month ($2 value)",
+              "Preset agents only",
+              "1 team seat",
+            ],
           },
           {
-            id: "base",
-            description: "For individuals and small teams",
+            id: "pro_monthly",
+            description: "For builders who ship fast. Cancel anytime.",
             recommendText: "Most Popular",
+            features: [
+              "Unlimited canvases",
+              "Unlimited nodes (all types)",
+              "60,000 AI credits/month ($15 value)",
+              "$1 per 4,000 credits overage (at cost)",
+              "Unlimited custom agents",
+              "5 team seats (+$5/seat after)",
+              "Priority support",
+            ],
           },
           {
-            id: "pro",
-            description: "For power users and large teams",
+            id: "pro_annual",
+            description: "Same price as Poppy AI, more features.",
+            features: [
+              "Everything in Pro Monthly",
+              "720,000 AI credits/year ($180 value)",
+              "2x credits vs monthly",
+            ],
           },
         ]}
       />
-    </div>
-  );
-}
-```
 
-### Frontend: Upgrade Flow with Paywall Dialog
-
-```typescript
-import { useCustomer, PaywallDialog } from "autumn-js/react";
-
-export function FeatureButton() {
-  const { check } = useCustomer();
-
-  return (
-    <button
-      onClick={async () => {
-        // Check feature access with automatic paywall
-        const { data } = await check({
-          featureId: "ai_credits",
-          dialog: PaywallDialog, // Automatically shows if not allowed
-        });
-
-        if (data?.allowed) {
-          // User has access, proceed with feature
-          sendMessage();
-        }
-      }}
-    >
-      Send Message
-    </button>
-  );
-}
-```
-
----
-
-## Advanced: Multi-Model Cost Preview
-
-Show users cost BEFORE sending message:
-
-```typescript
-export function ChatInput() {
-  const { customer } = useCustomer();
-  const [selectedModel, setSelectedModel] = useState("gpt-4");
-
-  // Cost per 1k tokens in credits
-  const costPerThousandTokens = {
-    "gpt-4": 10,
-    "claude-sonnet": 8,
-    "qwen": 2,
-  };
-
-  const estimatedTokens = 500; // Estimate based on input length
-  const estimatedCost = Math.ceil(
-    (estimatedTokens / 1000) * costPerThousandTokens[selectedModel]
-  );
-
-  const remainingCredits = customer?.features?.find(
-    (f) => f.feature_id === "ai_credits"
-  )?.limit - customer?.features?.find(
-    (f) => f.feature_id === "ai_credits"
-  )?.usage || 0;
-
-  return (
-    <div>
-      <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
-        <option value="gpt-4">GPT-4 (10 credits/1k tokens)</option>
-        <option value="claude-sonnet">Claude Sonnet (8 credits/1k tokens)</option>
-        <option value="qwen">Qwen (2 credits/1k tokens)</option>
-      </select>
-
-      <p>
-        Estimated cost: ~{estimatedCost} credits
-        ({remainingCredits} remaining)
-      </p>
-
-      <button disabled={estimatedCost > remainingCredits}>
-        Send Message
-      </button>
+      <div className="mt-8">
+        <h3>Add-Ons</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="border p-4 rounded">
+            <h4>Credit Top-Up</h4>
+            <p className="text-2xl font-bold">$10</p>
+            <p className="text-sm text-muted-foreground">
+              40,000 credits. Never expires.
+            </p>
+          </div>
+          <div className="border p-4 rounded">
+            <h4>Additional Seat</h4>
+            <p className="text-2xl font-bold">$5/mo</p>
+            <p className="text-sm text-muted-foreground">
+              Add more team members (after 5).
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -727,15 +1050,31 @@ export function ChatInput() {
 ### 1. Organization-Scoped Billing
 - **ALWAYS use `organizationId` as `customerId`** in `autumn.ts` `identify` function
 - This ensures billing is per-organization, not per-user
-- Teams share the same credit pool and canvas limits
+- Teams share the same credit pool, canvas limits, and custom agents
 
 ### 2. Track Usage Accurately
-- **Use `autumn.track()`** for consumable features (tokens, messages)
-  - Increments usage counter
-  - Deducts from balance
-- **Use `autumn.usage()`** for fixed features (seats, canvases)
-  - Sets absolute value (overwrites previous)
-  - Use when you know exact count
+- **Use `autumn.track()`** for all feature tracking
+  - Increments/decrements usage counter (e.g., `value: 1` to increment, `value: -1` to decrement)
+  - Works for both consumable and continuous features
+
+### 3. Customer Object Structure
+**Important**: The `customer` object from `useCustomer()` has this structure:
+```typescript
+customer = {
+  products: [{ name: "Free" | "Pro", ... }],  // Array of products
+  features: {
+    canvases: {                               // Object keyed by feature ID (NOT array!)
+      usage: 0,
+      included_usage: 3,
+      unlimited: false,
+      balance: 3,
+      // ... other fields
+    }
+  }
+}
+```
+- Access features by key: `customer.features.canvases` (NOT `customer.features.find(...)`)
+- Current product: `customer.products[0]` (NOT `customer.product`)
 
 ### 3. Check Before Action
 - **ALWAYS check feature access** before expensive operations
@@ -745,16 +1084,18 @@ export function ChatInput() {
 ### 4. Idempotency for Critical Operations
 ```typescript
 await autumn.track(ctx, {
-  featureId: "gpt4_tokens",
-  value: 10,
-  idempotency_key: `msg_${messageId}`, // Prevents double-charging
+  featureId: "ai_credits",
+  value: creditsUsed,
+  idempotency_key: `thread_${threadId}_${timestamp}`, // Prevents double-charging
 });
 ```
 
 ### 5. Transparent Pricing
 - Show users cost BEFORE they take action
-- Display remaining credits prominently
+- Display credits prominently with dollar conversion visible
 - Provide usage analytics dashboard
+- Show conversion rate: "4,000 credits = $1"
+- Lead with credit count (feels more generous), show dollar value as context
 
 ### 6. Graceful Degradation
 ```typescript
@@ -771,17 +1112,21 @@ if (error) {
 
 ## Testing Checklist
 
-- [ ] Canvas creation respects limits
+- [ ] Canvas creation respects limits (1 on Free, unlimited on Pro)
 - [ ] Canvas deletion updates count correctly
-- [ ] Token usage tracks correctly for each model
-- [ ] Credits deduct based on token type (GPT-4 vs Claude vs Qwen)
+- [ ] Node creation respects limits (5 per canvas on Free, unlimited on Pro)
+- [ ] AI credit tracking uses 4000:1 ratio from providerMetadata.cost
+- [ ] Credits display with both credit count and dollar conversion (4000 = $1)
 - [ ] Multiple users in same org share credit pool
-- [ ] Upgrade flow works (free → base → pro)
-- [ ] Credit top-up purchases work
+- [ ] Custom agent creation blocked on Free tier (0 limit)
+- [ ] Custom agent creation works on Pro tier (unlimited)
+- [ ] Upgrade flow works (Free → Pro Monthly/Annual)
+- [ ] Credit top-up purchases work (40,000 credits for $10, never expire)
+- [ ] Additional seat purchases work ($5/month per seat after 5)
 - [ ] Usage dashboard shows accurate data
 - [ ] Paywall dialogs appear when limits reached
 - [ ] Idempotency prevents double-charging
-- [ ] Cost preview shows accurate estimates
+- [ ] Cost preview shows accurate estimates in credits + dollars
 
 ---
 
@@ -795,23 +1140,25 @@ if (error) {
 5. Define pricing config (`autumn.config.ts`)
 6. Push to Autumn platform
 
-### Phase 2: Canvas Limits (Week 2)
+### Phase 2: Feature Gating (Week 2)
 1. Add canvas limit checks to `createCanvas`
-2. Update canvas count on delete
-3. Add canvas usage display to dashboard
-4. Test with multiple orgs
+2. Add node limit checks to `addNodeToCanvas`
+3. Add custom agent limit checks to `createCustomAgent`
+4. Update counts on delete operations
+5. Test with multiple orgs
 
-### Phase 3: Token Metering (Week 3)
-1. Add token tracking to AI message handler
-2. Add credit display to UI
-3. Add cost preview before sending
-4. Test with different models
+### Phase 3: Credit Metering (Week 3)
+1. Add credit tracking to Agent usageHandler (1:1 passthrough)
+2. Add credit display to UI (show in dollars)
+3. Add cost preview before sending messages
+4. Test with different models and context sizes
 
 ### Phase 4: Pricing & Upgrades (Week 4)
 1. Add pricing table page
 2. Add upgrade flows with dialogs
 3. Add usage analytics dashboard
 4. Add credit top-up purchase flow
+5. Add additional seat purchase flow
 
 ---
 
@@ -825,25 +1172,30 @@ if (!organizationId || typeof organizationId !== "string") {
 }
 ```
 
-### Issue: Credits not deducting
-**Solution:** Check `credit_schema` in feature definition matches your `track()` calls:
+### Issue: Credits not deducting correctly
+**Solution:** Ensure you're using `providerMetadata.cost` from AI SDK with correct ratio:
 ```typescript
-// In autumn.config.ts
-credit_schema: [
-  { metered_feature_id: "gpt4_tokens", credit_cost: 10 },
-]
+const costInDollars = providerMetadata?.cost || 0;
+const creditsUsed = Math.ceil(costInDollars * 4000); // 4000:1 ratio
+```
 
-// In backend
-await autumn.track(ctx, {
-  featureId: "gpt4_tokens", // Must match metered_feature_id
-  value: 1,
-});
+### Issue: Node limit not enforced
+**Solution:** Check current node count BEFORE creating:
+```typescript
+const currentNodes = await ctx.db
+  .query("canvas_nodes")
+  .withIndex("by_canvas", (q) => q.eq("canvasId", args.canvasId))
+  .collect();
+
+if (currentNodes.length >= nodeLimit && nodeLimit < 999999) {
+  throw new Error("Node limit reached");
+}
 ```
 
 ### Issue: Canvas count wrong after operations
 **Solution:** Use `autumn.usage()` to SET absolute value, not increment:
 ```typescript
-const currentCount = await db.query("canvases")...collect();
+const currentCount = await db.query("canvases").collect();
 await autumn.usage(ctx, {
   featureId: "canvases",
   value: currentCount.length, // Absolute count, not increment
@@ -867,10 +1219,27 @@ await autumn.usage(ctx, {
 Autumn provides a complete billing solution for AI Whiteboard Chat:
 
 1. **Organization-scoped** - Perfect for multi-tenant with Clerk
-2. **Credit system** - Flexible pricing for different AI models
-3. **Canvas limits** - Gate features by plan tier
+2. **Transparent credit system** - 4,000 credits = $1 (generous-sounding, still transparent)
+3. **Feature gating** - Canvas, node, and custom agent limits
 4. **Real-time tracking** - Convex integration for instant updates
-5. **Transparent pricing** - Show costs before actions
+5. **Profitable margins** - $15/month base profit on Pro tier
 6. **Upgrade flows** - Built-in dialogs and checkout
 
-Start with canvas limits (simpler), then add token metering once comfortable with the system.
+### Pricing Summary:
+- **Free:** 1 canvas, 5 nodes, 8,000 credits/month ($2), preset agents only
+- **Pro Monthly ($30):** Unlimited everything, 60,000 credits/month ($15), $15 profit margin
+- **Pro Annual ($300):** Same as Poppy price, 720,000 credits/year ($180), $120 profit margin
+- **Overages:** At-cost passthrough ($1 per 4,000 credits)
+
+### Competitive Advantages:
+- **vs. Poppy AI ($300/year):** More customizable, transparent, monthly option, free tier
+- **Unlimited nodes** - All types included (YouTube, TikTok, Facebook, etc.)
+- **At-cost AI pricing** - No hidden markups on overage
+- **Healthy margins** - 50% profit on base subscription
+- **Free tier** - Try before you buy (1 canvas, 5 nodes, 8,000 credits/month)
+
+### Implementation Order:
+1. **Week 1:** Canvas limits (simplest)
+2. **Week 2:** Node limits + Custom agent gating
+3. **Week 3:** AI credit metering (4000:1 ratio)
+4. **Week 4:** Pricing table + upgrade flows
