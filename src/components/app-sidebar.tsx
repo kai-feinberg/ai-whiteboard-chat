@@ -63,7 +63,13 @@ const data = {
 }
 
 function TierBadge() {
-  const { customer } = useCustomer();
+  const { customer } = useCustomer({
+    swrConfig: {
+      refreshInterval: 30000, // Poll every 30 seconds
+      revalidateOnFocus: true, // Instant update when user returns to tab
+      refreshWhenHidden: false, // Don't poll in background
+    }
+  });
 
   // Get current product - check products array
   const currentProduct = customer?.products?.[0];

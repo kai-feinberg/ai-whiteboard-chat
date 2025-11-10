@@ -8,6 +8,14 @@ import { toast } from "sonner";
 import { useAuth } from "@clerk/tanstack-react-start";
 import { useCustomer, CheckoutDialog } from "autumn-js/react";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import * as React from "react";
 
 export const Route = createFileRoute("/")({
@@ -20,7 +28,16 @@ function Dashboard() {
   const canvases = useQuery(api.canvas.functions.listCanvases) ?? [];
   const createCanvas = useAction(api.canvas.functions.createCanvas);
   const deleteCanvas = useAction(api.canvas.functions.deleteCanvas);
-  const { customer, check, checkout } = useCustomer();
+  const { customer, check, checkout, refetch } = useCustomer({
+    swrConfig: {
+      refreshInterval: 30000, // Poll every 30 seconds
+      revalidateOnFocus: true, // Instant update when user returns to tab
+      refreshWhenHidden: false, // Don't poll in background
+    }
+  });
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [canvasToDelete, setCanvasToDelete] = React.useState<string | null>(null);
 
   // Get current product - check products array
   const currentProduct = customer?.products?.[0];
@@ -50,6 +67,7 @@ function Dashboard() {
 
       // Backend enforces limit securely - this will throw if limit reached
       const result = await createCanvas({});
+      await refetch(); // Force immediate update of canvas count
       toast.success("Canvas created");
       navigate({ to: `/canvas/${result.canvasId}` });
     } catch (error) {
@@ -74,19 +92,25 @@ function Dashboard() {
 
   const handleDeleteCanvas = async (canvasId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    setCanvasToDelete(canvasId);
+    setDeleteDialogOpen(true);
+  };
 
-    if (!confirm("Delete this canvas? This will remove all nodes and cannot be undone.")) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!canvasToDelete) return;
 
     try {
-      await deleteCanvas({ canvasId: canvasId as any });
+      await deleteCanvas({ canvasId: canvasToDelete as any });
+      await refetch(); // Force immediate update of canvas count
       toast.success("Canvas deleted");
     } catch (error) {
       console.error("[Dashboard] Error deleting canvas:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to delete canvas"
       );
+    } finally {
+      setDeleteDialogOpen(false);
+      setCanvasToDelete(null);
     }
   };
 
@@ -195,7 +219,7 @@ function Dashboard() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground z-10"
+                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400 z-10"
                 onClick={(e) => handleDeleteCanvas(canvas._id, e)}
               >
                 <Trash2 className="h-4 w-4" />
@@ -221,6 +245,25 @@ function Dashboard() {
           ))}
         </div>
       )}
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Canvas</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this canvas? This will remove all nodes and cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
