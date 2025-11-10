@@ -27,12 +27,38 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
     data.selectedThreadId
   );
 
+  // Agent state management with localStorage persistence
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(() => {
+    // Try to load from localStorage on mount
+    if (typeof window !== "undefined" && data.canvasId) {
+      const stored = localStorage.getItem(`canvas-agent-${data.canvasId}`);
+      return stored || null;
+    }
+    return null;
+  });
+
   // Sync selected thread when data changes
   useEffect(() => {
     if (data.selectedThreadId !== selectedThreadId) {
       setSelectedThreadId(data.selectedThreadId);
     }
   }, [data.selectedThreadId]);
+
+  // Load default agent on mount if no stored agent
+  const defaultAgent = useQuery(api.agents.functions.getDefaultAgent);
+  useEffect(() => {
+    if (defaultAgent && !selectedAgentId) {
+      setSelectedAgentId(defaultAgent);
+    }
+  }, [defaultAgent, selectedAgentId]);
+
+  // Persist agent selection to localStorage
+  const handleAgentChange = (agentId: string) => {
+    setSelectedAgentId(agentId);
+    if (typeof window !== "undefined" && data.canvasId) {
+      localStorage.setItem(`canvas-agent-${data.canvasId}`, agentId);
+    }
+  };
 
   // Get context from connected nodes
   const contextMessages = useQuery(
@@ -133,7 +159,7 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
   // Get refetch function for credits
   const { refetch } = useCustomer();
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string, agentId?: string) => {
     if (!selectedThreadId || !data.canvasNodeId) {
       toast.error("Please select a thread first");
       return;
@@ -144,6 +170,7 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
         threadId: selectedThreadId,
         canvasNodeId: data.canvasNodeId,
         message,
+        agentId: agentId || selectedAgentId || undefined,
       });
       // Refetch credits after message to update sidebar
       await refetch();
@@ -194,6 +221,8 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
                 streams={[]}
                 variant="compact"
                 className="h-full"
+                selectedAgentId={selectedAgentId}
+                onAgentChange={handleAgentChange}
               />
             ) : selectedThreadId ? (
               <div className="flex items-center justify-center flex-1">

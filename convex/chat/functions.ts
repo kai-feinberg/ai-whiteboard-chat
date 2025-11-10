@@ -10,10 +10,10 @@ import { autumn } from "../autumn";
 import { convertUsdToCredits, estimateCost } from "../ai/pricing";
 
 // Create agent instance with credit tracking
-function createChatAgent(userId: string, organizationId: string) {
+function createChatAgent(userId: string, organizationId: string, agentName: string, systemPrompt: string) {
   return new Agent(components.agent, {
-    name: "Chat Assistant",
-    instructions: `You are a helpful AI assistant. Provide clear, concise, and accurate responses.`,
+    name: agentName,
+    instructions: systemPrompt,
     languageModel: 'xai/grok-4-fast-non-reasoning',
     maxSteps: 10,
     callSettings: {
@@ -279,6 +279,7 @@ export const sendMessage = action({
   args: {
     threadId: v.id("threads"),
     message: v.string(),
+    agentId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ success: boolean; response: string }> => {
     // Auth check
@@ -315,13 +316,24 @@ export const sendMessage = action({
       );
     }
 
+    // Fetch agent config
+    const agentId = args.agentId || "default";
+    const agentConfig: any = await ctx.runQuery(internal.agents.functions.getAgent, {
+      agentId,
+      organizationId,
+    });
+
+    if (!agentConfig) {
+      throw new Error("Agent not found");
+    }
+
     // Touch thread to update timestamp
     await ctx.runMutation(internal.chat.functions.touchThread, {
       threadId: args.threadId,
     });
 
     // Create agent with user context for credit tracking
-    const agent = createChatAgent(userId, organizationId);
+    const agent = createChatAgent(userId, organizationId, agentConfig.name, agentConfig.systemPrompt);
 
     try {
       // Stream AI response with delta saving

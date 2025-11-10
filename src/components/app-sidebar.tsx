@@ -1,5 +1,5 @@
 import * as React from "react"
-import { LayoutDashboard, Eye, MessageSquare, Search, CreditCard, Sparkles } from "lucide-react"
+import { LayoutDashboard, Eye, MessageSquare, Search, CreditCard, Sparkles, Bot, Settings } from "lucide-react"
 import { Link } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 import { useCustomer } from "autumn-js/react"
@@ -57,6 +57,18 @@ const data = {
           title: "Plans",
           url: "/pricing",
           icon: CreditCard,
+        },
+      ],
+    },
+    {
+      title: "Settings",
+      url: "/settings/custom-agents",
+      icon: Settings,
+      items: [
+        {
+          title: "Custom Agents",
+          url: "/settings/custom-agents",
+          icon: Bot,
         },
       ],
     },

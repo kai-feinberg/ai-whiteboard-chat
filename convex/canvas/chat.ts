@@ -9,10 +9,10 @@ import { autumn } from "../autumn";
 import { convertUsdToCredits, estimateCost } from "../ai/pricing";
 
 // Create a function that returns an agent with a usageHandler that has access to user/org context
-function createCanvasChatAgent(userId: string, organizationId: string) {
+function createCanvasChatAgent(userId: string, organizationId: string, agentName: string, systemPrompt: string) {
   return new Agent(components.agent, {
-    name: "Canvas Chat Assistant",
-    instructions: `You are a helpful AI assistant in an infinite canvas workspace. Users may provide context from connected nodes - use this context to inform your responses.`,
+    name: agentName,
+    instructions: systemPrompt,
     languageModel: 'xai/grok-4-fast-non-reasoning',
     maxSteps: 10,
     callSettings: {
@@ -70,6 +70,7 @@ export const sendMessage = action({
     threadId: v.id("threads"),
     canvasNodeId: v.id("canvas_nodes"),
     message: v.string(),
+    agentId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -104,8 +105,19 @@ export const sendMessage = action({
       );
     }
 
+    // Fetch agent config
+    const agentId = args.agentId || "default";
+    const agent: any = await ctx.runQuery(internal.agents.functions.getAgent, {
+      agentId,
+      organizationId,
+    });
+
+    if (!agent) {
+      throw new Error("Agent not found");
+    }
+
     // Create agent with user context for usage tracking
-    const canvasChatAgent = createCanvasChatAgent(userId, organizationId);
+    const canvasChatAgent = createCanvasChatAgent(userId, organizationId, agent.name, agent.systemPrompt);
 
     // Gather context from connected nodes
     const contextMessages: any[] = await ctx.runQuery(internal.canvas.chat.getNodeContextInternal, {
@@ -121,16 +133,19 @@ export const sendMessage = action({
       }),
     });
 
-    // Build system message with context
-    let systemMessage = "";
+    // Build system message: Agent prompt first, then context
+    let systemMessage = agent.systemPrompt;
+
     if (contextMessages.length > 0) {
-      systemMessage = contextMessages.map((msg: any) => msg.content).join("\n\n");
+      const contextContent = contextMessages.map((msg: any) => msg.content).join("\n\n");
+      systemMessage += "\n\n---\n\n## Context from Connected Nodes\n\nThe user has provided the following context from nodes connected to this chat:\n\n" + contextContent;
     }
 
     console.log('[Canvas Chat] System prompt:', {
-      hasSystemMessage: !!systemMessage,
-      systemMessageLength: systemMessage.length,
-      systemMessagePreview: systemMessage.substring(0, 200),
+      hasAgentPrompt: !!agent.systemPrompt,
+      hasContext: contextMessages.length > 0,
+      totalSystemMessageLength: systemMessage.length,
+      systemMessagePreview: systemMessage.substring(0, 300),
     });
 
     // Touch thread to update timestamp
@@ -139,13 +154,13 @@ export const sendMessage = action({
     });
 
     try {
-      // Stream AI response with context injected as system message
+      // Stream AI response with full system message (agent prompt + context)
       const result: any = await canvasChatAgent.streamText(
         ctx,
         { threadId: thread.agentThreadId },
         {
           prompt: args.message,
-          ...(systemMessage && { system: systemMessage }),
+          system: systemMessage,
         },
         {
           saveStreamDeltas: {

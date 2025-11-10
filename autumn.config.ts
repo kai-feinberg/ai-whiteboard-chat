@@ -22,6 +22,13 @@ export const aiCredits = feature({
 	type: "single_use",
 });
 
+// Custom Agents feature (boolean = feature flag for PRO only)
+export const customAgents = feature({
+	id: "custom_agents",
+	name: "Custom Agents",
+	type: "boolean",
+});
+
 // ==================== PRODUCTS ====================
 
 // Free tier
@@ -40,6 +47,7 @@ export const free = product({
 			included_usage: 8000,
 			interval: "month",
 		}),
+		// No custom agents on free tier (omit the featureItem entirely)
 	],
 });
 
@@ -64,10 +72,14 @@ export const pro = product({
 			included_usage: 60000,
 			interval: "month",
 		}),
+		// Custom agents enabled for Pro (boolean feature)
+		featureItem({
+			feature_id: customAgents.id,
+		}),
 	],
 });
 
 export default {
-	features: [canvases, aiCredits],
+	features: [canvases, aiCredits, customAgents],
 	products: [free, pro],
 };

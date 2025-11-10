@@ -176,4 +176,17 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_organization", ["organizationId"]),
+
+  // Custom Agents - Organization-scoped custom AI agents
+  custom_agents: defineTable({
+    organizationId: v.string(),
+    name: v.string(), // Display name (e.g., "VSL Writer", "Ideation Bot")
+    systemPrompt: v.string(), // Custom instructions for agent
+    isDefault: v.boolean(), // Whether this is the default agent for org
+    createdBy: v.string(), // userId who created it
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_default", ["organizationId", "isDefault"]),
 });

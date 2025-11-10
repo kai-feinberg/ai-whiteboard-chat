@@ -18,14 +18,17 @@ import {
 import { MessageSquare, Loader2 } from "lucide-react";
 import { useSmoothText, type UIMessage } from "@convex-dev/agent/react";
 import { cn } from "@/lib/utils";
+import { AgentSelector } from "@/features/agents/components/AgentSelector";
 
 export interface ChatProps {
   messages: UIMessage[];
-  onSendMessage: (message: string) => Promise<void>;
+  onSendMessage: (message: string, agentId?: string) => Promise<void>;
   isStreaming?: boolean;
   streams?: any[];
   variant?: "fullscreen" | "compact";
   className?: string;
+  selectedAgentId?: string | null;
+  onAgentChange?: (agentId: string) => void;
 }
 
 // Component for rendering a message with smooth text streaming
@@ -59,12 +62,14 @@ export function Chat({
   streams = [],
   variant = "fullscreen",
   className,
+  selectedAgentId,
+  onAgentChange,
 }: ChatProps) {
   const handleSubmit = async (message: { text?: string; files?: any[] }) => {
     if (!message.text?.trim() || isStreaming) return;
 
     try {
-      await onSendMessage(message.text);
+      await onSendMessage(message.text, selectedAgentId || undefined);
     } catch (error) {
       console.error("[Chat] Error sending message:", error);
       throw error;
@@ -107,6 +112,16 @@ export function Chat({
         )}
 
         <div className="p-4">
+          {/* Agent Selector */}
+          {onAgentChange && (
+            <div className="mb-2">
+              <AgentSelector
+                value={selectedAgentId}
+                onChange={onAgentChange}
+              />
+            </div>
+          )}
+
           <PromptInput onSubmit={handleSubmit} className="w-full relative">
             <PromptInputTextarea
               placeholder="Type a message... (Shift+Enter for new line)"

@@ -9,6 +9,7 @@
  */
 
 import type * as agents_actions from "../agents/actions.js";
+import type * as agents_functions from "../agents/functions.js";
 import type * as agents_mutations from "../agents/mutations.js";
 import type * as agents_queries from "../agents/queries.js";
 import type * as ai_pricing from "../ai/pricing.js";
@@ -42,6 +43,7 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   "agents/actions": typeof agents_actions;
+  "agents/functions": typeof agents_functions;
   "agents/mutations": typeof agents_mutations;
   "agents/queries": typeof agents_queries;
   "ai/pricing": typeof ai_pricing;

@@ -38,6 +38,32 @@ function FullScreenChat() {
   const { canvasId } = Route.useParams();
   const [selectedThreadId, setSelectedThreadId] = useState<Id<"threads"> | null>(null);
 
+  // Agent state management with localStorage persistence
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(() => {
+    // Try to load from localStorage on mount
+    if (typeof window !== "undefined" && canvasId) {
+      const stored = localStorage.getItem(`canvas-agent-${canvasId}`);
+      return stored || null;
+    }
+    return null;
+  });
+
+  // Load default agent on mount if no stored agent
+  const defaultAgent = useQuery(api.agents.functions.getDefaultAgent);
+  useEffect(() => {
+    if (defaultAgent && !selectedAgentId) {
+      setSelectedAgentId(defaultAgent);
+    }
+  }, [defaultAgent, selectedAgentId]);
+
+  // Persist agent selection to localStorage
+  const handleAgentChange = (agentId: string) => {
+    setSelectedAgentId(agentId);
+    if (typeof window !== "undefined" && canvasId) {
+      localStorage.setItem(`canvas-agent-${canvasId}`, agentId);
+    }
+  };
+
   // Load canvas data
   const canvasData = useQuery(
     api.canvas.functions.getCanvasWithNodes,
@@ -132,7 +158,7 @@ function FullScreenChat() {
   // Get refetch function for credits
   const { refetch } = useCustomer();
 
-  const handleSendMessage = async (message: string) => {
+  const handleSendMessage = async (message: string, agentId?: string) => {
     if (!selectedThreadId) {
       toast.error("Please select a thread first");
       return;
@@ -152,6 +178,7 @@ function FullScreenChat() {
         threadId: selectedThreadId,
         canvasNodeId: chatNode._id,
         message,
+        agentId: agentId || selectedAgentId || undefined,
       });
       // Refetch credits after message to update sidebar
       await refetch();
@@ -211,6 +238,8 @@ function FullScreenChat() {
               streams={[]}
               variant="fullscreen"
               className="h-full"
+              selectedAgentId={selectedAgentId}
+              onAgentChange={handleAgentChange}
             />
           ) : selectedThreadId ? (
             <div className="flex items-center justify-center flex-1">
