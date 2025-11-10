@@ -10,6 +10,7 @@ import { useAuth } from "@clerk/tanstack-react-start";
 import { useUIMessages } from "@convex-dev/agent/react";
 import type { Id } from "../../convex/_generated/dataModel";
 import { Loader2 } from "lucide-react";
+import { useCustomer } from "autumn-js/react";
 
 export const Route = createFileRoute("/playground")({
   component: PlaygroundPage,
@@ -95,6 +96,9 @@ function PlaygroundPage() {
     }
   };
 
+  // Get refetch function for credits
+  const { refetch } = useCustomer();
+
   const handleSendMessage = async (message: string) => {
     if (!selectedThreadId) {
       toast.error("Please select or create a chat first");
@@ -106,6 +110,8 @@ function PlaygroundPage() {
         threadId: selectedThreadId,
         message,
       });
+      // Refetch credits after message to update sidebar
+      await refetch();
     } catch (error) {
       console.error("[Playground] Error sending message:", error);
       toast.error(

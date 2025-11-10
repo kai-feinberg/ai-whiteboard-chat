@@ -5,6 +5,8 @@ import { internal } from "../_generated/api";
 import { Agent } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
+import { autumn } from "../autumn";
+import { convertUsdToCredits, estimateCost } from "../ai/pricing";
 
 // Create a function that returns an agent with a usageHandler that has access to user/org context
 function createCanvasChatAgent(userId: string, organizationId: string) {
@@ -27,6 +29,16 @@ function createCanvasChatAgent(userId: string, organizationId: string) {
         usage, providerMetadata
       } = args;
 
+      // Extract cost from Vercel AI Gateway
+      const gatewayCost = providerMetadata?.gateway?.cost;
+      if (!gatewayCost) {
+        console.warn('[Canvas Chat Usage] No gateway cost found, skipping credit tracking');
+        return;
+      }
+
+      // Convert USD to credits (4000 credits = $1)
+      const costInCredits = convertUsdToCredits(gatewayCost);
+
       console.log('[Canvas Chat Usage]', {
         userId, // from closure
         organizationId, // from closure
@@ -34,8 +46,17 @@ function createCanvasChatAgent(userId: string, organizationId: string) {
         agentName,
         model,
         provider,
-        usage,
-        providerMetadata,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        totalTokens: usage.totalTokens,
+        usdCost: gatewayCost,
+        creditsDeducted: costInCredits,
+      });
+
+      // Track usage with Autumn (deduct credits)
+      await autumn.track(ctx, {
+        featureId: "ai_credits",
+        value: costInCredits, // Positive value = deduction for single_use features
       });
     },
   });
@@ -70,6 +91,17 @@ export const sendMessage = action({
 
     if (!thread) {
       throw new Error("Thread not found or does not belong to your organization");
+    }
+
+    // ========== PRE-FLIGHT CREDIT CHECK ==========
+    const { data, error } = await autumn.check(ctx, {
+      featureId: "ai_credits",
+    });
+
+    if (error || !data?.allowed) {
+      throw new Error(
+        `Insufficient credits. Please upgrade or wait for your monthly reset.`
+      );
     }
 
     // Create agent with user context for usage tracking

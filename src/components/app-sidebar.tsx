@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 import { useCustomer } from "autumn-js/react"
 import { Badge } from "@/components/ui/badge"
+import { CreditBalance } from "@/features/credits/components/CreditBalance"
 
 import {
   Sidebar,
@@ -169,6 +170,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         <div className="flex flex-col gap-2 p-2">
+          <CreditBalance />
           <TierBadge />
           <OrganizationSwitcher
             hidePersonal={false}

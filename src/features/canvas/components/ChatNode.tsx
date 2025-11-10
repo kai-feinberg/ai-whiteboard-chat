@@ -12,6 +12,7 @@ import type { NodeProps } from "@xyflow/react";
 import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { useCustomer } from "autumn-js/react";
 
 interface ChatNodeData {
   canvasNodeId: Id<"canvas_nodes">;
@@ -129,6 +130,9 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
     }
   };
 
+  // Get refetch function for credits
+  const { refetch } = useCustomer();
+
   const handleSendMessage = async (message: string) => {
     if (!selectedThreadId || !data.canvasNodeId) {
       toast.error("Please select a thread first");
@@ -141,6 +145,8 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
         canvasNodeId: data.canvasNodeId,
         message,
       });
+      // Refetch credits after message to update sidebar
+      await refetch();
     } catch (error) {
       console.error("[ChatNode] Error sending message:", error);
       toast.error(

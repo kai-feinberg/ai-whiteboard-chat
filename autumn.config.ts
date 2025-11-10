@@ -14,6 +14,14 @@ export const canvases = feature({
 	type: "continuous_use",
 });
 
+// AI Credits feature (single_use = consumed when used)
+// 4000 credits = $1 USD
+export const aiCredits = feature({
+	id: "ai_credits",
+	name: "AI Credits",
+	type: "single_use",
+});
+
 // ==================== PRODUCTS ====================
 
 // Free tier
@@ -25,6 +33,12 @@ export const free = product({
 		featureItem({
 			feature_id: canvases.id,
 			included_usage: 3,
+		}),
+		// 8,000 AI credits/month ($2 value)
+		featureItem({
+			feature_id: aiCredits.id,
+			included_usage: 8000,
+			interval: "month",
 		}),
 	],
 });
@@ -44,10 +58,16 @@ export const pro = product({
 			feature_id: canvases.id,
 			included_usage: 999999, // Effectively unlimited
 		}),
+		// 60,000 AI credits/month ($15 value)
+		featureItem({
+			feature_id: aiCredits.id,
+			included_usage: 60000,
+			interval: "month",
+		}),
 	],
 });
 
 export default {
-	features: [canvases],
+	features: [canvases, aiCredits],
 	products: [free, pro],
 };

@@ -122,7 +122,7 @@ export function ThreadSidebar({
                 View Context
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col gap-4">
+            <DialogContent className="max-w-5xl w-[95vw] h-[80vh] flex flex-col gap-4">
               <DialogHeader>
                 <DialogTitle>Connected Node Context</DialogTitle>
                 <DialogDescription>
@@ -130,14 +130,14 @@ export function ThreadSidebar({
                   {contextMessages.length !== 1 ? "s" : ""} that will be passed to the AI
                 </DialogDescription>
               </DialogHeader>
-              <ScrollArea className="flex-1 pr-4">
-                <div className="space-y-4">
+              <ScrollArea className="flex-1 h-[50vh]">
+                <div className="space-y-4 max-w-full pr-4">
                   {contextMessages.map((msg, idx) => (
                     <div
                       key={idx}
-                      className="p-4 rounded-lg bg-muted/50 border"
+                      className="p-4 rounded-lg bg-muted/50 border max-w-full"
                     >
-                      <pre className="text-xs whitespace-pre-wrap font-mono">
+                      <pre className="text-xs whitespace-pre-wrap font-mono" style={{ overflowWrap: 'anywhere' }}>
                         {msg.content}
                       </pre>
                     </div>

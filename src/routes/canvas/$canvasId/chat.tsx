@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { useCustomer } from "autumn-js/react";
 
 export const Route = createFileRoute("/canvas/$canvasId/chat")({
   beforeLoad: ({ context }) => {
@@ -128,6 +129,9 @@ function FullScreenChat() {
     }
   };
 
+  // Get refetch function for credits
+  const { refetch } = useCustomer();
+
   const handleSendMessage = async (message: string) => {
     if (!selectedThreadId) {
       toast.error("Please select a thread first");
@@ -149,6 +153,8 @@ function FullScreenChat() {
         canvasNodeId: chatNode._id,
         message,
       });
+      // Refetch credits after message to update sidebar
+      await refetch();
     } catch (error) {
       console.error("[FullScreenChat] Error sending message:", error);
       toast.error(

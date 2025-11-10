@@ -16,6 +16,7 @@ AI Whiteboard Chat uses [Autumn](https://useautumn.com) for pricing, billing, an
 │             │  ↓ gets customer data
 │             │  ↓ checks limits
 │             │  ↓ calls actions
+│             │  ↓ refetch customer data
 └─────────────┘
        ↓
 ┌─────────────┐

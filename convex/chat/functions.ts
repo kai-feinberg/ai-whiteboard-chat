@@ -6,18 +6,54 @@ import { createThread, listUIMessages, syncStreams, vStreamArgs } from "@convex-
 import { components } from "../_generated/api";
 import { paginationOptsValidator } from "convex/server";
 import { Agent } from "@convex-dev/agent";
+import { autumn } from "../autumn";
+import { convertUsdToCredits, estimateCost } from "../ai/pricing";
 
-// Create agent instance
-const chatAgent = new Agent(components.agent, {
-  name: "Chat Assistant",
-  instructions: `You are a helpful AI assistant. Provide clear, concise, and accurate responses.`,
-  languageModel: 'xai/grok-4-fast-non-reasoning',
-  maxSteps: 10,
-  callSettings: {
-    maxRetries: 2,
-    temperature: 0.7,
-  },
-});
+// Create agent instance with credit tracking
+function createChatAgent(userId: string, organizationId: string) {
+  return new Agent(components.agent, {
+    name: "Chat Assistant",
+    instructions: `You are a helpful AI assistant. Provide clear, concise, and accurate responses.`,
+    languageModel: 'xai/grok-4-fast-non-reasoning',
+    maxSteps: 10,
+    callSettings: {
+      maxRetries: 2,
+      temperature: 0.7,
+    },
+    usageHandler: async (ctx, args) => {
+      const { threadId, model, provider, usage, providerMetadata } = args;
+
+      // Extract cost from Vercel AI Gateway
+      const gatewayCost = providerMetadata?.gateway?.cost;
+      if (!gatewayCost) {
+        console.warn('[Chat Usage] No gateway cost found, skipping credit tracking');
+        return;
+      }
+
+      // Convert USD to credits (4000 credits = $1)
+      const costInCredits = convertUsdToCredits(gatewayCost);
+
+      console.log('[Chat Usage]', {
+        userId,
+        organizationId,
+        threadId,
+        model,
+        provider,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        totalTokens: usage.totalTokens,
+        usdCost: gatewayCost,
+        creditsDeducted: costInCredits,
+      });
+
+      // Track usage with Autumn (deduct credits)
+      await autumn.track(ctx, {
+        featureId: "ai_credits",
+        value: costInCredits,
+      });
+    },
+  });
+}
 
 /**
  * Create a new chat thread for the organization
@@ -268,14 +304,28 @@ export const sendMessage = action({
       throw new Error("Thread not found or does not belong to your organization");
     }
 
+    // ========== PRE-FLIGHT CREDIT CHECK ==========
+    const { data, error } = await autumn.check(ctx, {
+      featureId: "ai_credits",
+    });
+
+    if (error || !data?.allowed) {
+      throw new Error(
+        `Insufficient credits. Please upgrade or wait for your monthly reset.`
+      );
+    }
+
     // Touch thread to update timestamp
     await ctx.runMutation(internal.chat.functions.touchThread, {
       threadId: args.threadId,
     });
 
+    // Create agent with user context for credit tracking
+    const agent = createChatAgent(userId, organizationId);
+
     try {
       // Stream AI response with delta saving
-      const result: any = await chatAgent.streamText(
+      const result: any = await agent.streamText(
         ctx,
         { threadId: thread.agentThreadId },
         {
