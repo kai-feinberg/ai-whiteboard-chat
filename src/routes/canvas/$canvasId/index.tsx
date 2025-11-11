@@ -579,7 +579,7 @@ function CanvasEditor() {
 
   return (
     <CanvasContext.Provider value={{ onNodeUngrouped: handleNodeUngrouped }}>
-      <div className="h-screen w-full">
+      <div className="h-full w-full overflow-hidden rounded-2xl">
         <Canvas
         nodes={nodes}
         edges={edges}

@@ -26,7 +26,7 @@ import { ConvexQueryClient } from '@convex-dev/react-query'
 import { ConvexReactClient, useConvex } from 'convex/react'
 import { ConvexProviderWithClerk } from 'convex/react-clerk'
 import { Toaster } from '@/components/ui/sonner'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { SidebarProvider, SidebarInset, SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 import { Separator } from '@/components/ui/separator'
 import { AutumnProvider } from 'autumn-js/react'
@@ -211,15 +211,29 @@ function AuthenticatedContent() {
 
   return (
     <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset className="relative">
-        <SidebarTrigger className="fixed top-4 left-4 z-50" />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-      </SidebarInset>
+      <div className="flex h-screen w-full bg-sidebar">
+        <AppSidebar />
+        <SidebarInset className="relative bg-sidebar">
+          <ConditionalSidebarTrigger />
+          <div className="flex flex-1 flex-col p-4 h-full">
+            <div className="bg-background flex-1 rounded-2xl shadow-lg overflow-hidden">
+              <Outlet />
+            </div>
+          </div>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   )
+}
+
+function ConditionalSidebarTrigger() {
+  const { state } = useSidebar()
+
+  if (state === "expanded") {
+    return null
+  }
+
+  return <SidebarTrigger className="fixed top-4 left-4 z-50" />
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {

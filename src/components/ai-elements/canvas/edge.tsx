@@ -148,8 +148,8 @@ const Animated = ({ id, source, target, markerEnd, style }: EdgeProps) => {
           strokeDasharray: "12, 8",
         }}
       />
-      <circle fill="var(--chart-3)" r="8">
-        <animateMotion dur="2s" path={edgePath} repeatCount="indefinite" />
+      <circle fill="var(--chart-3)" r="6" opacity="0.4">
+        <animateMotion dur="4s" path={edgePath} repeatCount="indefinite" />
       </circle>
     </>
   );

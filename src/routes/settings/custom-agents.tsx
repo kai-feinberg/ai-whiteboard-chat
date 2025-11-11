@@ -151,9 +151,9 @@ function CustomAgentsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-full overflow-auto">
       {/* Header */}
-      <div className="border-b bg-background px-6 py-4">
+      <div className="border-b px-6 py-4">
         <div className="flex items-center justify-between max-w-6xl mx-auto">
           <div className="flex items-center gap-4">
             <Link to="/">

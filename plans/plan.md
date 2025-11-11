@@ -1,3 +1,7 @@
+copy button in full node context
+limit to one chat node per canvas
+
+
 Handle just pasting on the canvas
 
 full screen chat to display same context button

@@ -193,7 +193,7 @@ function FullScreenChat() {
   const isChatReady = selectedThread?.agentThreadId && messages !== undefined;
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-full flex flex-col">
       {/* Header */}
       <div className="border-b bg-background px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">

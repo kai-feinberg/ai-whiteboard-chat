@@ -1,10 +1,9 @@
 import * as React from "react"
-import { LayoutDashboard, Eye, MessageSquare, Search, CreditCard, Sparkles, Bot, Settings } from "lucide-react"
-import { Link } from "@tanstack/react-router"
+import { LayoutDashboard, MessageSquare, CreditCard, Sparkles, Bot } from "lucide-react"
+import { Link, useMatchRoute } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 import { useCustomer } from "autumn-js/react"
-import { Badge } from "@/components/ui/badge"
-import { CreditBalance } from "@/features/credits/components/CreditBalance"
+import { Button } from "@/components/ui/button"
 
 import {
   Sidebar,
@@ -14,11 +13,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
   SidebarFooter,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
 
 // Navigation data - simplified to core routes
@@ -28,179 +25,156 @@ const data = {
       title: "Dashboard",
       url: "/",
       icon: LayoutDashboard,
-      items: [
-        {
-          title: "Overview",
-          url: "/",
-          icon: Eye,
-        },
-      ],
     },
     {
-      title: "Chat",
+      title: "Playground",
       url: "/playground",
       icon: MessageSquare,
-      items: [
-        {
-          title: "Playground",
-          url: "/playground",
-          icon: MessageSquare,
-        },
-      ],
     },
     {
       title: "Pricing",
       url: "/pricing",
       icon: CreditCard,
-      items: [
-        {
-          title: "Plans",
-          url: "/pricing",
-          icon: CreditCard,
-        },
-      ],
     },
     {
-      title: "Settings",
+      title: "Custom Agents",
       url: "/settings/custom-agents",
-      icon: Settings,
-      items: [
-        {
-          title: "Custom Agents",
-          url: "/settings/custom-agents",
-          icon: Bot,
-        },
-      ],
+      icon: Bot,
     },
   ],
 }
 
-function TierBadge() {
+function UserCreditsCard() {
   const { customer } = useCustomer({
     swrConfig: {
-      refreshInterval: 30000, // Poll every 30 seconds
-      revalidateOnFocus: true, // Instant update when user returns to tab
-      refreshWhenHidden: false, // Don't poll in background
+      refreshInterval: 30000,
+      revalidateOnFocus: true,
+      refreshWhenHidden: false,
     }
   });
 
-  // Get current product - check products array
+  // Get current product
   const currentProduct = customer?.products?.[0];
   const productName = currentProduct?.name || "Free";
-
-  // Get canvas feature - features is an object keyed by feature ID
-  const canvasFeature = customer?.features?.canvases;
-  const usedCanvases = canvasFeature?.usage || 0;
-  const limitCanvases = canvasFeature?.included_usage || 3;
-  const isUnlimited = canvasFeature?.unlimited || limitCanvases >= 999999;
-
   const isPro = productName === "Pro";
 
+  // Get credits info
+  const creditsFeature = customer?.features?.ai_credits;
+  const balance = creditsFeature?.balance || 0;
+  const included = creditsFeature?.included_usage || 0;
+  const percentRemaining = included > 0 ? (balance / included) * 100 : 0;
+  const isLow = percentRemaining < 20;
+
   return (
-    <div className="px-2 py-3 border-t border-sidebar-border">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          {isPro ? (
+    <div className="border rounded-lg bg-sidebar-accent/30 p-3 space-y-3 shadow-md">
+      {/* User Info */}
+      <UserButton
+        appearance={{
+          elements: {
+            userButtonBox: "flex-row-reverse",
+            userButtonAvatarBox: "w-10 h-10",
+            userButtonTrigger: "w-full justify-start px-0 py-0 rounded-md hover:bg-transparent",
+            userButtonOuterIdentifier: "text-sm font-semibold",
+            userButtonInnerIdentifier: "text-xs text-muted-foreground",
+          }
+        }}
+        showName={true}
+      />
+
+      {/* Tier and Credits Combined */}
+      <div className="space-y-2.5 pt-2 border-t">
+        {/* Tier Badge - only show for Pro */}
+        {isPro && (
+          <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-yellow-500" />
-          ) : (
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          )}
-          <span className="text-sm font-medium">{productName}</span>
+            <span className="text-sm font-medium">{productName}</span>
+          </div>
+        )}
+
+        {/* Credits Info */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground/70">AI Credits</span>
+            <span className="text-sm font-semibold">{balance.toLocaleString()} / {included.toLocaleString()}</span>
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+            <div
+              className={`h-full transition-all ${isLow ? 'bg-destructive' : 'bg-primary'}`}
+              style={{ width: `${Math.max(0, Math.min(100, percentRemaining))}%` }}
+            />
+          </div>
         </div>
-        <Badge variant={isPro ? "default" : "secondary"} className="text-xs">
-          {isPro ? "Active" : "Free"}
-        </Badge>
+
+        {/* Upgrade Button */}
+        {!isPro && (
+          <Button asChild size="sm" className="w-full mt-1">
+            <Link to="/pricing">
+              <Sparkles className="h-3.5 w-3.5" />
+              Upgrade to Pro
+            </Link>
+          </Button>
+        )}
       </div>
-      <div className="text-xs text-muted-foreground">
-        {usedCanvases} / {isUnlimited ? "∞" : limitCanvases} canvases
-      </div>
-      {!isPro && (
-        <Link
-          to="/pricing"
-          className="text-xs text-primary hover:underline mt-1 inline-block"
-        >
-          Upgrade to Pro →
-        </Link>
-      )}
     </div>
   );
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const matchRoute = useMatchRoute();
+
   return (
-    <Sidebar {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link to="/">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Search className="size-4" />
-                </div>
-                <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">AdScout</span>
-                  <span className="">Ad Intelligence</span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+    <Sidebar {...props} className="bg-transparent border-none shadow-none">
+      <SidebarHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="default" asChild>
+                <Link to="/" className="font-semibold text-xl m-2">
+                  <span>Sprawl AI</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+          <SidebarTrigger />
+        </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
+        <SidebarGroup className="px-3">
+          <SidebarMenu className="gap-1.5">
             {data.navMain.map((item) => {
+              const Icon = item.icon;
+              const isActive = matchRoute({ to: item.url, fuzzy: item.url === "/" ? false : true });
+
               return (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link to={item.url} className="font-medium">
+                  <SidebarMenuButton asChild size="lg" isActive={!!isActive}>
+                    <Link
+                      to={item.url}
+                      className={isActive
+                        ? "font-semibold text-foreground text-[16px] bg-accent/40"
+                        : "font-medium text-foreground/85 text-[16px] hover:text-foreground hover:bg-accent"
+                      }
+                    >
+                      <Icon className="h-5 w-5" />
                       {item.title}
                     </Link>
                   </SidebarMenuButton>
-                  {item.items?.length ? (
-                    <SidebarMenuSub>
-                      {item.items.map((subItem) => {
-                        const SubIcon = subItem.icon;
-                        return (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton asChild>
-                              <Link to={subItem.url}>
-                                <SubIcon className="h-4 w-4" />
-                                {subItem.title}
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        );
-                      })}
-                    </SidebarMenuSub>
-                  ) : null}
                 </SidebarMenuItem>
               );
             })}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <div className="flex flex-col gap-2 p-2">
-          <CreditBalance />
-          <TierBadge />
+      <SidebarFooter className="p-4 pt-6">
+        <div className="flex flex-col gap-3">
           <OrganizationSwitcher
             hidePersonal={false}
             afterCreateOrganizationUrl={() => window.location.href = '/'}
             afterSelectOrganizationUrl={() => window.location.href = '/'}
           />
-          <UserButton
-            appearance={{
-              elements: {
-                userButtonBox: "flex-row-reverse",
-                userButtonAvatarBox: "w-10 h-10",
-                userButtonTrigger: "w-full justify-start px-2 py-2 rounded-md hover:bg-sidebar-accent",
-                userButtonOuterIdentifier: "text-sm font-medium",
-                userButtonInnerIdentifier: "text-xs text-muted-foreground",
-              }
-            }}
-            showName={true}
-          />
+          <UserCreditsCard />
         </div>
       </SidebarFooter>
       <SidebarRail />
