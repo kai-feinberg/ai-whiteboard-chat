@@ -128,15 +128,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar {...props} className="bg-transparent border-none shadow-none">
       <SidebarHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="default" asChild>
-                <Link to="/" className="font-semibold text-xl m-2">
-                  <span>Sprawl AI</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <Link to="/" className="font-semibold text-xl m-2 hover:opacity-80 transition-opacity">
+            <span>Sprawl AI</span>
+          </Link>
           <SidebarTrigger />
         </div>
       </SidebarHeader>
