@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 interface TranscriptDialogProps {
   transcript: string;
@@ -26,10 +27,25 @@ export function TranscriptDialog({
 }: TranscriptDialogProps) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(transcript);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      if (!transcript || transcript.length === 0) {
+        toast.error("No content to copy");
+        return;
+      }
+
+      await navigator.clipboard.writeText(transcript);
+
+      setCopied(true);
+      toast.success(`Copied ${transcript.length.toLocaleString()} characters to clipboard`);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Copy failed:", error);
+      toast.error("Failed to copy to clipboard");
+    }
   };
 
   const wordCount = transcript.split(/\s+/).filter(Boolean).length;

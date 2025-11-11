@@ -12,8 +12,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { MessageSquare, Plus, Trash2, Eye } from "lucide-react";
+import { MessageSquare, Plus, Trash2, Eye, Copy, Check } from "lucide-react";
 import type { Id } from "../../../../convex/_generated/dataModel";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export interface Thread {
   _id: Id<"threads">;
@@ -42,6 +44,33 @@ export function ThreadSidebar({
   contextMessages,
   className,
 }: ThreadSidebarProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!contextMessages) return;
+
+    try {
+      const fullContext = contextMessages.map((msg) => msg.content).join("\n\n---\n\n");
+
+      if (!fullContext || fullContext.length === 0) {
+        toast.error("No content to copy");
+        return;
+      }
+
+      await navigator.clipboard.writeText(fullContext);
+
+      setCopied(true);
+      toast.success(`Copied ${fullContext.length.toLocaleString()} characters to clipboard`);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Copy failed:", error);
+      toast.error("Failed to copy to clipboard");
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -124,7 +153,27 @@ export function ThreadSidebar({
             </DialogTrigger>
             <DialogContent className="max-w-5xl w-[95vw] h-[80vh] flex flex-col gap-4">
               <DialogHeader>
-                <DialogTitle>Connected Node Context</DialogTitle>
+                <DialogTitle className="flex items-center justify-between">
+                  <span>Connected Node Context</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="gap-2"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
+                </DialogTitle>
                 <DialogDescription>
                   Context from {contextMessages.length} connected node
                   {contextMessages.length !== 1 ? "s" : ""} that will be passed to the AI

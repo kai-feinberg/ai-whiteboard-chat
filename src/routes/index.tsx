@@ -149,7 +149,7 @@ function Dashboard() {
 
         {/* Usage Display */}
         <Card className="max-w-md">
-          <CardContent className="pt-6">
+          <CardContent className="pt-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Layout className="h-4 w-4 text-muted-foreground" />
