@@ -9,11 +9,11 @@ import { autumn } from "../autumn";
 import { convertUsdToCredits, estimateCost } from "../ai/pricing";
 
 // Create a function that returns an agent with a usageHandler that has access to user/org context
-function createCanvasChatAgent(userId: string, organizationId: string, agentName: string, systemPrompt: string) {
+function createCanvasChatAgent(userId: string, organizationId: string, agentName: string, systemPrompt: string, modelId?: string) {
   return new Agent(components.agent, {
     name: agentName,
     instructions: systemPrompt,
-    languageModel: 'xai/grok-4-fast-non-reasoning',
+    languageModel: modelId || 'xai/grok-4-fast-non-reasoning',
     maxSteps: 10,
     callSettings: {
       maxRetries: 2,
@@ -71,6 +71,7 @@ export const sendMessage = action({
     canvasNodeId: v.id("canvas_nodes"),
     message: v.string(),
     agentId: v.optional(v.string()),
+    modelId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -117,7 +118,7 @@ export const sendMessage = action({
     }
 
     // Create agent with user context for usage tracking
-    const canvasChatAgent = createCanvasChatAgent(userId, organizationId, agent.name, agent.systemPrompt);
+    const canvasChatAgent = createCanvasChatAgent(userId, organizationId, agent.name, agent.systemPrompt, args.modelId);
 
     // Gather context from connected nodes
     const contextMessages: any[] = await ctx.runQuery(internal.canvas.chat.getNodeContextInternal, {
@@ -172,6 +173,14 @@ export const sendMessage = action({
 
       // Await completion
       const responseText: string = await result.text;
+
+      // Generate title if thread has default title
+      if (thread.title && thread.title.startsWith("Chat Thread ")) {
+        await ctx.scheduler.runAfter(0, internal.canvas.threads.generateThreadTitleAsync, {
+          threadId: args.threadId,
+          organizationId,
+        });
+      }
 
       return {
         success: true,

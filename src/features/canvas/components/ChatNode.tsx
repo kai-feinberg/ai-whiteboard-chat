@@ -37,6 +37,16 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
     return null;
   });
 
+  // Model state management with localStorage persistence
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(() => {
+    // Try to load from localStorage on mount
+    if (typeof window !== "undefined" && data.canvasId) {
+      const stored = localStorage.getItem(`canvas-model-${data.canvasId}`);
+      return stored || null;
+    }
+    return null;
+  });
+
   // Sync selected thread when data changes
   useEffect(() => {
     if (data.selectedThreadId !== selectedThreadId) {
@@ -57,6 +67,14 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
     setSelectedAgentId(agentId);
     if (typeof window !== "undefined" && data.canvasId) {
       localStorage.setItem(`canvas-agent-${data.canvasId}`, agentId);
+    }
+  };
+
+  // Persist model selection to localStorage
+  const handleModelChange = (modelId: string) => {
+    setSelectedModelId(modelId);
+    if (typeof window !== "undefined" && data.canvasId) {
+      localStorage.setItem(`canvas-model-${data.canvasId}`, modelId);
     }
   };
 
@@ -106,6 +124,7 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
     try {
       const result = await createThread({
         canvasId: data.canvasId,
+        modelId: selectedModelId || undefined,
       });
       toast.success("New thread created");
 
@@ -159,7 +178,7 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
   // Get refetch function for credits
   const { refetch } = useCustomer();
 
-  const handleSendMessage = async (message: string, agentId?: string) => {
+  const handleSendMessage = async (message: string, agentId?: string, modelId?: string) => {
     if (!selectedThreadId || !data.canvasNodeId) {
       toast.error("Please select a thread first");
       return;
@@ -171,6 +190,7 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
         canvasNodeId: data.canvasNodeId,
         message,
         agentId: agentId || selectedAgentId || undefined,
+        modelId: modelId || selectedModelId || undefined,
       });
       // Refetch credits after message to update sidebar
       await refetch();
@@ -223,6 +243,8 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
                 className="h-full"
                 selectedAgentId={selectedAgentId}
                 onAgentChange={handleAgentChange}
+                selectedModelId={selectedModelId}
+                onModelChange={handleModelChange}
               />
             ) : selectedThreadId ? (
               <div className="flex items-center justify-center flex-1">

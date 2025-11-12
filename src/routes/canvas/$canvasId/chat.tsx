@@ -48,6 +48,16 @@ function FullScreenChat() {
     return null;
   });
 
+  // Model state management with localStorage persistence
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(() => {
+    // Try to load from localStorage on mount
+    if (typeof window !== "undefined" && canvasId) {
+      const stored = localStorage.getItem(`canvas-model-${canvasId}`);
+      return stored || null;
+    }
+    return null;
+  });
+
   // Load default agent on mount if no stored agent
   const defaultAgent = useQuery(api.agents.functions.getDefaultAgent);
   useEffect(() => {
@@ -61,6 +71,14 @@ function FullScreenChat() {
     setSelectedAgentId(agentId);
     if (typeof window !== "undefined" && canvasId) {
       localStorage.setItem(`canvas-agent-${canvasId}`, agentId);
+    }
+  };
+
+  // Persist model selection to localStorage
+  const handleModelChange = (modelId: string) => {
+    setSelectedModelId(modelId);
+    if (typeof window !== "undefined" && canvasId) {
+      localStorage.setItem(`canvas-model-${canvasId}`, modelId);
     }
   };
 
@@ -122,6 +140,7 @@ function FullScreenChat() {
     try {
       const result = await createThread({
         canvasId: canvasId as Id<"canvases">,
+        modelId: selectedModelId || undefined,
       });
       toast.success("New thread created");
       setSelectedThreadId(result.threadId);
@@ -158,7 +177,7 @@ function FullScreenChat() {
   // Get refetch function for credits
   const { refetch } = useCustomer();
 
-  const handleSendMessage = async (message: string, agentId?: string) => {
+  const handleSendMessage = async (message: string, agentId?: string, modelId?: string) => {
     if (!selectedThreadId) {
       toast.error("Please select a thread first");
       return;
@@ -179,6 +198,7 @@ function FullScreenChat() {
         canvasNodeId: chatNode._id,
         message,
         agentId: agentId || selectedAgentId || undefined,
+        modelId: modelId || selectedModelId || undefined,
       });
       // Refetch credits after message to update sidebar
       await refetch();
@@ -207,9 +227,6 @@ function FullScreenChat() {
             <h1 className="text-lg font-semibold">
               {canvasData?.canvas?.title || "Canvas Chat"}
             </h1>
-            <p className="text-xs text-muted-foreground">
-              Full-screen chat view
-            </p>
           </div>
         </div>
       </div>
@@ -240,6 +257,8 @@ function FullScreenChat() {
               className="h-full"
               selectedAgentId={selectedAgentId}
               onAgentChange={handleAgentChange}
+              selectedModelId={selectedModelId}
+              onModelChange={handleModelChange}
             />
           ) : selectedThreadId ? (
             <div className="flex items-center justify-center flex-1">

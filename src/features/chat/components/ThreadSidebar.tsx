@@ -100,20 +100,18 @@ export function ThreadSidebar({
               <div
                 key={thread._id}
                 className={cn(
-                  "group relative flex items-center gap-2 rounded-md p-3 cursor-pointer transition-colors",
+                  "group relative flex items-center gap-2 rounded-md p-2 cursor-pointer transition-colors",
                   selectedThreadId === thread._id
                     ? "bg-primary/10 text-primary"
                     : "hover:bg-muted"
                 )}
                 onClick={() => onSelectThread(thread._id)}
               >
-                <MessageSquare className="h-4 w-4 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {thread.title || "Untitled Chat"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(thread.updatedAt).toLocaleDateString()}
+                    {thread.title && thread.title.length > 15
+                      ? `${thread.title.slice(0, 15)}...`
+                      : thread.title || "Untitled Chat"}
                   </p>
                 </div>
                 {onDeleteThread && (

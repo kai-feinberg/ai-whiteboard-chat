@@ -5,7 +5,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Canvas } from "@/components/ai-elements/canvas/canvas";
 import { Panel } from "@/components/ai-elements/canvas/panel";
-import { Edge as CustomEdge } from "@/components/ai-elements/canvas/edge";
+import { Edge as CustomEdge, DeleteButtonEdge } from "@/components/ai-elements/canvas/edge";
 import { Button } from "@/components/ui/button";
 import { TextNode } from "@/features/canvas/components/TextNode";
 import { ChatNode } from "@/features/canvas/components/ChatNode";
@@ -53,7 +53,7 @@ const nodeTypes: NodeTypes = {
 };
 
 const edgeTypes: EdgeTypes = {
-  animated: CustomEdge.Animated,
+  animated: DeleteButtonEdge,
   temporary: CustomEdge.Temporary,
 };
 
@@ -61,6 +61,7 @@ function CanvasEditor() {
   const { canvasId } = Route.useParams();
   const { orgId } = useAuth();
   const [hasLoadedFromDB, setHasLoadedFromDB] = useState(false);
+  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
 
   // Dialog state
   const [dialogState, setDialogState] = useState<{
@@ -172,6 +173,7 @@ function CanvasEditor() {
         target: dbEdge.target,
         sourceHandle: dbEdge.sourceHandle,
         targetHandle: dbEdge.targetHandle,
+        data: { deleteEdge, isHovered: hoveredEdgeId === dbEdge._id },
       }));
 
       setNodes(flowNodes);
@@ -195,8 +197,8 @@ function CanvasEditor() {
           targetHandle: connection.targetHandle || undefined,
         });
 
-        // Update local state with animated edge type
-        setEdges((eds) => addEdge({ ...connection, type: 'animated' }, eds));
+        // Update local state with animated edge type and deleteEdge mutation
+        setEdges((eds) => addEdge({ ...connection, type: 'animated', data: { deleteEdge, isHovered: false } }, eds));
         toast.success("Nodes connected");
       } catch (error) {
         console.error("[Canvas] Error creating edge:", error);
@@ -589,6 +591,22 @@ function CanvasEditor() {
         onNodeDragStop={onNodeDragStop}
         onNodesDelete={onNodesDelete}
         onEdgesDelete={onEdgesDelete}
+        onEdgeMouseEnter={(_, edge) => {
+          setHoveredEdgeId(edge.id);
+          setEdges((eds) =>
+            eds.map((e) =>
+              e.id === edge.id ? { ...e, data: { ...e.data, isHovered: true } } : e
+            )
+          );
+        }}
+        onEdgeMouseLeave={(_, edge) => {
+          setHoveredEdgeId(null);
+          setEdges((eds) =>
+            eds.map((e) =>
+              e.id === edge.id ? { ...e, data: { ...e.data, isHovered: false } } : e
+            )
+          );
+        }}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
       >

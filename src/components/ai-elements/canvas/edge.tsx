@@ -155,6 +155,8 @@ const Animated = ({ id, source, target, markerEnd, style }: EdgeProps) => {
   );
 };
 
+export { DeleteButtonEdge } from "./delete-button-edge";
+
 export const Edge = {
   Temporary,
   Animated,

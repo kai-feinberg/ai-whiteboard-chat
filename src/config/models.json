@@ -1,0 +1,16 @@
+{
+  "models": [
+    {
+      "id": "xai/grok-4-fast-non-reasoning",
+      "name": "Grok 4 Fast (Non-Reasoning)",
+      "provider": "xai",
+      "description": "Fast, efficient model for quick responses"
+    },
+    {
+      "id": "openai/gpt-4.1-mini",
+      "name": "GPT-4.1 Mini",
+      "provider": "openai",
+      "description": "OpenAI's flagship mini model"
+    }
+  ]
+}

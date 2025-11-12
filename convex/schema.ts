@@ -9,6 +9,7 @@ export default defineSchema({
     organizationId: v.string(), // Clerk organization ID for multi-tenancy
     canvasId: v.optional(v.id("canvases")), // Optional: canvas this thread belongs to
     title: v.optional(v.string()), // Thread title/name
+    modelId: v.optional(v.string()), // AI model to use (e.g., "openai/gpt-4o")
     createdAt: v.number(), // Timestamp when thread was created
     updatedAt: v.number(), // Timestamp when thread was last updated
   })
@@ -77,7 +78,8 @@ export default defineSchema({
     canvasId: v.optional(v.id("canvases")), // Canvas this chat node belongs to
     selectedThreadId: v.optional(v.id("threads")), // Currently selected thread
     threadId: v.optional(v.id("threads")), // Legacy: single thread reference (deprecated)
-    agentId: v.optional(v.string()), // Which agent/model to use
+    agentId: v.optional(v.string()), // Which agent to use
+    modelId: v.optional(v.string()), // Which AI model to use (e.g., "openai/gpt-4o")
     createdAt: v.number(),
   })
     .index("by_organization", ["organizationId"])

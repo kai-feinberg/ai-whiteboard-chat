@@ -10,11 +10,11 @@ import { autumn } from "../autumn";
 import { convertUsdToCredits, estimateCost } from "../ai/pricing";
 
 // Create agent instance with credit tracking
-function createChatAgent(userId: string, organizationId: string, agentName: string, systemPrompt: string) {
+function createChatAgent(userId: string, organizationId: string, agentName: string, systemPrompt: string, modelId?: string) {
   return new Agent(components.agent, {
     name: agentName,
     instructions: systemPrompt,
-    languageModel: 'xai/grok-4-fast-non-reasoning',
+    languageModel: modelId || 'xai/grok-4-fast-non-reasoning',
     maxSteps: 10,
     callSettings: {
       maxRetries: 2,
@@ -280,6 +280,7 @@ export const sendMessage = action({
     threadId: v.id("threads"),
     message: v.string(),
     agentId: v.optional(v.string()),
+    modelId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ success: boolean; response: string }> => {
     // Auth check
@@ -333,7 +334,7 @@ export const sendMessage = action({
     });
 
     // Create agent with user context for credit tracking
-    const agent = createChatAgent(userId, organizationId, agentConfig.name, agentConfig.systemPrompt);
+    const agent = createChatAgent(userId, organizationId, agentConfig.name, agentConfig.systemPrompt, args.modelId);
 
     try {
       // Stream AI response with delta saving

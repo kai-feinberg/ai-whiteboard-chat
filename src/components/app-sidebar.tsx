@@ -62,61 +62,60 @@ function UserCreditsCard() {
   const creditsFeature = customer?.features?.ai_credits;
   const balance = creditsFeature?.balance || 0;
   const included = creditsFeature?.included_usage || 0;
-  const percentRemaining = included > 0 ? (balance / included) * 100 : 0;
-  const isLow = percentRemaining < 20;
 
   return (
-    <div className="border rounded-lg bg-sidebar-accent/30 p-3 space-y-3 shadow-md">
-      {/* User Info */}
+    <div className="space-y-3">
+      {/* Organization Switcher */}
+      <OrganizationSwitcher
+        hidePersonal={false}
+        afterCreateOrganizationUrl={() => window.location.href = '/'}
+        afterSelectOrganizationUrl={() => window.location.href = '/'}
+        appearance={{
+          elements: {
+            rootBox: "w-full",
+            organizationSwitcherTrigger: "w-full px-3 py-2 rounded-md border-0 bg-sidebar-accent/40 hover:bg-sidebar-accent/60 justify-start transition-colors",
+            organizationSwitcherTriggerIcon: "text-muted-foreground",
+            organizationPreviewAvatarBox: "w-7 h-7",
+            organizationPreviewMainIdentifier: "text-sm font-medium",
+            organizationPreviewSecondaryIdentifier: "text-xs",
+          }
+        }}
+      />
+
+      {/* User Profile */}
       <UserButton
         appearance={{
           elements: {
-            userButtonBox: "flex-row-reverse",
-            userButtonAvatarBox: "w-10 h-10",
-            userButtonTrigger: "w-full justify-start px-0 py-0 rounded-md hover:bg-transparent",
-            userButtonOuterIdentifier: "text-sm font-semibold",
+            userButtonBox: "w-full",
+            userButtonTrigger: "w-full px-3 py-2 rounded-md hover:bg-sidebar-accent/40 justify-start transition-colors",
+            userButtonAvatarBox: "w-7 h-7 order-first",
+            userButtonOuterIdentifier: "text-sm font-medium",
             userButtonInnerIdentifier: "text-xs text-muted-foreground",
           }
         }}
         showName={true}
       />
 
-      {/* Tier and Credits Combined */}
-      <div className="space-y-2.5 pt-2 border-t">
-        {/* Tier Badge - only show for Pro */}
-        {isPro && (
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-yellow-500" />
-            <span className="text-sm font-medium">{productName}</span>
-          </div>
-        )}
+      {/* Divider */}
+      <div className="border-t border-sidebar-border" />
 
-        {/* Credits Info */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground/70">AI Credits</span>
-            <span className="text-sm font-semibold">{balance.toLocaleString()} / {included.toLocaleString()}</span>
-          </div>
-
-          {/* Progress bar */}
-          <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-            <div
-              className={`h-full transition-all ${isLow ? 'bg-destructive' : 'bg-primary'}`}
-              style={{ width: `${Math.max(0, Math.min(100, percentRemaining))}%` }}
-            />
-          </div>
+      {/* Credits Display - smaller text */}
+      <div className="px-1 space-y-1">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/50 font-medium">AI Credits</span>
+          <span className="text-xs font-semibold">{balance.toLocaleString()} / {included.toLocaleString()}</span>
         </div>
-
-        {/* Upgrade Button */}
-        {!isPro && (
-          <Button asChild size="sm" className="w-full mt-1">
-            <Link to="/pricing">
-              <Sparkles className="h-3.5 w-3.5" />
-              Upgrade to Pro
-            </Link>
-          </Button>
-        )}
       </div>
+
+      {/* Upgrade Button - outline style */}
+      {!isPro && (
+        <Button asChild variant="outline" size="sm" className="w-full">
+          <Link to="/pricing">
+            <Sparkles className="h-3.5 w-3.5" />
+            Upgrade to Pro
+          </Link>
+        </Button>
+      )}
     </div>
   );
 }
@@ -162,14 +161,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4 pt-6">
-        <div className="flex flex-col gap-3">
-          <OrganizationSwitcher
-            hidePersonal={false}
-            afterCreateOrganizationUrl={() => window.location.href = '/'}
-            afterSelectOrganizationUrl={() => window.location.href = '/'}
-          />
-          <UserCreditsCard />
-        </div>
+        <UserCreditsCard />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

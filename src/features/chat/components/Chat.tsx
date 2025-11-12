@@ -15,20 +15,24 @@ import {
   PromptInputSubmit,
   PromptInputBody,
 } from "@/components/ai-elements/prompt-input";
-import { MessageSquare, Loader2 } from "lucide-react";
+import { MessageSquare, Loader2, Copy, Check } from "lucide-react";
+import { useState } from "react";
 import { useSmoothText, type UIMessage } from "@convex-dev/agent/react";
 import { cn } from "@/lib/utils";
 import { AgentSelector } from "@/features/agents/components/AgentSelector";
+import { ModelSelector } from "@/features/models/components/ModelSelector";
 
 export interface ChatProps {
   messages: UIMessage[];
-  onSendMessage: (message: string, agentId?: string) => Promise<void>;
+  onSendMessage: (message: string, agentId?: string, modelId?: string) => Promise<void>;
   isStreaming?: boolean;
   streams?: any[];
   variant?: "fullscreen" | "compact";
   className?: string;
   selectedAgentId?: string | null;
   onAgentChange?: (agentId: string) => void;
+  selectedModelId?: string | null;
+  onModelChange?: (modelId: string) => void;
 }
 
 // Component for rendering a message with smooth text streaming
@@ -36,6 +40,19 @@ function StreamingMessage({ message }: { message: UIMessage }) {
   const [visibleText] = useSmoothText(message.text, {
     startStreaming: message.status === "streaming",
   });
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!message.text) return;
+
+    try {
+      await navigator.clipboard.writeText(message.text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy text:", error);
+    }
+  };
 
   return (
     <Message from={message.role} key={message.id}>
@@ -50,6 +67,27 @@ function StreamingMessage({ message }: { message: UIMessage }) {
 
         {/* Show the text response */}
         {visibleText && <Response>{visibleText}</Response>}
+
+        {/* Copy button for AI messages only */}
+        {message.role === "assistant" && message.text && (
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-2 py-1 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors rounded"
+            aria-label="Copy message"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3 w-3" />
+                <span>Copied</span>
+              </>
+            ) : (
+              <>
+                <Copy className="h-3 w-3" />
+                <span>Copy</span>
+              </>
+            )}
+          </button>
+        )}
       </MessageContent>
     </Message>
   );
@@ -64,12 +102,14 @@ export function Chat({
   className,
   selectedAgentId,
   onAgentChange,
+  selectedModelId,
+  onModelChange,
 }: ChatProps) {
   const handleSubmit = async (message: { text?: string; files?: any[] }) => {
     if (!message.text?.trim() || isStreaming) return;
 
     try {
-      await onSendMessage(message.text, selectedAgentId || undefined);
+      await onSendMessage(message.text, selectedAgentId || undefined, selectedModelId || undefined);
     } catch (error) {
       console.error("[Chat] Error sending message:", error);
       throw error;
@@ -101,24 +141,22 @@ export function Chat({
       </Conversation>
 
       <div className="shrink-0 border-t">
-        {/* Activity status indicator */}
-        {isStreaming && (
-          <div className="px-4 pt-2 pb-1">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              <span>AI is responding...</span>
-            </div>
-          </div>
-        )}
-
         <div className="p-4">
-          {/* Agent Selector */}
-          {onAgentChange && (
-            <div className="mb-2">
-              <AgentSelector
-                value={selectedAgentId}
-                onChange={onAgentChange}
-              />
+          {/* Agent and Model Selectors */}
+          {(onAgentChange || onModelChange) && (
+            <div className="flex gap-2 mb-2">
+              {onAgentChange && (
+                <AgentSelector
+                  value={selectedAgentId ?? null}
+                  onChange={onAgentChange}
+                />
+              )}
+              {onModelChange && (
+                <ModelSelector
+                  value={selectedModelId ?? null}
+                  onChange={onModelChange}
+                />
+              )}
             </div>
           )}
 

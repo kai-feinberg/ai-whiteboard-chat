@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Plus, Layout, Calendar, Trash2, Sparkles } from "lucide-react";
+import { Plus, Layout, Calendar, Trash2, Sparkles, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/tanstack-react-start";
 import { useCustomer, CheckoutDialog } from "autumn-js/react";
@@ -28,6 +28,7 @@ function Dashboard() {
   const canvases = useQuery(api.canvas.functions.listCanvases) ?? [];
   const createCanvas = useAction(api.canvas.functions.createCanvas);
   const deleteCanvas = useAction(api.canvas.functions.deleteCanvas);
+  const updateCanvas = useMutation(api.canvas.functions.updateCanvas);
   const { customer, check, checkout, refetch } = useCustomer({
     swrConfig: {
       refreshInterval: 30000, // Poll every 30 seconds
@@ -38,6 +39,8 @@ function Dashboard() {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [canvasToDelete, setCanvasToDelete] = React.useState<string | null>(null);
+  const [editingCanvasId, setEditingCanvasId] = React.useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = React.useState<string>("");
 
   // Get current product - check products array
   const currentProduct = customer?.products?.[0];
@@ -116,6 +119,46 @@ function Dashboard() {
 
   const handleSelectCanvas = (canvasId: string) => {
     navigate({ to: `/canvas/${canvasId}` });
+  };
+
+  const handleStartRename = (canvasId: string, currentTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingCanvasId(canvasId);
+    setEditingTitle(currentTitle);
+  };
+
+  const handleCancelRename = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingCanvasId(null);
+    setEditingTitle("");
+  };
+
+  const handleSaveRename = async (canvasId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!editingTitle.trim()) {
+      toast.error("Canvas title cannot be empty");
+      return;
+    }
+
+    try {
+      await updateCanvas({ canvasId: canvasId as any, title: editingTitle });
+      toast.success("Canvas renamed");
+      setEditingCanvasId(null);
+      setEditingTitle("");
+    } catch (error) {
+      console.error("[Dashboard] Error renaming canvas:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to rename canvas"
+      );
+    }
+  };
+
+  const handleKeyDown = (canvasId: string, e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSaveRename(canvasId);
+    } else if (e.key === "Escape") {
+      handleCancelRename();
+    }
   };
 
   if (!orgId) {
@@ -216,19 +259,58 @@ function Dashboard() {
               className="cursor-pointer hover:shadow-lg transition-shadow relative group"
               onClick={() => handleSelectCanvas(canvas._id)}
             >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400 z-10"
-                onClick={(e) => handleDeleteCanvas(canvas._id, e)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-950/30 dark:hover:text-blue-400"
+                  onClick={(e) => handleStartRename(canvas._id, canvas.title, e)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                  onClick={(e) => handleDeleteCanvas(canvas._id, e)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Layout className="h-5 w-5 text-muted-foreground" />
-                  {canvas.title}
-                </CardTitle>
+                {editingCanvasId === canvas._id ? (
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(canvas._id, e)}
+                      className="flex-1 px-2 py-1 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      autoFocus
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-950/30 dark:hover:text-green-400"
+                      onClick={(e) => handleSaveRename(canvas._id, e)}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                      onClick={handleCancelRename}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <CardTitle className="flex items-center gap-2">
+                    <Layout className="h-5 w-5 text-muted-foreground" />
+                    {canvas.title}
+                  </CardTitle>
+                )}
                 {canvas.description && (
                   <CardDescription>{canvas.description}</CardDescription>
                 )}

@@ -1,10 +1,13 @@
 // convex/canvas/threads.ts
 import { v } from "convex/values";
-import { action, mutation, query, internalMutation, internalQuery } from "../_generated/server";
+import { action, mutation, query, internalMutation, internalQuery, internalAction } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { createThread } from "@convex-dev/agent";
 import { components } from "../_generated/api";
+import { Agent } from "@convex-dev/agent";
+import { listMessages } from "@convex-dev/agent";
+import { z } from "zod";
 
 /**
  * List all threads for a canvas
@@ -48,6 +51,7 @@ export const createCanvasThread = action({
   args: {
     canvasId: v.id("canvases"),
     title: v.optional(v.string()),
+    modelId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{
     threadId: Id<"threads">;
@@ -83,6 +87,7 @@ export const createCanvasThread = action({
       organizationId,
       canvasId: args.canvasId,
       title,
+      modelId: args.modelId,
     });
 
     return { threadId, agentThreadId };
@@ -99,6 +104,7 @@ export const saveCanvasThread = internalMutation({
     organizationId: v.string(),
     canvasId: v.id("canvases"),
     title: v.string(),
+    modelId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -109,6 +115,7 @@ export const saveCanvasThread = internalMutation({
       organizationId: args.organizationId,
       canvasId: args.canvasId,
       title: args.title,
+      modelId: args.modelId,
       createdAt: now,
       updatedAt: now,
     });
@@ -180,5 +187,152 @@ export const selectThread = mutation({
     });
 
     return { success: true };
+  },
+});
+
+/**
+ * Update thread title
+ */
+export const updateThreadTitle = mutation({
+  args: {
+    threadId: v.id("threads"),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Get thread and verify ownership
+    const thread = await ctx.db.get(args.threadId);
+    if (!thread || thread.organizationId !== organizationId) {
+      throw new Error("Thread not found or unauthorized");
+    }
+
+    // Update title and timestamp
+    await ctx.db.patch(args.threadId, {
+      title: args.title,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Internal mutation to update thread title (bypasses auth)
+ */
+export const updateThreadTitleInternal = internalMutation({
+  args: {
+    threadId: v.id("threads"),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.threadId, {
+      title: args.title,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Generate thread title from message history using AI
+ */
+export const generateThreadTitleAsync = internalAction({
+  args: {
+    threadId: v.id("threads"),
+    organizationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      // Get thread
+      const thread: any = await ctx.runQuery(internal.chat.functions.getThreadInternal, {
+        threadId: args.threadId,
+        organizationId: args.organizationId,
+      });
+
+      if (!thread) {
+        console.log('[generateThreadTitle] Thread not found');
+        return;
+      }
+
+      // Check if thread already has custom title (not default)
+      if (thread.title && !thread.title.startsWith("Chat Thread ")) {
+        console.log('[generateThreadTitle] Thread already has custom title, skipping');
+        return;
+      }
+
+      // Fetch first 3 messages from thread
+      const messages = await listMessages(ctx, components.agent, {
+        threadId: thread.agentThreadId,
+        excludeToolMessages: true,
+        paginationOpts: { cursor: null, numItems: 3 },
+      });
+
+      if (!messages.page || messages.page.length === 0) {
+        console.log('[generateThreadTitle] No messages found');
+        return;
+      }
+
+      // Build context from messages
+      const messageContext = messages.page
+        .map((msg: any) => {
+          const role = msg.role === "user" ? "User" : "Assistant";
+          let content = "";
+          if (typeof msg.content === "string") {
+            content = msg.content;
+          } else if (Array.isArray(msg.content)) {
+            content = msg.content.map((c: any) => c.text || c.content || "").join(" ");
+          } else {
+            content = String(msg.content || "");
+          }
+          return `${role}: ${content}`;
+        })
+        .join("\n\n");
+
+      // Create lightweight agent for title generation
+      const titleAgent = new Agent(components.agent, {
+        name: "title-generator",
+        instructions: "Generate a concise, descriptive title for this conversation.",
+        languageModel: "openai/gpt-4o-mini",
+      });
+
+      // Generate title using structured output without saving to thread
+      const result: any = await titleAgent.generateObject(
+        ctx,
+        { threadId: thread.agentThreadId },
+        {
+          prompt: `Based on the following conversation, generate a concise title (maximum 5 words):\n\n${messageContext}`,
+          schema: z.object({
+            title: z.string().max(50).describe("A concise title for the conversation"),
+          }),
+        },
+        {
+          storageOptions: {
+            saveMessages: "none", // Don't save title generation to thread history
+          },
+        }
+      );
+
+      const generatedTitle = result.object.title;
+
+      console.log('[generateThreadTitle] Generated title:', generatedTitle);
+
+      // Update thread title
+      await ctx.runMutation(internal.canvas.threads.updateThreadTitleInternal, {
+        threadId: args.threadId,
+        title: generatedTitle,
+      });
+
+    } catch (error) {
+      console.error('[generateThreadTitle] Error:', error);
+      // Fail silently - keep default title if generation fails
+    }
   },
 });
