@@ -57,7 +57,7 @@ export function FacebookAdNode({ data }: NodeProps<FacebookAdNodeData>) {
               {/* Video Preview */}
               {facebookAdNode.mediaType === "video" && (
                 <div
-                  className="relative w-full max-h-[300px] bg-black rounded-lg overflow-hidden cursor-pointer group flex items-center justify-center"
+                  className="relative w-full max-h-[200px] bg-black rounded-lg overflow-hidden cursor-pointer group flex items-center justify-center"
                   onClick={() => facebookAdNode.url && window.open(facebookAdNode.url, '_blank')}
                 >
                   {facebookAdNode.videoThumbnailUrl ? (
@@ -65,7 +65,7 @@ export function FacebookAdNode({ data }: NodeProps<FacebookAdNodeData>) {
                       <img
                         src={facebookAdNode.videoThumbnailUrl}
                         alt="Video thumbnail"
-                        className="max-w-full max-h-[300px] object-contain"
+                        className="max-w-full max-h-[200px] object-contain"
                       />
                       {/* Play button overlay */}
                       <div className="absolute inset-0 flex items-center justify-center">

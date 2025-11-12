@@ -205,7 +205,7 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
   const isChatReady = selectedThread?.agentThreadId && messages !== undefined;
 
   return (
-    <Node handles={{ target: true, source: false }} width="1000px" height="750px" className="flex flex-col">
+    <Node handles={{ target: true, source: false }} width="1300px" height="975px" className="flex flex-col">
       <NodeHeader variant="chat" className="flex items-center justify-between">
         <NodeTitle className="flex items-center gap-2 text-sm">
           <MessageSquare className="h-4 w-4" />
