@@ -3,6 +3,15 @@ import { useState } from "react";
 import { Check, Sparkles } from "lucide-react";
 import { useCustomer } from "autumn-js/react";
 import CheckoutDialog from "~/components/autumn/checkout-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { Button } from "~/components/ui/button";
 
 export const Route = createFileRoute("/pricing")({
   component: PricingPage,
@@ -10,11 +19,17 @@ export const Route = createFileRoute("/pricing")({
 
 function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
-  const { customer, checkout } = useCustomer({ errorOnNotFound: false });
+  const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
+  const { customer, checkout, cancel, refetch } = useCustomer({ errorOnNotFound: false });
 
   const currentProduct = customer?.products?.[0];
-  const isOnPro = currentProduct?.id === "pro";
-  const isOnFree = !currentProduct || currentProduct?.id === "free";
+  const isCancelled = currentProduct?.canceled_at != null;
+  const isOnPro = currentProduct?.id === "pro" && !isCancelled;
+  const isOnFree = !currentProduct || currentProduct?.id === "free" || isCancelled;
+
+  console.log("Autumn customer data:", customer);
+  console.log("Current product:", currentProduct);
+  console.log("isCancelled:", isCancelled, "isOnPro:", isOnPro, "isOnFree:", isOnFree);
 
   const handleUpgradeToPro = async () => {
     await checkout({
@@ -25,6 +40,16 @@ function PricingPage() {
 
   const handleContactSales = () => {
     window.location.href = "mailto:sales@aiwhiteboardchat.com?subject=Enterprise Inquiry";
+  };
+
+  const handleDowngradeToFree = async () => {
+    try {
+      await cancel({ productId: "pro" });
+      await refetch();
+      setShowDowngradeDialog(false);
+    } catch (error) {
+      console.error("Failed to downgrade:", error);
+    }
   };
 
   return (
@@ -57,10 +82,11 @@ function PricingPage() {
               </div>
 
               <button
+                onClick={isOnPro ? () => setShowDowngradeDialog(true) : undefined}
                 disabled={isOnFree}
                 className="w-full py-3 px-5 rounded-full text-sm font-medium transition-all mb-10 bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isOnFree ? "Current Plan" : "Start for free"}
+                {isOnFree ? "Current Plan" : isOnPro ? "Downgrade to Free" : "Start for free"}
               </button>
 
               <ul className="space-y-4">
@@ -199,6 +225,31 @@ function PricingPage() {
           </button>
         </div>
       </div>
+
+      {/* Downgrade Confirmation Dialog */}
+      <Dialog open={showDowngradeDialog} onOpenChange={setShowDowngradeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Downgrade to Free Plan?</DialogTitle>
+            <DialogDescription>
+              Your Pro subscription will be cancelled and you'll be downgraded to the Free plan at the end of your current billing cycle. You'll continue to have access to all Pro features until then.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDowngradeDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDowngradeToFree}
+            >
+              Confirm Downgrade
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

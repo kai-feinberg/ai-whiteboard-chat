@@ -174,8 +174,8 @@ function FullScreenChat() {
     }
   };
 
-  // Get refetch function for credits
-  const { refetch } = useCustomer();
+  // Get customer data for credit balance
+  const { customer, refetch } = useCustomer();
 
   const handleSendMessage = async (message: string, agentId?: string, modelId?: string) => {
     if (!selectedThreadId) {
@@ -192,6 +192,38 @@ function FullScreenChat() {
       return;
     }
 
+    // Check credit balance before sending
+    const monthlyBalance = customer?.features?.ai_credits?.balance || 0;
+    const topUpBalance = customer?.features?.topup_credits?.balance || 0;
+    const totalBalance = monthlyBalance + topUpBalance;
+
+    // Block send if no credits
+    if (totalBalance <= 0) {
+      toast.error("Out of credits! Purchase top-up credits to continue.", {
+        duration: 5000,
+        action: {
+          label: "Buy Credits",
+          onClick: () => {
+            window.location.href = "/credits";
+          },
+        },
+      });
+      return;
+    }
+
+    // Warn if credits low but allow send
+    if (totalBalance < 100) {
+      toast.warning("Low credits! Consider purchasing more.", {
+        duration: 4000,
+        action: {
+          label: "Buy Credits",
+          onClick: () => {
+            window.location.href = "/credits";
+          },
+        },
+      });
+    }
+
     try {
       await sendMessage({
         threadId: selectedThreadId,
@@ -204,9 +236,22 @@ function FullScreenChat() {
       await refetch();
     } catch (error) {
       console.error("[FullScreenChat] Error sending message:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send message"
-      );
+      const errorMessage = error instanceof Error ? error.message : "Failed to send message";
+
+      // Enhanced error handling for credit errors
+      if (errorMessage.includes("No credits remaining") || errorMessage.includes("Insufficient credits")) {
+        toast.error("Out of credits! Purchase top-up credits to continue.", {
+          duration: 5000,
+          action: {
+            label: "Buy Credits",
+            onClick: () => {
+              window.location.href = "/credits";
+            },
+          },
+        });
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 

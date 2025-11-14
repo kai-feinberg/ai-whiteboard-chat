@@ -86,3 +86,42 @@ export const getCreditBalances = query({
     };
   },
 });
+
+/**
+ * DEV ONLY: Adjust credits for testing purposes
+ * Adds or deducts credits from ai_credits or topup_credits
+ */
+export const adjustCreditsForDev = action({
+  args: {
+    amount: v.number(), // Positive to add, negative to deduct
+    featureId: v.union(v.literal("ai_credits"), v.literal("topup_credits")),
+  },
+  handler: async (ctx, args) => {
+    // Auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Track the adjustment (negative values deduct, positive values add)
+    await autumn.track(ctx, {
+      featureId: args.featureId,
+      value: -args.amount, // Negate because autumn.track deducts positive values
+    });
+
+    // Get updated balances
+    const monthlyCheck = await autumn.check(ctx, { featureId: "ai_credits" });
+    const topUpCheck = await autumn.check(ctx, { featureId: "topup_credits" });
+
+    return {
+      success: true,
+      monthlyBalance: monthlyCheck?.data?.balance || 0,
+      topUpBalance: topUpCheck?.data?.balance || 0,
+    };
+  },
+});

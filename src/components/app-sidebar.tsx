@@ -4,6 +4,7 @@ import { Link, useMatchRoute } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 import { useCustomer } from "autumn-js/react"
 import { Button } from "@/components/ui/button"
+import { DevCreditsAdjuster } from "@/components/dev-credits-adjuster"
 
 import {
   Sidebar,
@@ -124,6 +125,9 @@ function UserCreditsCard() {
           </Link>
         </Button>
       )}
+
+      {/* Dev Credits Adjuster - localhost only */}
+      <DevCreditsAdjuster />
     </div>
   );
 }

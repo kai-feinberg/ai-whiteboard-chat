@@ -35,27 +35,51 @@ export async function deductCreditsWithPriority(
       console.log("[Credit Deduction] Deducted from monthly:", amount);
     } else if (monthlyBalance > 0) {
       // Partial from monthly, rest from top-up
+      const remainder = amount - monthlyBalance;
+
+      // Check top-up balance
+      const topUpCheck = await autumn.check(ctx, { featureId: "topup_credits" });
+      const topUpBalance = topUpCheck?.data?.balance || 0;
+
+      // Deduct all available monthly credits
       await autumn.track(ctx, {
         featureId: "ai_credits",
         value: monthlyBalance,
       });
 
-      const remainder = amount - monthlyBalance;
-      await autumn.track(ctx, {
-        featureId: "topup_credits",
-        value: remainder,
-      });
+      // Deduct whatever is available from top-up (up to remainder)
+      const topUpDeduction = Math.min(remainder, topUpBalance);
+      if (topUpDeduction > 0) {
+        await autumn.track(ctx, {
+          featureId: "topup_credits",
+          value: topUpDeduction,
+        });
+      }
+
       console.log("[Credit Deduction] Split:", {
         monthly: monthlyBalance,
-        topUp: remainder,
+        topUp: topUpDeduction,
+        totalDeducted: monthlyBalance + topUpDeduction,
+        requested: amount,
       });
     } else {
       // All from top-up
-      await autumn.track(ctx, {
-        featureId: "topup_credits",
-        value: amount,
+      const topUpCheck = await autumn.check(ctx, { featureId: "topup_credits" });
+      const topUpBalance = topUpCheck?.data?.balance || 0;
+
+      // Deduct whatever is available (up to amount requested)
+      const deduction = Math.min(amount, topUpBalance);
+      if (deduction > 0) {
+        await autumn.track(ctx, {
+          featureId: "topup_credits",
+          value: deduction,
+        });
+      }
+
+      console.log("[Credit Deduction] Deducted from top-up:", {
+        deducted: deduction,
+        requested: amount,
       });
-      console.log("[Credit Deduction] Deducted from top-up:", amount);
     }
   } catch (error) {
     console.error("[Credit Deduction Error]", { amount, error });

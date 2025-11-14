@@ -1,7 +1,7 @@
 "use client";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import type { CheckoutParams, CheckoutResult, ProductItem } from "autumn-js";
-import { ArrowRight, ChevronDown, Loader2 } from "lucide-react";
+import { ArrowRight, ChevronDown, Loader2, Lock, ShieldCheck } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import {
@@ -72,22 +72,66 @@ export default function CheckoutDialog(params: CheckoutDialogProps) {
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogContent className="p-0 pt-4 gap-0 text-foreground text-sm">
-				<DialogTitle className="px-6 mb-1">{title}</DialogTitle>
-				<div className="px-6 mt-1 mb-4 text-muted-foreground">
-					{message}
+			<DialogContent className="p-0 pt-8 gap-0 text-foreground max-h-[85vh] min-h-[520px] flex flex-col">
+				{/* Header with extra breathing room */}
+				<div className="px-8 pb-6">
+					<DialogTitle className="text-2xl font-bold mb-3">{title}</DialogTitle>
+					<div className="text-base text-foreground/70">
+						{message}
+					</div>
 				</div>
 
-				{isPaid && checkoutResult && (
-					<PriceInformation
-						checkoutResult={checkoutResult}
-						setCheckoutResult={setCheckoutResult}
-					/>
-				)}
+				{/* Pricing Details - Card background */}
+				<div className="flex-1 overflow-y-auto px-8 pb-6">
+					{isPaid && checkoutResult && (
+						<div className="bg-muted/40 border border-border/50 rounded-lg p-6">
+							<PriceInformation
+								checkoutResult={checkoutResult}
+								setCheckoutResult={setCheckoutResult}
+							/>
+						</div>
+					)}
+				</div>
 
-				<DialogFooter className="flex flex-col sm:flex-row justify-between gap-x-4 py-2 pl-6 pr-3 bg-secondary border-t shadow-inner">
+				{/* Visual divider */}
+				<div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mx-8" />
+
+				{/* Security Badges - Compact */}
+				<div className="px-8 py-5">
+					<div className="flex items-center justify-center gap-6">
+						{/* 256-bit Encryption */}
+						<div className="flex items-center gap-2">
+							<div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-500/10">
+								<Lock className="w-4 h-4 text-green-600 dark:text-green-500" />
+							</div>
+							<div className="text-xs">
+								<div className="font-medium text-foreground">256-bit Encryption</div>
+								<div className="text-muted-foreground">Bank-level security</div>
+							</div>
+						</div>
+
+						{/* Stripe Badge */}
+						<div className="flex items-center gap-2">
+							<div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500/10">
+								<ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-500" />
+							</div>
+							<div className="text-xs">
+								<div className="font-medium text-foreground">Powered by Stripe</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				{/* Payment Action Section */}
+				<div className="px-8 pb-8">
+					<div className="text-center mb-4">
+						<p className="text-sm text-muted-foreground">
+							We'll charge the card on file for this purchase
+						</p>
+					</div>
+
 					<Button
-						size="sm"
+						size="lg"
 						onClick={async () => {
 							setLoading(true);
 
@@ -107,19 +151,18 @@ export default function CheckoutDialog(params: CheckoutDialogProps) {
 							setLoading(false);
 						}}
 						disabled={loading}
-						className="min-w-16 flex items-center gap-2"
+						className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/20"
 					>
 						{loading ? (
-							<Loader2 className="w-4 h-4 animate-spin" />
+							<Loader2 className="w-5 h-5 animate-spin" />
 						) : (
-							<>
-								<span className="whitespace-nowrap flex gap-1">
-									Confirm
-								</span>
-							</>
+							<span className="flex items-center gap-2">
+								<Lock className="w-4 h-4" />
+								Confirm Purchase
+							</span>
 						)}
 					</Button>
-				</DialogFooter>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);
@@ -162,13 +205,13 @@ function DueAmounts({ checkoutResult }: { checkoutResult: CheckoutResult }) {
 	const showNextCycle = next_cycle && next_cycle.total !== checkoutResult.total;
 
 	return (
-		<div className="flex flex-col gap-1">
-			<div className="flex justify-between">
+		<div className="flex flex-col gap-3 mt-4 pt-4 border-t-2 border-border">
+			<div className="flex justify-between items-center">
 				<div>
-					<p className="font-medium text-md">Total due today</p>
+					<p className="text-sm font-medium text-foreground/70">Total due today</p>
 				</div>
 
-				<p className="font-medium text-md">
+				<p className="text-3xl font-bold text-foreground">
 					{formatCurrency({
 						amount: checkoutResult?.total,
 						currency: checkoutResult?.currency,
@@ -176,11 +219,11 @@ function DueAmounts({ checkoutResult }: { checkoutResult: CheckoutResult }) {
 				</p>
 			</div>
 			{showNextCycle && (
-				<div className="flex justify-between text-muted-foreground">
+				<div className="flex justify-between text-muted-foreground text-sm">
 					<div>
-						<p className="text-md">Due next cycle ({nextCycleAtStr})</p>
+						<p>Due next cycle ({nextCycleAtStr})</p>
 					</div>
-					<p className="text-md">
+					<p className="font-medium">
 						{formatCurrency({
 							amount: next_cycle.total,
 							currency: checkoutResult?.currency,
@@ -207,8 +250,8 @@ function ProductItems({
 	const isOneOff = checkoutResult?.product.properties.is_one_off;
 
 	return (
-		<div className="flex flex-col gap-2">
-			<p className="text-sm font-medium">Price</p>
+		<div className="flex flex-col gap-3">
+			<p className="text-sm font-semibold text-foreground/70 uppercase tracking-wide">Price Details</p>
 			{checkoutResult?.product.items
 				.filter((item) => item.type !== "feature")
 				.map((item, index) => {
@@ -228,15 +271,15 @@ function ProductItems({
 					}
 
 					return (
-						<div key={index} className="flex justify-between">
-							<p className="text-muted-foreground">
+						<div key={index} className="flex justify-between items-center">
+							<p className="text-foreground/70">
 								{item.feature
 									? item.feature.name
 									: isOneOff
 										? "Price"
 										: "Subscription"}
 							</p>
-							<p>
+							<p className="font-medium text-foreground">
 								{item.display?.primary_text} {item.display?.secondary_text}
 							</p>
 						</div>
@@ -361,24 +404,25 @@ const PrepaidItem = ({
 	const disableSelection = scenario === "renew";
 
 	return (
-		<div className="flex justify-between gap-2">
-			<div className="flex gap-2 items-start">
-				<p className="text-muted-foreground whitespace-nowrap">
+		<div className="flex justify-between items-center gap-2">
+			<div className="flex gap-2 items-center">
+				<p className="text-foreground font-medium whitespace-nowrap">
 					{item.feature?.name}
 				</p>
 				<Popover open={open} onOpenChange={setOpen}>
 					<PopoverTrigger
 						className={cn(
-							"text-muted-foreground text-xs px-1 py-0.5 rounded-md flex items-center gap-1 bg-accent/80 shrink-0",
+							"text-foreground text-sm px-2.5 py-1 rounded-md flex items-center gap-1.5 bg-muted border border-border shrink-0 font-medium",
 							disableSelection !== true &&
-								"hover:bg-accent hover:text-foreground",
+								"hover:bg-accent hover:border-foreground/20 cursor-pointer transition-colors",
 							disableSelection &&
-								"pointer-events-none opacity-80 cursor-not-allowed",
+								"pointer-events-none opacity-50 cursor-not-allowed",
 						)}
 						disabled={disableSelection}
 					>
-						Qty: {quantity}
-						{!disableSelection && <ChevronDown size={12} />}
+						<span className="text-xs text-muted-foreground">Qty:</span>
+						{quantity.toLocaleString()}
+						{!disableSelection && <ChevronDown size={14} className="text-muted-foreground" />}
 					</PopoverTrigger>
 					<PopoverContent
 						align="start"
@@ -419,9 +463,6 @@ const PrepaidItem = ({
 					</PopoverContent>
 				</Popover>
 			</div>
-			<p className="text-end">
-				{item.display?.primary_text} {item.display?.secondary_text}
-			</p>
 		</div>
 	);
 };
