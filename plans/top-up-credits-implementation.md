@@ -4,7 +4,7 @@
 Add non-expiring top-up credits purchasable by Pro users. Monthly credits consumed first, then top-up credits. Top-ups never reset.
 
 **Key Requirements**:
-- 3200 credits per $1 USD (vs 4000/$ for monthly credits)
+- 3200 credits per $1 USD
 - Flexible amount input with presets ($10, $50, $100)
 - Only Pro users can purchase
 - Monthly credits consumed before top-up credits

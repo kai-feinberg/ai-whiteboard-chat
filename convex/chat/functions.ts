@@ -8,6 +8,7 @@ import { paginationOptsValidator } from "convex/server";
 import { Agent } from "@convex-dev/agent";
 import { autumn } from "../autumn";
 import { convertUsdToCredits, estimateCost } from "../ai/pricing";
+import { deductCreditsWithPriority, checkCombinedBalance } from "../ai/credits";
 
 // Create agent instance with credit tracking
 function createChatAgent(userId: string, organizationId: string, agentName: string, systemPrompt: string, modelId?: string) {
@@ -46,11 +47,8 @@ function createChatAgent(userId: string, organizationId: string, agentName: stri
         creditsDeducted: costInCredits,
       });
 
-      // Track usage with Autumn (deduct credits)
-      await autumn.track(ctx, {
-        featureId: "ai_credits",
-        value: costInCredits,
-      });
+      // Deduct credits with priority: monthly first, then top-up
+      await deductCreditsWithPriority(ctx, costInCredits);
     },
   });
 }
@@ -307,13 +305,13 @@ export const sendMessage = action({
     }
 
     // ========== PRE-FLIGHT CREDIT CHECK ==========
-    const { data, error } = await autumn.check(ctx, {
-      featureId: "ai_credits",
-    });
+    // Estimate cost and check combined balance (monthly + top-up)
+    const estimatedCost = estimateCost(args.message);
+    const balanceCheck = await checkCombinedBalance(ctx, estimatedCost);
 
-    if (error || !data?.allowed) {
+    if (!balanceCheck.hasEnough) {
       throw new Error(
-        `Insufficient credits. Please upgrade or wait for your monthly reset.`
+        `Insufficient credits. You have ${balanceCheck.monthlyBalance.toFixed(2)} monthly + ${balanceCheck.topUpBalance.toFixed(2)} top-up credits (${balanceCheck.totalBalance.toFixed(2)} total). This message requires ~${estimatedCost.toFixed(2)} credits. ${balanceCheck.shortfall.toFixed(2)} credits short.`
       );
     }
 

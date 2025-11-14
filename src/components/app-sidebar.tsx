@@ -58,6 +58,12 @@ function UserCreditsCard() {
   const balance = creditsFeature?.balance || 0;
   const included = creditsFeature?.included_usage || 0;
 
+  // Get top-up credits
+  const topUpCredits = customer?.features?.topup_credits;
+  const topUpBalance = topUpCredits?.balance || 0;
+
+  // Total credits
+
   return (
     <div className="space-y-3">
       {/* Organization Switcher */}
@@ -95,11 +101,18 @@ function UserCreditsCard() {
       <div className="border-t border-sidebar-border" />
 
       {/* Credits Display - smaller text */}
-      <div className="px-1 space-y-1">
+      <div className="px-1 space-y-1.5">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/50 font-medium">AI Credits</span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/100 font-medium">Monthly</span>
           <span className="text-xs font-semibold">{balance.toLocaleString()} / {included.toLocaleString()}</span>
         </div>
+        {isPro && topUpBalance > 0 && (
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/100 font-medium">Top-Up</span>
+            <span className="text-xs font-semibold">{topUpBalance.toLocaleString()}</span>
+          </div>
+        )}
+        
       </div>
 
       {/* Upgrade Button - outline style */}

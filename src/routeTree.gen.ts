@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as CreditsRouteImport } from './routes/credits'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsCustomAgentsRouteImport } from './routes/settings/custom-agents'
@@ -19,6 +20,11 @@ import { Route as CanvasCanvasIdChatRouteImport } from './routes/canvas/$canvasI
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreditsRoute = CreditsRouteImport.update({
+  id: '/credits',
+  path: '/credits',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
@@ -48,6 +54,7 @@ const CanvasCanvasIdChatRoute = CanvasCanvasIdChatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/credits': typeof CreditsRoute
   '/pricing': typeof PricingRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
@@ -55,6 +62,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/credits': typeof CreditsRoute
   '/pricing': typeof PricingRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
@@ -64,6 +72,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRoute
+  '/credits': typeof CreditsRoute
   '/pricing': typeof PricingRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
@@ -73,6 +82,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/credits'
     | '/pricing'
     | '/settings/custom-agents'
     | '/canvas/$canvasId/chat'
@@ -80,6 +90,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/credits'
     | '/pricing'
     | '/settings/custom-agents'
     | '/canvas/$canvasId/chat'
@@ -88,6 +99,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
+    | '/credits'
     | '/pricing'
     | '/settings/custom-agents'
     | '/canvas/$canvasId/chat'
@@ -97,6 +109,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRoute
+  CreditsRoute: typeof CreditsRoute
   PricingRoute: typeof PricingRoute
   SettingsCustomAgentsRoute: typeof SettingsCustomAgentsRoute
   CanvasCanvasIdChatRoute: typeof CanvasCanvasIdChatRoute
@@ -110,6 +123,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/credits': {
+      id: '/credits'
+      path: '/credits'
+      fullPath: '/credits'
+      preLoaderRoute: typeof CreditsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -153,6 +173,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRoute,
+  CreditsRoute: CreditsRoute,
   PricingRoute: PricingRoute,
   SettingsCustomAgentsRoute: SettingsCustomAgentsRoute,
   CanvasCanvasIdChatRoute: CanvasCanvasIdChatRoute,

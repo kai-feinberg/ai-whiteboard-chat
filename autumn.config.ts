@@ -3,6 +3,7 @@ import {
 	product,
 	featureItem,
 	priceItem,
+	pricedFeatureItem,
 } from "atmn";
 
 // ==================== FEATURES ====================
@@ -15,10 +16,18 @@ export const canvases = feature({
 });
 
 // AI Credits feature (single_use = consumed when used)
-// 4000 credits = $1 USD
+// 4000 credits = $1 USD (monthly reset)
 export const aiCredits = feature({
 	id: "ai_credits",
 	name: "AI Credits",
+	type: "single_use",
+});
+
+// Top-Up Credits feature (single_use = consumed when used, no reset)
+// 3200 credits = $1 USD (never expires)
+export const topUpCredits = feature({
+	id: "topup_credits",
+	name: "Top-Up Credits",
 	type: "single_use",
 });
 
@@ -79,7 +88,21 @@ export const pro = product({
 	],
 });
 
+// Top-Up Credits Product (one-time purchase, Pro users only)
+export const topUpProduct = product({
+	id: "topup_credits",
+	name: "Credit Top-Up",
+	items: [
+		pricedFeatureItem({
+			feature_id: topUpCredits.id,
+			price: 1, // $1 USD
+			billing_units: 3200, // per 3200 credits
+			usage_model: "prepaid", // One-time purchase
+		}),
+	],
+});
+
 export default {
-	features: [canvases, aiCredits, customAgents],
-	products: [free, pro],
+	features: [canvases, aiCredits, topUpCredits, customAgents],
+	products: [free, pro, topUpProduct],
 };

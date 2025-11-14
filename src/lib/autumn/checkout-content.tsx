@@ -12,6 +12,20 @@ export const getCheckoutContent = (checkoutResult: CheckoutResult) => {
   const productName = product.name;
 
   if (is_one_off) {
+    // Special handling for credit top-up
+    if (product.id === "topup_credits") {
+      const credits = checkoutResult.preview?.options?.[0]?.included_usage || 0;
+      return {
+        title: <p>Purchase Top-Up Credits</p>,
+        message: (
+          <p>
+            By clicking confirm, you will purchase {credits.toLocaleString()} credits that never expire.
+            Your card will be charged immediately.
+          </p>
+        ),
+      };
+    }
+
     return {
       title: <p>Purchase {productName}</p>,
       message: (

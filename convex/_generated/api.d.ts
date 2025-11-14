@@ -12,6 +12,7 @@ import type * as agents_actions from "../agents/actions.js";
 import type * as agents_functions from "../agents/functions.js";
 import type * as agents_mutations from "../agents/mutations.js";
 import type * as agents_queries from "../agents/queries.js";
+import type * as ai_credits from "../ai/credits.js";
 import type * as ai_pricing from "../ai/pricing.js";
 import type * as autumn from "../autumn.js";
 import type * as canvas_chat from "../canvas/chat.js";
@@ -25,6 +26,7 @@ import type * as canvas_tiktok from "../canvas/tiktok.js";
 import type * as canvas_website from "../canvas/website.js";
 import type * as canvas_youtube from "../canvas/youtube.js";
 import type * as chat_functions from "../chat/functions.js";
+import type * as credits_functions from "../credits/functions.js";
 import type * as http from "../http.js";
 import type * as models from "../models.js";
 
@@ -47,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   "agents/functions": typeof agents_functions;
   "agents/mutations": typeof agents_mutations;
   "agents/queries": typeof agents_queries;
+  "ai/credits": typeof ai_credits;
   "ai/pricing": typeof ai_pricing;
   autumn: typeof autumn;
   "canvas/chat": typeof canvas_chat;
@@ -60,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   "canvas/website": typeof canvas_website;
   "canvas/youtube": typeof canvas_youtube;
   "chat/functions": typeof chat_functions;
+  "credits/functions": typeof credits_functions;
   http: typeof http;
   models: typeof models;
 }>;
