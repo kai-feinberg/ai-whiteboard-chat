@@ -218,7 +218,7 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
         </Link>
       </NodeHeader>
       <NodeContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="flex h-full w-full nowheel overflow-hidden">
+        <div className="flex h-full w-full overflow-hidden">
           {/* Thread Sidebar */}
           <ThreadSidebar
             threads={threads}

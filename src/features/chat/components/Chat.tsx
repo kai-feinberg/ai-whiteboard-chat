@@ -119,7 +119,7 @@ export function Chat({
   return (
     <div
       className={cn(
-        "flex flex-col nopan nowheel h-full",
+        "flex flex-col h-full",
         className
       )}
     >
