@@ -27,11 +27,6 @@ const data = {
       icon: LayoutDashboard,
     },
     {
-      title: "Playground",
-      url: "/playground",
-      icon: MessageSquare,
-    },
-    {
       title: "Pricing",
       url: "/pricing",
       icon: CreditCard,

@@ -1,10 +1,19 @@
-copy button in full node context
-limit to one chat node per canvas
+migrate to personal convex and clerk:
+- get real stripe authorization and push autumn to prod
+- get domain
+
+
+analysis agent: breakdown by hooks, ...
+repurpose agent: 
+
+pricing table fix:
+remove playground link/route
+
+business context: (always pulled in)
 
 
 Handle just pasting on the canvas
 
-full screen chat to display same context button
 
 scroll for chat node component
 

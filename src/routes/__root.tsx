@@ -58,7 +58,7 @@ export const Route = createRootRouteWithContext<{
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'AdScout - Ad Intelligence Platform',
+        title: 'Sprawl AI - AI Canvas',
       },
     ],
     links: [

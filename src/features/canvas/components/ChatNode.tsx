@@ -42,9 +42,9 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
     // Try to load from localStorage on mount
     if (typeof window !== "undefined" && data.canvasId) {
       const stored = localStorage.getItem(`canvas-model-${data.canvasId}`);
-      return stored || null;
+      return stored || "anthropic/claude-haiku-4.5"; // Default to Claude Haiku
     }
-    return null;
+    return "anthropic/claude-haiku-4.5"; // Default to Claude Haiku
   });
 
   // Sync selected thread when data changes

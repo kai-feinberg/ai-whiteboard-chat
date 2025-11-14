@@ -53,9 +53,9 @@ function FullScreenChat() {
     // Try to load from localStorage on mount
     if (typeof window !== "undefined" && canvasId) {
       const stored = localStorage.getItem(`canvas-model-${canvasId}`);
-      return stored || null;
+      return stored || "anthropic/claude-haiku-4.5"; // Default to Claude Haiku
     }
-    return null;
+    return "anthropic/claude-haiku-4.5"; // Default to Claude Haiku
   });
 
   // Load default agent on mount if no stored agent
