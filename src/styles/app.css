@@ -171,4 +171,12 @@
   .react-flow__handle-valid {
     background: var(--chart-4) !important;
   }
+
+  /* Selected node styling - Clear visual feedback */
+  .react-flow__node.selected .node-container {
+    outline: 1px solid oklch(0.5 0.02 286) !important;
+    box-shadow: 0 0 0 3px oklch(0.5 0.02 286 / 0.1),
+                0 4px 12px oklch(0 0 0 / 0.15) !important;
+    transition: all 0.2s ease;
+  }
 }
