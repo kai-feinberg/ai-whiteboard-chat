@@ -210,7 +210,7 @@ function AuthenticatedContent() {
           <div className="text-center">
             <h1 className="text-2xl font-bold tracking-tight">Create an Organization</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              You need to create an organization to continue using AdScout
+              You need to create an organization to continue using Sprawl AI
             </p>
           </div>
           <div className="mt-8 flex justify-center">
