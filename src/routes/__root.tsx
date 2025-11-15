@@ -119,12 +119,12 @@ function RootComponent() {
               <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
                 <div className="w-full max-w-md space-y-8 p-8">
                   <div className="text-center">
-                    <h1 className="text-4xl font-bold tracking-tight">AdScout</h1>
+                    <h1 className="text-4xl font-bold tracking-tight">Sprawl AI</h1>
                     <p className="mt-2 text-lg text-muted-foreground">
-                      Ad Intelligence Platform
+                      Your Infinite AI Canvas
                     </p>
                     <p className="mt-4 text-sm text-muted-foreground">
-                      Sign in to track, analyze, and discover winning ad campaigns
+                      Sign in to generate, transcribe, and repurpose content
                     </p>
                   </div>
                   <div className="mt-8 flex justify-center">
@@ -154,6 +154,7 @@ function AuthenticatedContent() {
     },
   })
   const [isSettingOrg, setIsSettingOrg] = React.useState(false)
+  const [orgReady, setOrgReady] = React.useState(false)
 
   // Auto-select first organization if none is active
   React.useEffect(() => {
@@ -165,6 +166,8 @@ function AuthenticatedContent() {
         try {
           // Set the first organization as active
           await clerk.setActive({ organization: userMemberships.data[0].organization.id })
+          // Wait a bit for JWT to refresh before reload
+          await new Promise(resolve => setTimeout(resolve, 500))
           window.location.reload()
         } catch (error) {
           console.error('Failed to auto-select organization:', error)
@@ -176,7 +179,20 @@ function AuthenticatedContent() {
     autoSelectFirstOrg()
   }, [isLoaded, organization, clerk, userMemberships, isSettingOrg])
 
-  if (!isLoaded || isSettingOrg) {
+  // Mark org as ready only when fully loaded with organization context
+  React.useEffect(() => {
+    if (isLoaded && organization && !isSettingOrg) {
+      // Small delay to ensure JWT has refreshed with organizationId
+      const timer = setTimeout(() => {
+        setOrgReady(true)
+      }, 100)
+      return () => clearTimeout(timer)
+    } else {
+      setOrgReady(false)
+    }
+  }, [isLoaded, organization, isSettingOrg])
+
+  if (!isLoaded || isSettingOrg || (organization && !orgReady)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -213,9 +229,9 @@ function AuthenticatedContent() {
     <SidebarProvider>
       <div className="flex h-screen w-full bg-sidebar">
         <AppSidebar />
-        <SidebarInset className="relative bg-sidebar-accent">
+        <SidebarInset className="relative">
           <ConditionalSidebarTrigger />
-          <div className="flex flex-1 flex-col p-4 h-full">
+          <div className="flex flex-1 flex-col p-4 h-full bg-sidebar">
             <div className="bg-background flex-1 rounded-2xl shadow-lg overflow-hidden">
               <Outlet />
             </div>

@@ -76,10 +76,10 @@ function UserCreditsCard() {
           elements: {
             rootBox: "w-full",
             organizationSwitcherTrigger: "w-full px-3 py-2 rounded-md border-0 bg-sidebar-accent/40 hover:bg-sidebar-accent/60 justify-start transition-colors",
-            organizationSwitcherTriggerIcon: "text-muted-foreground",
+            organizationSwitcherTriggerIcon: { color: "oklch(0.98 0.005 70 / 0.7)" },
             organizationPreviewAvatarBox: "w-7 h-7",
-            organizationPreviewMainIdentifier: "text-sm font-medium",
-            organizationPreviewSecondaryIdentifier: "text-xs",
+            organizationPreviewMainIdentifier: { color: "oklch(0.98 0.005 70)", fontSize: "0.875rem", fontWeight: 500 },
+            organizationPreviewSecondaryIdentifier: { color: "oklch(0.98 0.005 70 / 0.7)", fontSize: "0.75rem" },
           }
         }}
       />
@@ -87,12 +87,16 @@ function UserCreditsCard() {
       {/* User Profile */}
       <UserButton
         appearance={{
+          variables: {
+            colorText: "oklch(0.98 0.005 70)",
+            colorTextSecondary: "oklch(0.98 0.005 70 / 0.7)",
+          },
           elements: {
             userButtonBox: "w-full",
-            userButtonTrigger: "w-full px-3 py-2 rounded-md hover:bg-sidebar-accent/40 justify-start transition-colors",
+            userButtonTrigger: "w-full px-3 py-2 rounded-md hover:bg-sidebar-accent justify-start transition-colors",
             userButtonAvatarBox: "w-7 h-7 order-first",
-            userButtonOuterIdentifier: "text-sm font-medium",
-            userButtonInnerIdentifier: "text-xs text-muted-foreground",
+            userButtonOuterIdentifier: "text-sm font-medium text-sidebar-foreground",
+            userButtonInnerIdentifier: "text-xs text-sidebar-foreground/70",
           }
         }}
         showName={true}
@@ -118,7 +122,7 @@ function UserCreditsCard() {
 
       {/* Upgrade Button - outline style */}
       {!isPro && (
-        <Button asChild variant="outline" size="sm" className="w-full">
+        <Button asChild variant="outline" size="sm" className="w-full text-sidebar-foreground border-sidebar-border hover:bg-accent hover:text-accent-foreground text-black">
           <Link to="/pricing">
             <Sparkles className="h-3.5 w-3.5" />
             Upgrade to Pro
@@ -136,7 +140,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const matchRoute = useMatchRoute();
 
   return (
-    <Sidebar {...props} className="bg-transparent border-none shadow-none">
+    <Sidebar {...props} className="border-none shadow-none">
       <SidebarHeader className="pb-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="font-semibold text-xl m-2 text-sidebar-foreground hover:opacity-80 transition-opacity">
@@ -158,8 +162,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <Link
                       to={item.url}
                       className={isActive
-                        ? "font-semibold text-sidebar-foreground text-[16px] bg-sidebar-accent/50 rounded-lg ring-1 ring-sidebar-accent"
-                        : "font-medium text-sidebar-foreground/70 text-[16px] hover:text-sidebar-foreground bg-transparent hover:bg-sidebar-accent/30 rounded-lg"
+                        ? "font-semibold text-sidebar-foreground text-[16px] bg-sidebar-footer !outline-1 outline-sidebar-border rounded-lg"
+                        : "font-medium text-sidebar-foreground/70 text-[16px] hover:text-sidebar-foreground bg-transparent hover:bg-transparent rounded-lg"
                       }
                     >
                       <Icon className="h-5 w-5" />
@@ -173,7 +177,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4 pt-6">
-        <UserCreditsCard />
+        <div className="bg-sidebar-footer rounded-xl p-4">
+          <UserCreditsCard />
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
