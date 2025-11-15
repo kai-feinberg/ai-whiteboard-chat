@@ -213,7 +213,7 @@ function AuthenticatedContent() {
     <SidebarProvider>
       <div className="flex h-screen w-full bg-sidebar">
         <AppSidebar />
-        <SidebarInset className="relative bg-sidebar">
+        <SidebarInset className="relative bg-sidebar-accent">
           <ConditionalSidebarTrigger />
           <div className="flex flex-1 flex-col p-4 h-full">
             <div className="bg-background flex-1 rounded-2xl shadow-lg overflow-hidden">

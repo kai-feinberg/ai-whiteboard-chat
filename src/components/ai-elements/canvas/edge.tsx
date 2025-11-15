@@ -33,10 +33,11 @@ const Temporary = ({
       id={id}
       path={edgePath}
       style={{
-        strokeDasharray: "8, 8",
-        strokeWidth: 6,
+        strokeDasharray: "6, 6",
+        strokeWidth: 3,
         stroke: 'var(--ring)',
-        opacity: 0.6,
+        opacity: 0.4,
+        strokeLinecap: 'round',
       }}
     />
   );
@@ -132,9 +133,9 @@ const Animated = ({ id, source, target, markerEnd, style }: EdgeProps) => {
     <>
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="var(--chart-1)" />
-          <stop offset="50%" stopColor="var(--chart-2)" />
-          <stop offset="100%" stopColor="var(--chart-4)" />
+          <stop offset="0%" stopColor="var(--chart-1)" stopOpacity="0.7" />
+          <stop offset="50%" stopColor="var(--chart-2)" stopOpacity="0.7" />
+          <stop offset="100%" stopColor="var(--chart-4)" stopOpacity="0.7" />
         </linearGradient>
       </defs>
       <BaseEdge
@@ -143,13 +144,14 @@ const Animated = ({ id, source, target, markerEnd, style }: EdgeProps) => {
         path={edgePath}
         style={{
           ...style,
-          strokeWidth: 8,
+          strokeWidth: 4,
           stroke: `url(#${gradientId})`,
-          strokeDasharray: "12, 8",
+          strokeDasharray: "8, 6",
+          strokeLinecap: 'round',
         }}
       />
-      <circle fill="var(--chart-3)" r="6" opacity="0.4">
-        <animateMotion dur="4s" path={edgePath} repeatCount="indefinite" />
+      <circle fill="var(--chart-3)" r="4" opacity="0.5">
+        <animateMotion dur="5s" path={edgePath} repeatCount="indefinite" />
       </circle>
     </>
   );

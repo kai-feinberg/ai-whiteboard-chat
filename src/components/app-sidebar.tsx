@@ -104,16 +104,16 @@ function UserCreditsCard() {
       {/* Credits Display - smaller text */}
       <div className="px-1 space-y-1.5">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/100 font-medium">Monthly</span>
-          <span className="text-xs font-semibold">{balance.toLocaleString()} / {included.toLocaleString()}</span>
+          <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/70 font-medium">Monthly</span>
+          <span className="text-xs font-semibold text-sidebar-foreground">{balance.toLocaleString()} / {included.toLocaleString()}</span>
         </div>
         {isPro && topUpBalance > 0 && (
           <div className="flex items-baseline gap-1.5">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/100 font-medium">Top-Up</span>
-            <span className="text-xs font-semibold">{topUpBalance.toLocaleString()}</span>
+            <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/70 font-medium">Top-Up</span>
+            <span className="text-xs font-semibold text-sidebar-foreground">{topUpBalance.toLocaleString()}</span>
           </div>
         )}
-        
+
       </div>
 
       {/* Upgrade Button - outline style */}
@@ -139,7 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar {...props} className="bg-transparent border-none shadow-none">
       <SidebarHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="font-semibold text-xl m-2 hover:opacity-80 transition-opacity">
+          <Link to="/" className="font-semibold text-xl m-2 text-sidebar-foreground hover:opacity-80 transition-opacity">
             <span>Sprawl AI</span>
           </Link>
           <SidebarTrigger />
@@ -158,8 +158,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <Link
                       to={item.url}
                       className={isActive
-                        ? "font-semibold text-foreground text-[16px] bg-accent/40"
-                        : "font-medium text-foreground/85 text-[16px] hover:text-foreground hover:bg-accent"
+                        ? "font-semibold text-sidebar-foreground text-[16px] bg-sidebar-accent/50 rounded-lg ring-1 ring-sidebar-accent"
+                        : "font-medium text-sidebar-foreground/70 text-[16px] hover:text-sidebar-foreground bg-transparent hover:bg-sidebar-accent/30 rounded-lg"
                       }
                     >
                       <Icon className="h-5 w-5" />
