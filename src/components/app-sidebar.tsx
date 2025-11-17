@@ -4,7 +4,7 @@ import { Link, useMatchRoute } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 import { useCustomer } from "autumn-js/react"
 import { Button } from "@/components/ui/button"
-import { DevCreditsAdjuster } from "@/components/dev-credits-adjuster"
+// import { DevCreditsAdjuster } from "@/components/dev-credits-adjuster"
 
 import {
   Sidebar,
@@ -95,8 +95,8 @@ function UserCreditsCard() {
             userButtonBox: "w-full",
             userButtonTrigger: "w-full px-3 py-2 rounded-md hover:bg-sidebar-accent justify-start transition-colors",
             userButtonAvatarBox: "w-7 h-7 order-first",
-            userButtonOuterIdentifier: "text-sm font-medium text-sidebar-foreground",
-            userButtonInnerIdentifier: "text-xs text-sidebar-foreground/70",
+            userButtonOuterIdentifier: "text-sm font-medium text-sidebar-foreground truncate max-w-[100px]",
+            userButtonInnerIdentifier: "text-xs text-sidebar-foreground/70 truncate max-w-[100px]",
           }
         }}
         showName={true}
@@ -131,7 +131,7 @@ function UserCreditsCard() {
       )}
 
       {/* Dev Credits Adjuster - localhost only */}
-      <DevCreditsAdjuster />
+      {/* <DevCreditsAdjuster /> */}
     </div>
   );
 }
