@@ -105,43 +105,35 @@ export const Route = createRootRouteWithContext<{
 })
 
 function RootComponent() {
-  const context = useRouteContext({ from: Route.id })
-
   return (
-    <ClerkProvider>
-      <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
-        <AutumnWrapper>
-          <RootDocument>
-            <SignedIn>
-              <AuthenticatedContent />
-            </SignedIn>
-            <SignedOut>
-              <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-                <div className="w-full max-w-md space-y-8 p-8">
-                  <div className="text-center">
-                    <h1 className="text-4xl font-bold tracking-tight">Sprawl AI</h1>
-                    <p className="mt-2 text-lg text-muted-foreground">
-                      Your Infinite AI Canvas
-                    </p>
-                    <p className="mt-4 text-sm text-muted-foreground">
-                      Sign in to generate, transcribe, and repurpose content
-                    </p>
-                  </div>
-                  <div className="mt-8 flex justify-center">
-                    <SignInButton mode="modal">
-                      <button className="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-                        Sign In
-                      </button>
-                    </SignInButton>
-                  </div>
-                </div>
-              </div>
-            </SignedOut>
-            <Toaster />
-          </RootDocument>
-        </AutumnWrapper>
-      </ConvexProviderWithClerk>
-    </ClerkProvider>
+    <RootDocument>
+      <SignedIn>
+        <AuthenticatedContent />
+      </SignedIn>
+      <SignedOut>
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+          <div className="w-full max-w-md space-y-8 p-8">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold tracking-tight">Sprawl AI</h1>
+              <p className="mt-2 text-lg text-muted-foreground">
+                Your Infinite AI Canvas
+              </p>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Sign in to generate, transcribe, and repurpose content
+              </p>
+            </div>
+            <div className="mt-8 flex justify-center">
+              <SignInButton mode="modal">
+                <button className="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+                  Sign In
+                </button>
+              </SignInButton>
+            </div>
+          </div>
+        </div>
+      </SignedOut>
+      <Toaster />
+    </RootDocument>
   )
 }
 
@@ -253,16 +245,25 @@ function ConditionalSidebarTrigger() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const context = useRouteContext({ from: Route.id })
+  const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
   return (
-    <html>
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
+    <ClerkProvider publishableKey={clerkPublishableKey}>
+      <html>
+        <head>
+          <HeadContent />
+        </head>
+        <body>
+          <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
+            <AutumnWrapper>
+              {children}
+            </AutumnWrapper>
+          </ConvexProviderWithClerk>
+          <Scripts />
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
 
