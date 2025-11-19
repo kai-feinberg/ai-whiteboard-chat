@@ -34,13 +34,13 @@ export default defineSchema({
   canvas_nodes: defineTable({
     canvasId: v.id("canvases"),
     organizationId: v.string(),
-    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube"), v.literal("website"), v.literal("tiktok"), v.literal("facebook_ad"), v.literal("group")), // Node type
+    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube"), v.literal("website"), v.literal("tiktok"), v.literal("twitter"), v.literal("facebook_ad"), v.literal("group")), // Node type
     position: v.object({ x: v.number(), y: v.number() }),
     width: v.number(),
     height: v.number(),
     data: v.object({
       // Reference to type-specific table
-      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes"), v.id("website_nodes"), v.id("tiktok_nodes"), v.id("facebook_ads_nodes"), v.id("group_nodes")),
+      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes"), v.id("website_nodes"), v.id("tiktok_nodes"), v.id("twitter_nodes"), v.id("facebook_ads_nodes"), v.id("group_nodes")),
     }),
     notes: v.optional(v.string()), // User-added notes
     parentGroupId: v.optional(v.id("canvas_nodes")), // Parent group node (for nesting)
@@ -131,6 +131,25 @@ export default defineSchema({
     title: v.optional(v.string()), // Video description/caption
     transcript: v.optional(v.string()), // Full transcript text
     author: v.optional(v.string()), // Video author/creator
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    error: v.optional(v.string()), // Error message if failed
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
+
+  // Twitter Nodes - Twitter/X tweets
+  twitter_nodes: defineTable({
+    organizationId: v.string(),
+    url: v.string(), // Full tweet URL
+    tweetId: v.string(), // Extracted tweet ID
+    fullText: v.optional(v.string()), // Tweet text content
+    authorName: v.optional(v.string()), // Author display name
+    authorUsername: v.optional(v.string()), // Author @username
     status: v.union(
       v.literal("pending"),
       v.literal("processing"),

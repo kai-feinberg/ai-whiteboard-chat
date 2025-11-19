@@ -289,7 +289,7 @@ export const deleteNode = mutation({
     }
 
     // Delete node-specific data
-    await ctx.db.delete(canvasNode.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes"> | Id<"website_nodes"> | Id<"tiktok_nodes">);
+    await ctx.db.delete(canvasNode.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes"> | Id<"website_nodes"> | Id<"tiktok_nodes"> | Id<"twitter_nodes"> | Id<"facebook_ads_nodes"> | Id<"group_nodes">);
 
     // Delete canvas node reference
     await ctx.db.delete(args.canvasNodeId);
@@ -376,6 +376,15 @@ export const getNodeContext = query({
             contextMessages.push({
               role: "system",
               content: `TikTok Video: ${title}${author}\nURL: ${tiktokNode.url}\n\nTranscript:\n${tiktokNode.transcript}`,
+            });
+          }
+        } else if (node.nodeType === "twitter") {
+          const twitterNode = await ctx.db.get(node.data.nodeId as Id<"twitter_nodes">);
+          if (twitterNode?.fullText) {
+            const author = twitterNode.authorUsername ? `@${twitterNode.authorUsername}` : "";
+            contextMessages.push({
+              role: "system",
+              content: `Tweet${author ? ` by ${author}` : ""}\nURL: ${twitterNode.url}\n\nContent:\n${twitterNode.fullText}`,
             });
           }
         } else if (node.nodeType === "facebook_ad") {

@@ -147,6 +147,12 @@ export const getCanvasWithNodes = query({
             ...node,
             tiktokNodeId: tiktokNode?._id || null,
           };
+        } else if (node.nodeType === "twitter") {
+          const twitterNode = await ctx.db.get(node.data.nodeId as Id<"twitter_nodes">);
+          return {
+            ...node,
+            twitterNodeId: twitterNode?._id || null,
+          };
         } else if (node.nodeType === "facebook_ad") {
           const facebookAdNode = await ctx.db.get(node.data.nodeId as Id<"facebook_ads_nodes">);
           return {
@@ -274,6 +280,38 @@ export const getTikTokNode = query({
     }
 
     return tiktokNode;
+  },
+});
+
+/**
+ * Get Twitter node data (for UI component)
+ */
+export const getTwitterNode = query({
+  args: {
+    twitterNodeId: v.id("twitter_nodes"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    const twitterNode = await ctx.db.get(args.twitterNodeId);
+    if (!twitterNode) {
+      return null;
+    }
+
+    // Verify ownership
+    if (twitterNode.organizationId !== organizationId) {
+      throw new Error("Twitter node does not belong to your organization");
+    }
+
+    return twitterNode;
   },
 });
 

@@ -1,18 +1,16 @@
-migrate to personal convex and clerk:
-- get real stripe authorization and push autumn to prod
-- get domain
+- domain
+permanent business context
+Handle just pasting on the canvas
 
 
 analysis agent: breakdown by hooks, ...
 repurpose agent: 
 
 pricing table fix:
-remove playground link/route
 
 business context: (always pulled in)
 
 
-Handle just pasting on the canvas
 
 
 scroll for chat node component

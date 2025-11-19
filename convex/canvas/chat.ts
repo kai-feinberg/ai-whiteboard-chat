@@ -259,6 +259,15 @@ export const getNodeContextInternal = internalQuery({
             content: `TikTok Video: ${title}${author}\nURL: ${tiktokNode.url}\n\nTranscript:\n${tiktokNode.transcript}`,
           });
         }
+      } else if (sourceNode.nodeType === "twitter") {
+        const twitterNode = await ctx.db.get(sourceNode.data.nodeId as Id<"twitter_nodes">);
+        if (twitterNode?.fullText) {
+          const author = twitterNode.authorUsername ? `@${twitterNode.authorUsername}` : "";
+          contextMessages.push({
+            role: "system",
+            content: `Tweet${author ? ` by ${author}` : ""}\nURL: ${twitterNode.url}\n\nContent:\n${twitterNode.fullText}`,
+          });
+        }
       } else if (sourceNode.nodeType === "facebook_ad") {
         const facebookAdNode = await ctx.db.get(sourceNode.data.nodeId as Id<"facebook_ads_nodes">);
         if (facebookAdNode) {

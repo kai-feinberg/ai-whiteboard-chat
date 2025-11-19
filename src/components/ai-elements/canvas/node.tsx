@@ -44,7 +44,7 @@ export const Node = ({ handles, className, width, height, ...props }: NodeProps)
 );
 
 export type NodeHeaderProps = ComponentProps<typeof CardHeader> & {
-  variant?: "default" | "youtube" | "website" | "chat" | "tiktok" | "facebook" | "text" | "group";
+  variant?: "default" | "youtube" | "website" | "chat" | "tiktok" | "twitter" | "facebook" | "text" | "group";
 };
 
 const headerVariants = {
@@ -53,6 +53,7 @@ const headerVariants = {
   website: "bg-gradient-to-br from-sky-50 to-cyan-100/70 text-cyan-900 border-cyan-200/60",
   chat: "bg-gradient-to-br from-rose-50 to-rose-100/70 text-rose-900 border-rose-200/60",
   tiktok: "bg-gradient-to-br from-fuchsia-50 to-pink-100/70 text-fuchsia-900 border-fuchsia-200/60",
+  twitter: "bg-gradient-to-br from-blue-50 to-sky-100/70 text-blue-900 border-blue-200/60",
   facebook: "bg-gradient-to-br from-indigo-50 to-indigo-100/70 text-indigo-900 border-indigo-200/60",
   text: "bg-gradient-to-br from-stone-50 to-stone-100/70 text-stone-800 border-stone-200/60",
   group: "bg-gradient-to-br from-amber-50 to-yellow-100/70 text-amber-900 border-amber-200/60",

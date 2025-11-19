@@ -12,6 +12,7 @@ import { ChatNode } from "@/features/canvas/components/ChatNode";
 import { YouTubeNode } from "@/features/canvas/components/YouTubeNode";
 import { WebsiteNode } from "@/features/canvas/components/WebsiteNode";
 import { TikTokNode } from "@/features/canvas/components/TikTokNode";
+import { TwitterNode } from "@/features/canvas/components/TwitterNode";
 import { FacebookAdNode } from "@/features/canvas/components/FacebookAdNode";
 import { GroupNode } from "@/features/canvas/components/GroupNode";
 import { useCallback, useEffect, useState, createContext, useContext } from "react";
@@ -33,10 +34,16 @@ import {
   type NodeTypes,
   type EdgeTypes,
 } from "@xyflow/react";
-import { FileText, MessageSquare, Loader2, Video, Globe, Folder } from "lucide-react";
+import { FileText, MessageSquare, Loader2, Video, Globe, Folder, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/tanstack-react-start";
 import { UrlInputDialog } from "@/components/canvas/UrlInputDialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/canvas/$canvasId/")({
   component: CanvasEditor,
@@ -48,6 +55,7 @@ const nodeTypes: NodeTypes = {
   youtube: YouTubeNode,
   website: WebsiteNode,
   tiktok: TikTokNode,
+  twitter: TwitterNode,
   facebook_ad: FacebookAdNode,
   group: GroupNode,
 };
@@ -62,10 +70,11 @@ function CanvasEditor() {
   const { orgId } = useAuth();
   const [hasLoadedFromDB, setHasLoadedFromDB] = useState(false);
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
 
   // Dialog state
   const [dialogState, setDialogState] = useState<{
-    type: "youtube" | "website" | "tiktok" | "facebook" | null;
+    type: "youtube" | "website" | "tiktok" | "twitter" | "facebook" | null;
     open: boolean;
   }>({ type: null, open: false });
 
@@ -79,6 +88,7 @@ function CanvasEditor() {
   const createYouTubeNode = useAction(api.canvas.youtube.createYouTubeNode);
   const createWebsiteNode = useAction(api.canvas.website.createWebsiteNode);
   const createTikTokNode = useAction(api.canvas.tiktok.createTikTokNode);
+  const createTwitterNode = useAction(api.canvas.twitter.createTwitterNode);
   const createFacebookAdNode = useAction(api.canvas.facebook.createFacebookAdNode);
   const createGroup = useMutation(api.canvas.groups.createGroup);
   const addNodeToGroup = useMutation(api.canvas.groups.addNodeToGroup);
@@ -135,6 +145,7 @@ function CanvasEditor() {
           youtubeNodeId: (dbNode as any).youtubeNodeId,
           websiteNodeId: (dbNode as any).websiteNodeId,
           tiktokNodeId: (dbNode as any).tiktokNodeId,
+          twitterNodeId: (dbNode as any).twitterNodeId,
           facebookAdNodeId: (dbNode as any).facebookAdNodeId,
           groupNodeId: (dbNode as any).groupNodeId,
           canvasId: canvasId as Id<"canvases">, // Use canvasId from route params
@@ -470,6 +481,41 @@ function CanvasEditor() {
     }
   };
 
+  // Add Twitter node
+  const handleAddTwitterNode = async () => {
+    setDialogState({ type: "twitter", open: true });
+  };
+
+  const handleTwitterUrlSubmit = async (url: string) => {
+    try {
+      const position = { x: Math.random() * 400, y: Math.random() * 400 };
+      const result = await createTwitterNode({
+        canvasId: canvasId as Id<"canvases">,
+        position,
+        url,
+      });
+
+      // Add to local state immediately for better UX
+      setNodes((nds) => [
+        ...nds,
+        {
+          id: result.canvasNodeId,
+          type: "twitter",
+          position,
+          data: {
+            canvasNodeId: result.canvasNodeId,
+            twitterNodeId: result.twitterNodeId,
+          },
+        },
+      ]);
+
+      toast.success("Twitter node created");
+    } catch (error) {
+      console.error("[Canvas] Error creating Twitter node:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create Twitter node");
+    }
+  };
+
   // Add Facebook Ad node
   const handleAddFacebookAdNode = async () => {
     setDialogState({ type: "facebook", open: true });
@@ -610,75 +656,132 @@ function CanvasEditor() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
       >
-        <Panel position="top-left">
-          <div className="flex items-center gap-2 p-2">
-            <Button
-              onClick={handleAddTextNode}
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-            >
-              <FileText className="h-4 w-4" />
-              Add Text
-            </Button>
-            <Button
-              onClick={handleAddChatNode}
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-            >
-              <MessageSquare className="h-4 w-4" />
-              Add Chat
-            </Button>
-            <Button
-              onClick={handleAddYouTubeNode}
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-            >
-              <Video className="h-4 w-4" />
-              Add YouTube
-            </Button>
-            <Button
-              onClick={handleAddWebsiteNode}
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-            >
-              <Globe className="h-4 w-4" />
-              Add Website
-            </Button>
-            <Button
-              onClick={handleAddTikTokNode}
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-            >
-              <svg
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-              </svg>
-              Add TikTok
-            </Button>
-            <Button
-              onClick={handleAddFacebookAdNode}
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-            >
-              <svg
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
-              Add Facebook Ad
-            </Button>
-          </div>
+        <Panel position="top-right">
+          <TooltipProvider>
+            <div className="bg-accent/30 backdrop-blur-sm rounded-xl p-3 flex flex-col gap-2 border border-border/50">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={handleAddTextNode}
+                    className="cursor-pointer hover:bg-accent rounded-md p-2 transition-colors flex items-center justify-center"
+                  >
+                    <FileText className="h-6 w-6" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="px-4 py-2 text-xl">
+                  <p>Text</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={handleAddChatNode}
+                    className="cursor-pointer hover:bg-accent rounded-md p-2 transition-colors flex items-center justify-center"
+                  >
+                    <MessageSquare className="h-6 w-6" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="px-4 py-2 text-xl">
+                  <p>Chat</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={handleAddYouTubeNode}
+                    className="cursor-pointer hover:bg-accent rounded-md p-2 transition-colors flex items-center justify-center"
+                  >
+                    <svg
+                      className="h-6 w-6"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="px-4 py-2 text-xl">
+                  <p>YouTube</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={handleAddWebsiteNode}
+                    className="cursor-pointer hover:bg-accent rounded-md p-2 transition-colors flex items-center justify-center"
+                  >
+                    <Globe className="h-6 w-6" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="px-4 py-2 text-xl">
+                  <p>Website</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={handleAddTikTokNode}
+                    className="cursor-pointer hover:bg-accent rounded-md p-2 transition-colors flex items-center justify-center"
+                  >
+                    <svg
+                      className="h-6 w-6"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
+                    </svg>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="px-4 py-2 text-xl">
+                  <p>TikTok</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={handleAddTwitterNode}
+                    className="cursor-pointer hover:bg-accent rounded-md p-2 transition-colors flex items-center justify-center"
+                  >
+                    <svg
+                      className="h-6 w-6"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="px-4 py-2 text-xl">
+                  <p>Twitter</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={handleAddFacebookAdNode}
+                    className="cursor-pointer hover:bg-accent rounded-md p-2 transition-colors flex items-center justify-center"
+                  >
+                    <svg
+                      className="h-6 w-6"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="px-4 py-2 text-xl">
+                  <p>Facebook Ad</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </Panel>
       </Canvas>
 
@@ -708,6 +811,15 @@ function CanvasEditor() {
         title="Add TikTok Video"
         description="Enter the TikTok video URL to add to your canvas"
         placeholder="https://www.tiktok.com/@username/video/..."
+      />
+
+      <UrlInputDialog
+        open={dialogState.open && dialogState.type === "twitter"}
+        onOpenChange={(open) => setDialogState({ ...dialogState, open })}
+        onSubmit={handleTwitterUrlSubmit}
+        title="Add Twitter/X Post"
+        description="Enter the Twitter/X post URL to add to your canvas"
+        placeholder="https://twitter.com/username/status/... or https://x.com/username/status/..."
       />
 
       <UrlInputDialog
