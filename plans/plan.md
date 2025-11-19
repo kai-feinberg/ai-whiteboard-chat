@@ -3,13 +3,9 @@ permanent business context
 Handle just pasting on the canvas
 
 
-analysis agent: breakdown by hooks, ...
-repurpose agent: 
-
 pricing table fix:
 
 business context: (always pulled in)
-
 
 
 

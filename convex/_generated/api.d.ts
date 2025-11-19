@@ -30,6 +30,7 @@ import type * as chat_functions from "../chat/functions.js";
 import type * as credits_functions from "../credits/functions.js";
 import type * as http from "../http.js";
 import type * as models from "../models.js";
+import type * as organization_functions from "../organization/functions.js";
 
 import type {
   ApiFromModules,
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   "credits/functions": typeof credits_functions;
   http: typeof http;
   models: typeof models;
+  "organization/functions": typeof organization_functions;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

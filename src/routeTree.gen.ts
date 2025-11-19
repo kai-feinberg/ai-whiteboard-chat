@@ -13,6 +13,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as CreditsRouteImport } from './routes/credits'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsOrganizationRouteImport } from './routes/settings/organization'
 import { Route as SettingsCustomAgentsRouteImport } from './routes/settings/custom-agents'
 import { Route as CanvasCanvasIdIndexRouteImport } from './routes/canvas/$canvasId/index'
 import { Route as CanvasCanvasIdChatRouteImport } from './routes/canvas/$canvasId/chat'
@@ -36,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsOrganizationRoute = SettingsOrganizationRouteImport.update({
+  id: '/settings/organization',
+  path: '/settings/organization',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsCustomAgentsRoute = SettingsCustomAgentsRouteImport.update({
   id: '/settings/custom-agents',
   path: '/settings/custom-agents',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/credits': typeof CreditsRoute
   '/pricing': typeof PricingRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
+  '/settings/organization': typeof SettingsOrganizationRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId': typeof CanvasCanvasIdIndexRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/credits': typeof CreditsRoute
   '/pricing': typeof PricingRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
+  '/settings/organization': typeof SettingsOrganizationRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId': typeof CanvasCanvasIdIndexRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/credits': typeof CreditsRoute
   '/pricing': typeof PricingRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
+  '/settings/organization': typeof SettingsOrganizationRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId/': typeof CanvasCanvasIdIndexRoute
 }
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
     | '/credits'
     | '/pricing'
     | '/settings/custom-agents'
+    | '/settings/organization'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId'
   fileRoutesByTo: FileRoutesByTo
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
     | '/credits'
     | '/pricing'
     | '/settings/custom-agents'
+    | '/settings/organization'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId'
   id:
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '/credits'
     | '/pricing'
     | '/settings/custom-agents'
+    | '/settings/organization'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId/'
   fileRoutesById: FileRoutesById
@@ -112,6 +124,7 @@ export interface RootRouteChildren {
   CreditsRoute: typeof CreditsRoute
   PricingRoute: typeof PricingRoute
   SettingsCustomAgentsRoute: typeof SettingsCustomAgentsRoute
+  SettingsOrganizationRoute: typeof SettingsOrganizationRoute
   CanvasCanvasIdChatRoute: typeof CanvasCanvasIdChatRoute
   CanvasCanvasIdIndexRoute: typeof CanvasCanvasIdIndexRoute
 }
@@ -146,6 +159,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/organization': {
+      id: '/settings/organization'
+      path: '/settings/organization'
+      fullPath: '/settings/organization'
+      preLoaderRoute: typeof SettingsOrganizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/custom-agents': {
       id: '/settings/custom-agents'
       path: '/settings/custom-agents'
@@ -176,6 +196,7 @@ const rootRouteChildren: RootRouteChildren = {
   CreditsRoute: CreditsRoute,
   PricingRoute: PricingRoute,
   SettingsCustomAgentsRoute: SettingsCustomAgentsRoute,
+  SettingsOrganizationRoute: SettingsOrganizationRoute,
   CanvasCanvasIdChatRoute: CanvasCanvasIdChatRoute,
   CanvasCanvasIdIndexRoute: CanvasCanvasIdIndexRoute,
 }

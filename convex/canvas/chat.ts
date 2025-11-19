@@ -119,6 +119,11 @@ export const sendMessage = action({
       throw new Error("Agent not found");
     }
 
+    // Fetch organization settings for business context
+    const orgSettings: any = await ctx.runQuery(internal.organization.functions.getOrganizationSettingsInternal, {
+      organizationId,
+    });
+
     // Create agent with user context for usage tracking
     const canvasChatAgent = createCanvasChatAgent(userId, organizationId, agent.name, agent.systemPrompt, args.modelId);
 
@@ -136,9 +141,18 @@ export const sendMessage = action({
       }),
     });
 
-    // Build system message: Agent prompt first, then context
-    let systemMessage = agent.systemPrompt;
+    // Build system message: Business context first, then agent prompt, then connected nodes
+    let systemMessage = "";
 
+    // 1. Add business context if present (org-wide context like brand voice, business info)
+    if (orgSettings?.businessContext) {
+      systemMessage += orgSettings.businessContext + "\n\n---\n\n";
+    }
+
+    // 2. Add agent-specific system prompt
+    systemMessage += agent.systemPrompt;
+
+    // 3. Add context from connected nodes
     if (contextMessages.length > 0) {
       const contextContent = contextMessages.map((msg: any) => msg.content).join("\n\n");
       systemMessage += "\n\n---\n\n## Context from Connected Nodes\n\nThe user has provided the following context from nodes connected to this chat:\n\n" + contextContent;

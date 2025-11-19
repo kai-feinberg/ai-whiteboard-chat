@@ -210,4 +210,12 @@ export default defineSchema({
   })
     .index("by_organization", ["organizationId"])
     .index("by_org_default", ["organizationId", "isDefault"]),
+
+  // Organization Settings - Org-level configuration
+  organization_settings: defineTable({
+    organizationId: v.string(),
+    businessContext: v.optional(v.string()), // Org-wide business context (brand voice, business info) included in ALL chats
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
 });
