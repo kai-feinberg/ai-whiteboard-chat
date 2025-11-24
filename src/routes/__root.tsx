@@ -58,7 +58,7 @@ export const Route = createRootRouteWithContext<{
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Sprawl AI - AI Canvas',
+        title: 'Splat AI - AI Canvas',
       },
     ],
     links: [
@@ -114,7 +114,7 @@ function RootComponent() {
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
           <div className="w-full max-w-md space-y-8 p-8">
             <div className="text-center">
-              <h1 className="text-4xl font-bold tracking-tight">Sprawl AI</h1>
+              <h1 className="text-4xl font-bold tracking-tight">Splat AI</h1>
               <p className="mt-2 text-lg text-muted-foreground">
                 Your Infinite AI Canvas
               </p>
@@ -202,7 +202,7 @@ function AuthenticatedContent() {
           <div className="text-center">
             <h1 className="text-2xl font-bold tracking-tight">Create an Organization</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              You need to create an organization to continue using Sprawl AI
+              You need to create an organization to continue using Splat AI
             </p>
           </div>
           <div className="mt-8 flex justify-center">

@@ -1,10 +1,10 @@
-# Sprawl AI
+# Splat AI
 
 An infinite canvas for AI conversations with rich context inputs. Add YouTube videos, websites, TikToks, Facebook ads, and more to your canvas—then chat with AI agents that understand the full context.
 
 ## What It Is
 
-Sprawl AI is a visual workspace where you can:
+Splat AI is a visual workspace where you can:
 
 - **Drop content anywhere** - YouTube videos, websites, social media posts, text, PDFs
 - **Connect ideas visually** - Infinite canvas with draggable nodes and connections

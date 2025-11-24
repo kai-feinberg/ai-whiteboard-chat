@@ -2,15 +2,11 @@
 permanent business context
 Handle just pasting on the canvas
 
-
 pricing table fix:
 
 business context: (always pulled in)
 
-
-
 scroll for chat node component
-
 - Pricing
 - Different models
 - Different agents/bots

@@ -149,7 +149,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="pb-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="font-semibold text-xl m-2 text-sidebar-foreground hover:opacity-80 transition-opacity">
-            <span>Sprawl AI</span>
+            <span>Splat AI</span>
           </Link>
           <SidebarTrigger />
         </div>

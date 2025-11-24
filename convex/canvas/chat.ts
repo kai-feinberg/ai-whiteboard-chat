@@ -146,16 +146,16 @@ export const sendMessage = action({
 
     // 1. Add business context if present (org-wide context like brand voice, business info)
     if (orgSettings?.businessContext) {
-      systemMessage += orgSettings.businessContext + "\n\n---\n\n";
+      systemMessage += "# Organization Business Context\n\n" + orgSettings.businessContext + "\n\n---\n\n";
     }
 
     // 2. Add agent-specific system prompt
-    systemMessage += agent.systemPrompt;
+    systemMessage += "# Your Role and Instructions\n\n" + agent.systemPrompt;
 
     // 3. Add context from connected nodes
     if (contextMessages.length > 0) {
       const contextContent = contextMessages.map((msg: any) => msg.content).join("\n\n");
-      systemMessage += "\n\n---\n\n## Context from Connected Nodes\n\nThe user has provided the following context from nodes connected to this chat:\n\n" + contextContent;
+      systemMessage += "\n\n---\n\n# Attached Context from User\n\nThe user has connected the following content to this chat for you to reference:\n\n" + contextContent;
     }
 
     console.log('[Canvas Chat] System prompt:', {
@@ -279,7 +279,7 @@ export const getNodeContextInternal = internalQuery({
           const author = twitterNode.authorUsername ? `@${twitterNode.authorUsername}` : "";
           contextMessages.push({
             role: "system",
-            content: `Tweet${author ? ` by ${author}` : ""}\nURL: ${twitterNode.url}\n\nContent:\n${twitterNode.fullText}`,
+            content: `Tweet${author ? ` by ${author}` : ""}\n\n${twitterNode.fullText}`,
           });
         }
       } else if (sourceNode.nodeType === "facebook_ad") {

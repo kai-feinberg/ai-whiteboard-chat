@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Route = createFileRoute("/settings/custom-agents")({
   beforeLoad: ({ context }) => {
@@ -304,17 +305,18 @@ function CustomAgentsPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="systemPrompt">System Prompt</Label>
-                <Textarea
-                  id="systemPrompt"
-                  placeholder="Enter the instructions for your agent..."
-                  value={formData.systemPrompt}
-                  onChange={(e) =>
-                    setFormData({ ...formData, systemPrompt: e.target.value })
-                  }
-                  rows={8}
-                  required
-                  className="font-mono text-sm"
-                />
+                <ScrollArea className="h-[300px] rounded-md border">
+                  <Textarea
+                    id="systemPrompt"
+                    placeholder="Enter the instructions for your agent..."
+                    value={formData.systemPrompt}
+                    onChange={(e) =>
+                      setFormData({ ...formData, systemPrompt: e.target.value })
+                    }
+                    required
+                    className="font-mono text-sm min-h-[300px] border-0 focus-visible:ring-0"
+                  />
+                </ScrollArea>
                 <p className="text-xs text-muted-foreground">
                   This prompt will be used as the agent's instructions when
                   responding to messages.

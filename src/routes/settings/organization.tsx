@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export const Route = createFileRoute("/settings/organization")({
   beforeLoad: ({ context }) => {
@@ -92,14 +93,15 @@ function OrganizationSettingsPage() {
 
             <div className="space-y-2">
               <Label htmlFor="businessContext">Business Context</Label>
-              <Textarea
-                id="businessContext"
-                placeholder="Example: Our company is a B2B SaaS platform focused on developer tools. We maintain a technical but friendly tone, emphasize speed and simplicity, and target engineering teams at mid-size companies. Our writing style is direct, avoids marketing jargon, and includes concrete examples..."
-                value={businessContext}
-                onChange={(e) => setBusinessContext(e.target.value)}
-                rows={12}
-                className="font-mono text-sm"
-              />
+              <ScrollArea className="h-[400px] rounded-md border">
+                <Textarea
+                  id="businessContext"
+                  placeholder="Example: Our company is a B2B SaaS platform focused on developer tools. We maintain a technical but friendly tone, emphasize speed and simplicity, and target engineering teams at mid-size companies. Our writing style is direct, avoids marketing jargon, and includes concrete examples..."
+                  value={businessContext}
+                  onChange={(e) => setBusinessContext(e.target.value)}
+                  className="font-mono text-sm min-h-[400px] border-0 focus-visible:ring-0"
+                />
+              </ScrollArea>
               <p className="text-xs text-muted-foreground">
                 This context will be prepended to every chat conversation before the agent's system prompt and any connected node context.
               </p>
