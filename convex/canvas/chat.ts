@@ -2,16 +2,86 @@
 import { v } from "convex/values";
 import { action, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";
-import { Agent } from "@convex-dev/agent";
+import { Agent, createTool } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { autumn } from "../autumn";
 import { convertUsdToCredits } from "../ai/pricing";
 import { deductCreditsWithPriority } from "../ai/credits";
+import { z } from "zod";
+
+/**
+ * Tool for AI to generate images on the canvas
+ */
+const generateImageTool = createTool({
+  description: "Generate an AI image based on a text prompt and place it on the canvas. Use this when the user asks you to create, generate, or make an image.",
+  args: z.object({
+    prompt: z.string().describe("Detailed description of the image to generate. Be specific about style, content, colors, and composition."),
+  }),
+  handler: async (ctx, args) => {
+    // Access context passed from the agent
+    const canvasId = (ctx as any).canvasId as Id<"canvases">;
+    const organizationId = (ctx as any).organizationId as string;
+    const canvasNodeId = (ctx as any).canvasNodeId as Id<"canvas_nodes">;
+
+    if (!canvasId || !organizationId) {
+      throw new Error("Missing required context for image generation");
+    }
+
+    console.log(`[Image Tool] Generating image with prompt: ${args.prompt}`);
+    console.log(`[Image Tool] Canvas: ${canvasId}, Organization: ${organizationId}`);
+
+    // Calculate position: offset from the chat node
+    let position = { x: 100, y: 100 };
+
+    try {
+      // Try to get the chat node position to place image near it
+      const chatNode = await ctx.runQuery(internal.canvas.chat.getCanvasNodeInternal, {
+        canvasNodeId,
+        organizationId,
+      });
+
+      if (chatNode) {
+        // Place image to the right of the chat node
+        position = {
+          x: chatNode.position.x + chatNode.width + 100,
+          y: chatNode.position.y,
+        };
+      }
+    } catch (error) {
+      console.warn("[Image Tool] Could not get chat node position, using default", error);
+    }
+
+    // Create image node via internal mutation
+    const result = await ctx.runMutation(internal.canvas.images.createImageNodeInternal, {
+      canvasId,
+      position,
+      prompt: args.prompt,
+      organizationId,
+    });
+
+    // Schedule background image generation
+    await ctx.scheduler.runAfter(0, internal.canvas.images.generateImageAsync, {
+      imageNodeId: result.imageNodeId,
+    });
+
+    console.log(`[Image Tool] Created image node: ${result.imageNodeId}`);
+
+    return `I've started generating the image. It will appear on the canvas in a few moments with a loading indicator while it's being created.`;
+  },
+});
 
 // Create a function that returns an agent with a usageHandler that has access to user/org context
-function createCanvasChatAgent(userId: string, organizationId: string, agentName: string, systemPrompt: string, modelId?: string) {
-  return new Agent(components.agent, {
+function createCanvasChatAgent(
+  userId: string,
+  organizationId: string,
+  canvasId: Id<"canvases">,
+  canvasNodeId: Id<"canvas_nodes">,
+  agentName: string,
+  systemPrompt: string,
+  modelId?: string
+) {
+  return new Agent<{ canvasId: Id<"canvases">; canvasNodeId: Id<"canvas_nodes">; organizationId: string }>(components.agent, {
     name: agentName,
     instructions: systemPrompt,
     languageModel: modelId || 'xai/grok-4-fast-non-reasoning',
@@ -19,6 +89,9 @@ function createCanvasChatAgent(userId: string, organizationId: string, agentName
     callSettings: {
       maxRetries: 2,
       temperature: 0.7,
+    },
+    tools: {
+      generateImage: generateImageTool,
     },
     usageHandler: async (ctx, args) => {
       const {
@@ -119,13 +192,33 @@ export const sendMessage = action({
       throw new Error("Agent not found");
     }
 
+    // Get canvas node to extract canvasId
+    const canvasNode: any = await ctx.runQuery(internal.canvas.chat.getCanvasNodeInternal, {
+      canvasNodeId: args.canvasNodeId,
+      organizationId,
+    });
+
+    if (!canvasNode) {
+      throw new Error("Canvas node not found");
+    }
+
+    const canvasId = canvasNode.canvasId;
+
     // Fetch organization settings for business context
     const orgSettings: any = await ctx.runQuery(internal.organization.functions.getOrganizationSettingsInternal, {
       organizationId,
     });
 
-    // Create agent with user context for usage tracking
-    const canvasChatAgent = createCanvasChatAgent(userId, organizationId, agent.name, agent.systemPrompt, args.modelId);
+    // Create agent with user context for usage tracking and tool access
+    const canvasChatAgent = createCanvasChatAgent(
+      userId,
+      organizationId,
+      canvasId,
+      args.canvasNodeId,
+      agent.name,
+      agent.systemPrompt,
+      args.modelId
+    );
 
     // Gather context from connected nodes
     const contextMessages: any[] = await ctx.runQuery(internal.canvas.chat.getNodeContextInternal, {
@@ -171,10 +264,20 @@ export const sendMessage = action({
     });
 
     try {
+      // Create extended context with custom fields for tools
+      const extendedCtx = {
+        ...ctx,
+        canvasId,
+        canvasNodeId: args.canvasNodeId,
+        organizationId,
+      };
+
       // Stream AI response with full system message (agent prompt + context)
       const result: any = await canvasChatAgent.streamText(
-        ctx,
-        { threadId: thread.agentThreadId },
+        extendedCtx as any,
+        {
+          threadId: thread.agentThreadId,
+        },
         {
           prompt: args.message,
           system: systemMessage,
@@ -314,6 +417,9 @@ export const getNodeContextInternal = internalQuery({
             content,
           });
         }
+      } else if (sourceNode.nodeType === "image") {
+        // Images don't provide context to AI (for now)
+        // Future: could include image description or vision API analysis
       }
 
       // Add notes if present
@@ -326,5 +432,22 @@ export const getNodeContextInternal = internalQuery({
     }
 
     return contextMessages;
+  },
+});
+
+/**
+ * Internal query to get canvas node (for tool context)
+ */
+export const getCanvasNodeInternal = internalQuery({
+  args: {
+    canvasNodeId: v.id("canvas_nodes"),
+    organizationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const canvasNode = await ctx.db.get(args.canvasNodeId);
+    if (!canvasNode || canvasNode.organizationId !== args.organizationId) {
+      return null;
+    }
+    return canvasNode;
   },
 });

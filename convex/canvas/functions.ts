@@ -165,6 +165,12 @@ export const getCanvasWithNodes = query({
             ...node,
             groupNodeId: groupNode?._id || null,
           };
+        } else if (node.nodeType === "image") {
+          const imageNode = await ctx.db.get(node.data.nodeId as Id<"image_nodes">);
+          return {
+            ...node,
+            imageNodeId: imageNode?._id || null,
+          };
         }
         return node;
       })
@@ -361,6 +367,47 @@ export const getFacebookAdNode = query({
       ...facebookAdNode,
       imageUrls,
       videoThumbnailUrl,
+    };
+  },
+});
+
+/**
+ * Get Image node data (for UI component)
+ */
+export const getImageNode = query({
+  args: {
+    imageNodeId: v.id("image_nodes"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    const imageNode = await ctx.db.get(args.imageNodeId);
+    if (!imageNode) {
+      return null;
+    }
+
+    // Verify ownership
+    if (imageNode.organizationId !== organizationId) {
+      throw new Error("Image node does not belong to your organization");
+    }
+
+    // Get image URL from storage if available
+    let imageUrl: string | null = null;
+    if (imageNode.imageStorageId) {
+      imageUrl = await ctx.storage.getUrl(imageNode.imageStorageId);
+    }
+
+    return {
+      ...imageNode,
+      imageUrl,
     };
   },
 });

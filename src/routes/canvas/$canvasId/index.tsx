@@ -15,6 +15,7 @@ import { TikTokNode } from "@/features/canvas/components/TikTokNode";
 import { TwitterNode } from "@/features/canvas/components/TwitterNode";
 import { FacebookAdNode } from "@/features/canvas/components/FacebookAdNode";
 import { GroupNode } from "@/features/canvas/components/GroupNode";
+import { ImageNode } from "@/features/canvas/components/ImageNode";
 import { useCallback, useEffect, useState, createContext, useContext } from "react";
 
 // Context for canvas operations (like ungrouping)
@@ -58,6 +59,7 @@ const nodeTypes: NodeTypes = {
   twitter: TwitterNode,
   facebook_ad: FacebookAdNode,
   group: GroupNode,
+  image: ImageNode,
 };
 
 const edgeTypes: EdgeTypes = {
@@ -148,6 +150,7 @@ function CanvasEditor() {
           twitterNodeId: (dbNode as any).twitterNodeId,
           facebookAdNodeId: (dbNode as any).facebookAdNodeId,
           groupNodeId: (dbNode as any).groupNodeId,
+          imageNodeId: (dbNode as any).imageNodeId,
           canvasId: canvasId as Id<"canvases">, // Use canvasId from route params
           selectedThreadId: (dbNode as any).selectedThreadId,
           selectedAgentThreadId: (dbNode as any).selectedAgentThreadId,
@@ -192,6 +195,60 @@ function CanvasEditor() {
       setHasLoadedFromDB(true);
     }
   }, [canvasData, hasLoadedFromDB, setNodes, setEdges]);
+
+  // Sync new nodes from DB to local state (for real-time updates after initial load)
+  useEffect(() => {
+    if (hasLoadedFromDB && canvasData?.nodes) {
+      // Check for new nodes that aren't in local state
+      const currentNodeIds = new Set(nodes.map((n) => n.id));
+      const dbNodeIds = new Set(canvasData.nodes.filter((n) => !n.parentGroupId).map((n) => n._id));
+
+      // Find nodes in DB that aren't in local state (newly created)
+      const newDbNodes = canvasData.nodes.filter(
+        (dbNode) => !dbNode.parentGroupId && !currentNodeIds.has(dbNode._id)
+      );
+
+      if (newDbNodes.length > 0) {
+        console.log('[Canvas] Syncing new nodes from DB:', newDbNodes.length);
+
+        const newFlowNodes: Node[] = newDbNodes.map((dbNode) => {
+          const nodeData = {
+            canvasNodeId: dbNode._id,
+            content: (dbNode as any).textContent,
+            chatNodeId: (dbNode as any).chatNodeId,
+            youtubeNodeId: (dbNode as any).youtubeNodeId,
+            websiteNodeId: (dbNode as any).websiteNodeId,
+            tiktokNodeId: (dbNode as any).tiktokNodeId,
+            twitterNodeId: (dbNode as any).twitterNodeId,
+            facebookAdNodeId: (dbNode as any).facebookAdNodeId,
+            groupNodeId: (dbNode as any).groupNodeId,
+            imageNodeId: (dbNode as any).imageNodeId,
+            canvasId: canvasId as Id<"canvases">,
+            selectedThreadId: (dbNode as any).selectedThreadId,
+            selectedAgentThreadId: (dbNode as any).selectedAgentThreadId,
+          };
+
+          return {
+            id: dbNode._id,
+            type: dbNode.nodeType,
+            position: dbNode.position,
+            data: nodeData,
+            zIndex: dbNode.nodeType === 'group' ? -1 : undefined,
+            draggable: true,
+          };
+        });
+
+        setNodes((nds) => [...nds, ...newFlowNodes]);
+      }
+
+      // Also remove nodes that are in local state but not in DB (deleted)
+      const deletedNodeIds = Array.from(currentNodeIds).filter((id) => !dbNodeIds.has(id));
+      if (deletedNodeIds.length > 0) {
+        console.log('[Canvas] Removing deleted nodes from local state:', deletedNodeIds.length);
+        setNodes((nds) => nds.filter((n) => !deletedNodeIds.includes(n.id)));
+      }
+    }
+  }, [canvasData?.nodes, hasLoadedFromDB, nodes, setNodes, canvasId]);
 
   // Handle connection between nodes
   const onConnect = useCallback(

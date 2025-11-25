@@ -289,7 +289,7 @@ export const deleteNode = mutation({
     }
 
     // Delete node-specific data
-    await ctx.db.delete(canvasNode.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes"> | Id<"website_nodes"> | Id<"tiktok_nodes"> | Id<"twitter_nodes"> | Id<"facebook_ads_nodes"> | Id<"group_nodes">);
+    await ctx.db.delete(canvasNode.data.nodeId as Id<"text_nodes"> | Id<"chat_nodes"> | Id<"youtube_nodes"> | Id<"website_nodes"> | Id<"tiktok_nodes"> | Id<"twitter_nodes"> | Id<"facebook_ads_nodes"> | Id<"group_nodes"> | Id<"image_nodes">);
 
     // Delete canvas node reference
     await ctx.db.delete(args.canvasNodeId);
@@ -432,6 +432,9 @@ export const getNodeContext = query({
               });
             }
           }
+        } else if (node.nodeType === "image") {
+          // Images don't provide context to AI (for now)
+          // Future: could include image description or vision API analysis
         }
 
         // Add notes if present

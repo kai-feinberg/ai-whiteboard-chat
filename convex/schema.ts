@@ -34,13 +34,13 @@ export default defineSchema({
   canvas_nodes: defineTable({
     canvasId: v.id("canvases"),
     organizationId: v.string(),
-    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube"), v.literal("website"), v.literal("tiktok"), v.literal("twitter"), v.literal("facebook_ad"), v.literal("group")), // Node type
+    nodeType: v.union(v.literal("text"), v.literal("chat"), v.literal("youtube"), v.literal("website"), v.literal("tiktok"), v.literal("twitter"), v.literal("facebook_ad"), v.literal("group"), v.literal("image")), // Node type
     position: v.object({ x: v.number(), y: v.number() }),
     width: v.number(),
     height: v.number(),
     data: v.object({
       // Reference to type-specific table
-      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes"), v.id("website_nodes"), v.id("tiktok_nodes"), v.id("twitter_nodes"), v.id("facebook_ads_nodes"), v.id("group_nodes")),
+      nodeId: v.union(v.id("text_nodes"), v.id("chat_nodes"), v.id("youtube_nodes"), v.id("website_nodes"), v.id("tiktok_nodes"), v.id("twitter_nodes"), v.id("facebook_ads_nodes"), v.id("group_nodes"), v.id("image_nodes")),
     }),
     notes: v.optional(v.string()), // User-added notes
     parentGroupId: v.optional(v.id("canvas_nodes")), // Parent group node (for nesting)
@@ -194,6 +194,25 @@ export default defineSchema({
     title: v.string(), // Group name/title
     description: v.optional(v.string()), // Optional description
     color: v.optional(v.string()), // Background color
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
+
+  // Image Nodes - AI-generated or user-uploaded images
+  image_nodes: defineTable({
+    organizationId: v.string(),
+    prompt: v.string(), // Text prompt that generated the image (or description for uploads)
+    imageStorageId: v.optional(v.string()), // Convex storage ID for the image file
+    isAiGenerated: v.boolean(), // true for AI-generated, false for user uploads (future)
+    width: v.optional(v.number()), // Image width in pixels
+    height: v.optional(v.number()), // Image height in pixels
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    error: v.optional(v.string()), // Error message if failed
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_organization", ["organizationId"]),
