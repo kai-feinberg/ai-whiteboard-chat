@@ -5,11 +5,45 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { NodeProps } from "@xyflow/react";
-import { Tweet } from "react-tweet";
+import { useTweet } from "react-tweet";
+import { TweetContainer, TweetHeader, TweetBody, enrichTweet } from "react-tweet";
+import type { Tweet as TweetType } from "react-tweet/api";
 
 interface TwitterNodeData {
   canvasNodeId: Id<"canvas_nodes">;
   twitterNodeId: Id<"twitter_nodes">;
+}
+
+// Minimal tweet component - just header and body text
+function MinimalTweet({ tweetId }: { tweetId: string }) {
+  const { data: tweet, isLoading } = useTweet(tweetId);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!tweet) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        Failed to load tweet
+      </div>
+    );
+  }
+
+  const enrichedTweet = enrichTweet(tweet);
+
+  return (
+    <div className="[&_.react-tweet-theme]:!p-0 [&_.react-tweet-theme]:!py-0">
+      <TweetContainer>
+        <TweetHeader tweet={enrichedTweet} />
+        <TweetBody tweet={enrichedTweet} />
+      </TweetContainer>
+    </div>
+  );
 }
 
 export function TwitterNode({ data }: NodeProps<TwitterNodeData>) {
@@ -75,7 +109,7 @@ export function TwitterNode({ data }: NodeProps<TwitterNodeData>) {
 
           {twitterNode.status === "completed" && twitterNode.fullText && (
             <div className="w-full">
-              <Tweet id={twitterNode.tweetId} />
+              <MinimalTweet tweetId={twitterNode.tweetId} />
             </div>
           )}
 

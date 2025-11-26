@@ -80,6 +80,7 @@ export const updateImageNodeInternal = internalMutation({
     imageStorageId: v.optional(v.string()),
     width: v.optional(v.number()),
     height: v.optional(v.number()),
+    kieTaskId: v.optional(v.string()),
     error: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -90,6 +91,7 @@ export const updateImageNodeInternal = internalMutation({
       ...(args.imageStorageId && { imageStorageId: args.imageStorageId }),
       ...(args.width && { width: args.width }),
       ...(args.height && { height: args.height }),
+      ...(args.kieTaskId && { kieTaskId: args.kieTaskId }),
       ...(args.error && { error: args.error }),
       updatedAt: now,
     });
@@ -120,30 +122,92 @@ export const generateImageAsync = internalAction({
 
     console.log(`[Image] Generating image for prompt: ${node.prompt}`);
 
-    // Update status to processing
-    await ctx.runMutation(internal.canvas.images.updateImageNodeInternal, {
-      imageNodeId: args.imageNodeId,
-      status: "processing",
-    });
+    try {
+      // Build callback URL with imageNodeId as query param
+      // Use Convex site URL (not frontend SITE_URL)
+      const convexSiteUrl = process.env.CONVEX_SITE_URL;
+      if (!convexSiteUrl) {
+        throw new Error("CONVEX_SITE_URL environment variable is required for webhooks");
+      }
+      const callbackUrl = `${convexSiteUrl}/api/kie-callback?imageNodeId=${args.imageNodeId}`;
+
+      console.log(`[Image] Calling Kie AI API with callback: ${callbackUrl}`);
+
+      // Call Kie AI API
+      const response = await fetch("https://api.kie.ai/api/v1/jobs/createTask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.KIE_AI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "google/nano-banana",
+          callBackUrl: callbackUrl,
+          input: {
+            prompt: node.prompt,
+            output_format: "png",
+            image_size: "1:1",
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(`Kie AI error: ${data.msg || response.statusText}`);
+      }
+
+      console.log(`[Image] Task created successfully: ${data.data?.taskId}`);
+
+      // Update node with processing status and store taskId
+      await ctx.runMutation(internal.canvas.images.updateImageNodeInternal, {
+        imageNodeId: args.imageNodeId,
+        status: "processing",
+        kieTaskId: data.data?.taskId,
+      });
+
+      console.log(`[Image] Waiting for webhook callback for node: ${args.imageNodeId}`);
+
+    } catch (error) {
+      console.error(`[Image] Generation failed for node ${args.imageNodeId}:`, error);
+
+      // Update node with failed status
+      await ctx.runMutation(internal.canvas.images.updateImageNodeInternal, {
+        imageNodeId: args.imageNodeId,
+        status: "failed",
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
+  },
+});
+
+/**
+ * Process Kie AI webhook callback - download image and store in Convex
+ */
+export const processKieCallback = internalAction({
+  args: {
+    imageNodeId: v.id("image_nodes"),
+    imageUrl: v.string(),
+    status: v.literal("completed"),
+  },
+  handler: async (ctx, args) => {
+    console.log(`[Image Callback] Processing webhook for node: ${args.imageNodeId}`);
+    console.log(`[Image Callback] Downloading image from: ${args.imageUrl}`);
 
     try {
-      // TODO: Replace with actual image generation API call
-      // For now, use placeholder image
-      const placeholderUrl = `https://placehold.co/1024x1024/6366f1/white?text=AI+Generated+Image`;
+      // Download image from Kie AI URL
+      const response = await fetch(args.imageUrl);
 
-      console.log(`[Image] Fetching placeholder image from: ${placeholderUrl}`);
-
-      const response = await fetch(placeholderUrl);
       if (!response.ok) {
-        throw new Error(`Failed to fetch placeholder image: ${response.statusText}`);
+        throw new Error(`Failed to download image: ${response.statusText}`);
       }
 
       const blob = await response.blob();
-      console.log(`[Image] Storing image blob (${blob.size} bytes)`);
+      console.log(`[Image Callback] Downloaded image blob (${blob.size} bytes)`);
 
       // Store in Convex storage
       const storageId = await ctx.storage.store(blob);
-      console.log(`[Image] Image stored with ID: ${storageId}`);
+      console.log(`[Image Callback] Stored image with ID: ${storageId}`);
 
       // Update node with completed status
       await ctx.runMutation(internal.canvas.images.updateImageNodeInternal, {
@@ -154,15 +218,16 @@ export const generateImageAsync = internalAction({
         height: 1024,
       });
 
-      console.log(`[Image] Generation completed for node: ${args.imageNodeId}`);
+      console.log(`[Image Callback] Successfully completed image node: ${args.imageNodeId}`);
+
     } catch (error) {
-      console.error(`[Image] Generation failed for node ${args.imageNodeId}:`, error);
+      console.error(`[Image Callback] Failed to process callback for ${args.imageNodeId}:`, error);
 
       // Update node with failed status
       await ctx.runMutation(internal.canvas.images.updateImageNodeInternal, {
         imageNodeId: args.imageNodeId,
         status: "failed",
-        error: error instanceof Error ? error.message : "Unknown error occurred",
+        error: error instanceof Error ? error.message : "Failed to download and store image",
       });
     }
   },

@@ -206,6 +206,7 @@ export default defineSchema({
     isAiGenerated: v.boolean(), // true for AI-generated, false for user uploads (future)
     width: v.optional(v.number()), // Image width in pixels
     height: v.optional(v.number()), // Image height in pixels
+    kieTaskId: v.optional(v.string()), // Kie AI task ID for debugging/manual retries
     status: v.union(
       v.literal("pending"),
       v.literal("processing"),
