@@ -207,6 +207,8 @@ export default defineSchema({
     width: v.optional(v.number()), // Image width in pixels
     height: v.optional(v.number()), // Image height in pixels
     kieTaskId: v.optional(v.string()), // Kie AI task ID for debugging/manual retries
+    threadId: v.optional(v.id("threads")), // Thread ID if generated from chat (for adding image to conversation)
+    agentThreadId: v.optional(v.string()), // Agent thread ID for saving message to thread
     status: v.union(
       v.literal("pending"),
       v.literal("processing"),

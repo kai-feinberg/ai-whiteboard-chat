@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import type { NodeProps } from "@xyflow/react";
+import { TranscriptDialog } from "@/components/TranscriptDialog";
 
 interface ImageNodeData {
   canvasNodeId: Id<"canvas_nodes">;
@@ -80,10 +81,13 @@ export function ImageNode({ data }: NodeProps<ImageNodeData>) {
                 />
               </div>
 
-              {/* Prompt Display */}
-              <div className="text-xs text-muted-foreground px-2 py-1 bg-secondary/50 rounded">
-                <span className="font-medium">Prompt:</span> {imageNode.prompt}
-              </div>
+              {/* Prompt Preview & Dialog */}
+              <TranscriptDialog
+                transcript={imageNode.prompt}
+                title="Image Generation Prompt"
+                triggerText="View Prompt"
+                triggerClassName="w-full"
+              />
             </div>
           )}
 

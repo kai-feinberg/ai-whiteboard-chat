@@ -19,10 +19,27 @@ const generateImageTool = createTool({
     prompt: z.string().describe("Detailed description of the image to generate. Be specific about style, content, colors, and composition."),
   }),
   handler: async (ctx, args) => {
+    // LOG 1: Inspect the entire context
+    console.log('[Image Tool] Full context keys:', Object.keys(ctx));
+    console.log('[Image Tool] Context threadId:', (ctx as any).threadId);
+    console.log('[Image Tool] Context threadId type:', typeof (ctx as any).threadId);
+    console.log('[Image Tool] Context convexThreadId:', (ctx as any).convexThreadId);
+    console.log('[Image Tool] Context convexThreadId type:', typeof (ctx as any).convexThreadId);
+
     // Access context passed from the agent
     const canvasId = (ctx as any).canvasId as Id<"canvases">;
     const organizationId = (ctx as any).organizationId as string;
     const canvasNodeId = (ctx as any).canvasNodeId as Id<"canvas_nodes">;
+    const convexThreadId = (ctx as any).convexThreadId as Id<"threads"> | undefined;
+    const agentThreadId = (ctx as any).agentThreadId as string | undefined;
+
+    // LOG 2: Validate extracted values
+    console.log('[Image Tool] Extracted values:', {
+      convexThreadId,
+      convexThreadIdType: typeof convexThreadId,
+      agentThreadId,
+      agentThreadIdType: typeof agentThreadId,
+    });
 
     if (!canvasId || !organizationId) {
       throw new Error("Missing required context for image generation");
@@ -30,6 +47,7 @@ const generateImageTool = createTool({
 
     console.log(`[Image Tool] Generating image with prompt: ${args.prompt}`);
     console.log(`[Image Tool] Canvas: ${canvasId}, Organization: ${organizationId}`);
+    console.log(`[Image Tool] Convex Thread: ${convexThreadId}, Agent Thread: ${agentThreadId}`);
 
     // Calculate position: offset from the chat node
     let position = { x: 100, y: 100 };
@@ -58,6 +76,8 @@ const generateImageTool = createTool({
       position,
       prompt: args.prompt,
       organizationId,
+      threadId: convexThreadId, // Use renamed field
+      agentThreadId,
     });
 
     // Schedule background image generation
@@ -270,7 +290,17 @@ export const sendMessage = action({
         canvasId,
         canvasNodeId: args.canvasNodeId,
         organizationId,
+        convexThreadId: args.threadId, // Renamed to avoid collision with agent's threadId
+        agentThreadId: thread.agentThreadId,
       };
+
+      // LOG: Verify extended context before passing
+      console.log('[Canvas Chat] Extended context:', {
+        convexThreadId: extendedCtx.convexThreadId,
+        convexThreadIdType: typeof extendedCtx.convexThreadId,
+        agentThreadId: extendedCtx.agentThreadId,
+        argsThreadId: args.threadId,
+      });
 
       // Stream AI response with full system message (agent prompt + context)
       const result: any = await canvasChatAgent.streamText(

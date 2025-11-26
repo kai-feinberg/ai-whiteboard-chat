@@ -3,6 +3,8 @@ import { v } from "convex/values";
 import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
+import { saveMessage } from "@convex-dev/agent";
+import { components } from "../_generated/api";
 
 /**
  * Internal mutation to create image node (called from tool)
@@ -13,6 +15,8 @@ export const createImageNodeInternal = internalMutation({
     position: v.object({ x: v.number(), y: v.number() }),
     prompt: v.string(),
     organizationId: v.string(),
+    threadId: v.optional(v.id("threads")),
+    agentThreadId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Verify canvas ownership
@@ -29,6 +33,8 @@ export const createImageNodeInternal = internalMutation({
       prompt: args.prompt,
       isAiGenerated: true,
       status: "pending",
+      threadId: args.threadId,
+      agentThreadId: args.agentThreadId,
       createdAt: now,
       updatedAt: now,
     });
@@ -195,6 +201,15 @@ export const processKieCallback = internalAction({
     console.log(`[Image Callback] Downloading image from: ${args.imageUrl}`);
 
     try {
+      // Get image node to retrieve thread info
+      const imageNode = await ctx.runQuery(internal.canvas.images.getImageNodeInternal, {
+        imageNodeId: args.imageNodeId,
+      });
+
+      if (!imageNode) {
+        throw new Error("Image node not found");
+      }
+
       // Download image from Kie AI URL
       const response = await fetch(args.imageUrl);
 
@@ -209,6 +224,10 @@ export const processKieCallback = internalAction({
       const storageId = await ctx.storage.store(blob);
       console.log(`[Image Callback] Stored image with ID: ${storageId}`);
 
+      // Get public URL for the image
+      const imagePublicUrl = await ctx.storage.getUrl(storageId);
+      console.log(`[Image Callback] Image URL: ${imagePublicUrl}`);
+
       // Update node with completed status
       await ctx.runMutation(internal.canvas.images.updateImageNodeInternal, {
         imageNodeId: args.imageNodeId,
@@ -217,6 +236,29 @@ export const processKieCallback = internalAction({
         width: 1024,
         height: 1024,
       });
+
+      // If this image was generated from a chat thread, add it to the thread
+      if (imageNode.agentThreadId && imagePublicUrl) {
+        console.log(`[Image Callback] Adding image to agent thread: ${imageNode.agentThreadId}`);
+
+        try {
+          // Save message with image URL as text content using agentThreadId (string)
+          // Note: saveMessage from @convex-dev/agent expects agentThreadId as a string
+          await saveMessage(ctx, components.agent, {
+            threadId: imageNode.agentThreadId as any, // Agent thread ID is a string, not Id<"threads">
+            message: {
+              role: "assistant",
+              content: `Here's your generated image!\n\n![Generated Image](${imagePublicUrl})`,
+            },
+            agentName: "ImageGenerator",
+          });
+
+          console.log(`[Image Callback] Successfully added image to agent thread`);
+        } catch (threadError) {
+          console.error(`[Image Callback] Failed to add image to thread:`, threadError);
+          // Don't fail the whole operation if thread update fails
+        }
+      }
 
       console.log(`[Image Callback] Successfully completed image node: ${args.imageNodeId}`);
 
