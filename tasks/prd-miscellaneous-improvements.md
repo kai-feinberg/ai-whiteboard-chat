@@ -84,26 +84,6 @@ Collection of improvements to enhance AI chat capabilities, document management,
 
 ### Feature 2: Documents System
 
-#### US-DOC-002: Create Documents CRUD Functions
-
-**Description:** As a developer, I need Convex functions to create, read, update, delete documents.
-
-**Required Reading:**
-- `convex/canvas/functions.ts` → CRUD patterns with org scoping
-- `convex/_FEATURE.md` → function naming conventions
-
-**Acceptance Criteria:**
-- [ ] Create `convex/documents/functions.ts`
-- [ ] `createDocument` mutation - creates doc with title, optional initial content
-- [ ] `getDocument` query - fetches single doc by ID, validates org ownership
-- [ ] `listMyDocuments` query - returns all docs for current org, sorted by updatedAt desc
-- [ ] `updateDocument` mutation - updates title and/or content, sets updatedAt
-- [ ] `deleteDocument` mutation - removes doc, validates org ownership
-- [ ] All functions verify `organizationId` from auth
-- [ ] `pnpm typecheck` passes
-
----
-
 #### US-DOC-003: Create Documents List Page
 
 **Description:** As a user, I want to see all my documents in a dedicated section so I can find and manage them.
@@ -359,7 +339,7 @@ Navigate: /canvas/{id}/chat (no full canvas load)
 Recommended sequence for minimal dependencies:
 
 1. ~~**US-DOC-001** - Documents schema (foundation)~~ ✅ DONE
-2. **US-DOC-002** - Documents CRUD (enables all doc features)
+2. ~~**US-DOC-002** - Documents CRUD (enables all doc features)~~ ✅ DONE
 3. **US-DOC-003** - Documents list page (user-visible)
 4. **US-DOC-004** - Document editor (core functionality)
 5. **US-LR-001** - readLink tool (independent)

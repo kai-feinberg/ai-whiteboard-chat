@@ -29,6 +29,7 @@ import type * as canvas_website from "../canvas/website.js";
 import type * as canvas_youtube from "../canvas/youtube.js";
 import type * as chat_functions from "../chat/functions.js";
 import type * as credits_functions from "../credits/functions.js";
+import type * as documents_functions from "../documents/functions.js";
 import type * as http from "../http.js";
 import type * as models from "../models.js";
 import type * as organization_functions from "../organization/functions.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   "canvas/youtube": typeof canvas_youtube;
   "chat/functions": typeof chat_functions;
   "credits/functions": typeof credits_functions;
+  "documents/functions": typeof documents_functions;
   http: typeof http;
   models: typeof models;
   "organization/functions": typeof organization_functions;

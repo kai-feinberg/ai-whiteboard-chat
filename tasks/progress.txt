@@ -5,3 +5,15 @@
 - Fields: organizationId, title, content (markdown), createdAt, updatedAt, createdBy
 - Indexes: by_organization, by_organization_updated
 - Note: Pre-existing TS errors in codebase unrelated to this change. Convex codegen passes.
+
+### 2026-01-22: US-DOC-002 - Documents CRUD Functions
+- Created `convex/documents/functions.ts` with 5 functions:
+  - `createDocument` - mutation, creates doc with title/content
+  - `getDocument` - query, fetches single doc, validates org ownership
+  - `listMyDocuments` - query, returns all org docs sorted by updatedAt desc
+  - `updateDocument` - mutation, updates title/content, sets updatedAt
+  - `deleteDocument` - mutation, removes doc, validates org ownership
+- All functions verify auth and organizationId
+- Uses `by_organization_updated` index for sorted listing
+- Patterns match `convex/canvas/functions.ts`
+- Convex codegen passes. Logic review passed.
