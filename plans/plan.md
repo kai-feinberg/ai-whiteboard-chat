@@ -1,17 +1,7 @@
-- domain
-permanent business context
-Handle just pasting on the canvas
-
-pricing table fix:
-
-business context: (always pulled in)
-
-scroll for chat node component
-- Pricing
-- Different models
-- Different agents/bots
-
-- resize nodes
+onboard into playground with example flow
+notes page to store insights
+Keyboard shortcuts to add/remove connections (multi select nodes)
+group nodes
 
 copy connected context and view token usage
 
