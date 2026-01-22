@@ -5,7 +5,7 @@ iterations=${1:-3}
 
 for i in $(seq 1 $iterations); do
   echo "=== Iteration $i/$iterations ==="
-  claude --dangerously-skip-permissions -p "@tasks/ @progress.txt \
+  claude --dangerously-skip-permissions -p "@tasks/prd-miscellaneous-improvements.md @progress.txt \
 1. Find the first story to work on and work only on that feature. \
 2. Check types via pnpm typecheck. Use the agent-broswer to test acceptance criteria if necessary and iterate on issues. Make sure to review the code with the logic-review subagent. \
 3. Once complete add any passing acceptance criteria (that is behavior based) to /testing/passing.md. You may omit things like files existing, schemas being updated, etc
