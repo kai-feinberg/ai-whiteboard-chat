@@ -1,5 +1,5 @@
 import * as React from "react"
-import { LayoutDashboard, MessageSquare, CreditCard, Sparkles, Bot, Building2 } from "lucide-react"
+import { LayoutDashboard, FileText, CreditCard, Sparkles, Bot, Building2 } from "lucide-react"
 import { Link, useMatchRoute } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 import { useCustomer } from "autumn-js/react"
@@ -26,6 +26,11 @@ const data = {
       title: "Dashboard",
       url: "/",
       icon: LayoutDashboard,
+    },
+    {
+      title: "Documents",
+      url: "/documents",
+      icon: FileText,
     },
     {
       title: "Pricing",

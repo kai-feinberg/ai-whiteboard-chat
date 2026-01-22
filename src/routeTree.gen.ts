@@ -13,6 +13,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as CreditsRouteImport } from './routes/credits'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DocumentsIndexRouteImport } from './routes/documents/index'
 import { Route as SettingsOrganizationRouteImport } from './routes/settings/organization'
 import { Route as SettingsCustomAgentsRouteImport } from './routes/settings/custom-agents'
 import { Route as CanvasCanvasIdIndexRouteImport } from './routes/canvas/$canvasId/index'
@@ -35,6 +36,11 @@ const AuthedRoute = AuthedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsIndexRoute = DocumentsIndexRouteImport.update({
+  id: '/documents/',
+  path: '/documents/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsOrganizationRoute = SettingsOrganizationRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/settings/organization': typeof SettingsOrganizationRoute
+  '/documents': typeof DocumentsIndexRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId': typeof CanvasCanvasIdIndexRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/settings/organization': typeof SettingsOrganizationRoute
+  '/documents': typeof DocumentsIndexRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId': typeof CanvasCanvasIdIndexRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/settings/organization': typeof SettingsOrganizationRoute
+  '/documents/': typeof DocumentsIndexRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId/': typeof CanvasCanvasIdIndexRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/settings/custom-agents'
     | '/settings/organization'
+    | '/documents'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/settings/custom-agents'
     | '/settings/organization'
+    | '/documents'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/settings/custom-agents'
     | '/settings/organization'
+    | '/documents/'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId/'
   fileRoutesById: FileRoutesById
@@ -125,6 +137,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   SettingsCustomAgentsRoute: typeof SettingsCustomAgentsRoute
   SettingsOrganizationRoute: typeof SettingsOrganizationRoute
+  DocumentsIndexRoute: typeof DocumentsIndexRoute
   CanvasCanvasIdChatRoute: typeof CanvasCanvasIdChatRoute
   CanvasCanvasIdIndexRoute: typeof CanvasCanvasIdIndexRoute
 }
@@ -157,6 +170,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents/': {
+      id: '/documents/'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof DocumentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/organization': {
@@ -197,6 +217,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   SettingsCustomAgentsRoute: SettingsCustomAgentsRoute,
   SettingsOrganizationRoute: SettingsOrganizationRoute,
+  DocumentsIndexRoute: DocumentsIndexRoute,
   CanvasCanvasIdChatRoute: CanvasCanvasIdChatRoute,
   CanvasCanvasIdIndexRoute: CanvasCanvasIdIndexRoute,
 }

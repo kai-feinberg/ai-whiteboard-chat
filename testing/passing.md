@@ -103,3 +103,15 @@
 - [x] Back to sessions link navigates to /style-tuner
 - [x] Loading states show skeleton placeholders
 - [x] Not found state shown for invalid session IDs (handled by Convex validation)
+
+### Documents System (US-DOC-003)
+- [x] User navigates to /documents and sees documents list page
+- [x] "Documents" link appears in main sidebar navigation
+- [x] Page shows empty state with icon and "Create Your First Document" button when no documents
+- [x] "New Document" button creates document with "Untitled Document" title
+- [x] After creating, user is navigated to /documents/:documentId
+- [x] Documents list shows title and last updated date for each document
+- [x] Hovering document card reveals delete button (trash icon)
+- [x] Clicking delete shows confirmation dialog with "Cancel" and "Delete" buttons
+- [x] Confirming delete removes document and shows toast notification
+- [x] Loading state shows skeleton cards while fetching

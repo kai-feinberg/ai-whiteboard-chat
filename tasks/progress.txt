@@ -17,3 +17,17 @@
 - Uses `by_organization_updated` index for sorted listing
 - Patterns match `convex/canvas/functions.ts`
 - Convex codegen passes. Logic review passed.
+
+### 2026-01-22: US-DOC-003 - Documents List Page
+- Created `src/routes/documents/index.tsx`:
+  - Route `/documents` with `beforeLoad` auth guard
+  - Lists org documents with title, last updated date
+  - "New Document" button creates and navigates to editor
+  - Delete button with confirmation dialog
+  - Empty state with icon and CTA button
+  - Loading state with skeleton cards
+- Modified `src/components/app-sidebar.tsx`:
+  - Added "Documents" link with FileText icon
+- Browser testing passed: all acceptance criteria verified
+- Note: Pre-existing TS errors in codebase unrelated to this change
+- Next: US-DOC-004 (Document editor page)

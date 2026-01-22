@@ -30,3 +30,21 @@
 
 **Files changed:**
 - `convex/documents/functions.ts` (new)
+
+## US-DOC-003: Create Documents List Page (2026-01-22)
+
+**Description:** Created documents list page with full CRUD UI for managing org documents.
+
+**Acceptance Criteria (all met):**
+- [x] Created route `/documents` at `src/routes/documents/index.tsx`
+- [x] Added "Documents" link in main sidebar navigation
+- [x] Page lists all org documents with title, last updated date
+- [x] "New Document" button creates empty document and navigates to editor
+- [x] Delete button with confirmation dialog
+- [x] Empty state when no documents exist
+- [x] Loading state while fetching (skeleton cards)
+- [x] Added `beforeLoad` auth guard matching codebase patterns
+
+**Files changed:**
+- `src/routes/documents/index.tsx` (new)
+- `src/components/app-sidebar.tsx` (added Documents nav link)
