@@ -9,6 +9,435 @@ import { autumn } from "../autumn";
 import { convertUsdToCredits } from "../ai/pricing";
 import { deductCreditsWithPriority } from "../ai/credits";
 import { z } from "zod";
+import Firecrawl from "@mendable/firecrawl-js";
+
+/**
+ * Detect platform from URL
+ */
+type Platform = "youtube" | "twitter" | "tiktok" | "facebook_ad" | "website";
+
+function detectPlatform(url: string): Platform {
+  const urlLower = url.toLowerCase();
+
+  // YouTube
+  if (urlLower.includes("youtube.com") || urlLower.includes("youtu.be")) {
+    return "youtube";
+  }
+
+  // Twitter/X
+  if (urlLower.includes("twitter.com") || urlLower.includes("x.com")) {
+    return "twitter";
+  }
+
+  // TikTok
+  if (urlLower.includes("tiktok.com")) {
+    return "tiktok";
+  }
+
+  // Facebook Ad Library
+  if (urlLower.includes("facebook.com/ads/library")) {
+    return "facebook_ad";
+  }
+
+  // Default to website
+  return "website";
+}
+
+/**
+ * Extract YouTube video ID from URL
+ */
+function extractYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?]+)/);
+  return match?.[1] ?? null;
+}
+
+/**
+ * Extract Twitter/X tweet ID from URL
+ */
+function extractTwitterId(url: string): string | null {
+  const match = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+  return match?.[1] ?? null;
+}
+
+/**
+ * Extract Facebook Ad ID from URL
+ */
+function extractFacebookAdId(url: string): string | null {
+  const match = url.match(/facebook\.com\/ads\/library.*[?&]id=(\d+)/);
+  return match?.[1] ?? null;
+}
+
+/**
+ * Tool for AI to read content from URLs without creating nodes
+ * Supports: YouTube, Twitter/X, TikTok, Facebook Ads, general websites
+ */
+const readLinkTool = createTool({
+  description: "Read and extract content from a URL. Use this when the user shares a link and wants you to analyze or discuss its content. Supports YouTube videos (transcripts), Twitter/X posts, TikTok videos (transcripts), Facebook Ads, and general websites.",
+  args: z.object({
+    url: z.string().describe("The URL to read and extract content from"),
+  }),
+  handler: async (_ctx, args) => {
+    console.log(`[readLink] Reading URL: ${args.url}`);
+
+    // Validate URL
+    try {
+      new URL(args.url);
+    } catch {
+      return {
+        success: false,
+        error: "Invalid URL format. Please provide a valid URL.",
+        platform: null,
+        content: null,
+      };
+    }
+
+    const platform = detectPlatform(args.url);
+    console.log(`[readLink] Detected platform: ${platform}`);
+
+    try {
+      switch (platform) {
+        case "youtube": {
+          const videoId = extractYouTubeId(args.url);
+          if (!videoId) {
+            return {
+              success: false,
+              error: "Could not extract YouTube video ID from URL",
+              platform,
+              content: null,
+            };
+          }
+
+          const apiKey = process.env.SCRAPE_CREATORS_API_KEY;
+          if (!apiKey) {
+            return {
+              success: false,
+              error: "YouTube extraction service not configured",
+              platform,
+              content: null,
+            };
+          }
+
+          const response = await fetch(
+            `https://api.scrapecreators.com/v1/youtube/video/transcript?url=${encodeURIComponent(args.url)}`,
+            {
+              method: 'GET',
+              headers: { 'x-api-key': apiKey },
+            }
+          );
+
+          if (!response.ok) {
+            return {
+              success: false,
+              error: `Failed to fetch YouTube transcript: ${response.status}`,
+              platform,
+              content: null,
+            };
+          }
+
+          const data = await response.json();
+          const transcript = data.transcript_only_text;
+
+          if (!transcript) {
+            return {
+              success: false,
+              error: "No transcript available for this YouTube video",
+              platform,
+              content: null,
+            };
+          }
+
+          return {
+            success: true,
+            platform,
+            content: {
+              title: `YouTube Video ${videoId}`,
+              url: args.url,
+              transcript,
+            },
+          };
+        }
+
+        case "twitter": {
+          const tweetId = extractTwitterId(args.url);
+          if (!tweetId) {
+            return {
+              success: false,
+              error: "Could not extract tweet ID from URL. Please provide a valid Twitter/X post URL.",
+              platform,
+              content: null,
+            };
+          }
+
+          const apiKey = process.env.SCRAPE_CREATORS_API_KEY;
+          if (!apiKey) {
+            return {
+              success: false,
+              error: "Twitter extraction service not configured",
+              platform,
+              content: null,
+            };
+          }
+
+          const response = await fetch(
+            `https://api.scrapecreators.com/v1/twitter/tweet?url=${encodeURIComponent(args.url)}`,
+            {
+              method: 'GET',
+              headers: { 'x-api-key': apiKey },
+            }
+          );
+
+          if (!response.ok) {
+            return {
+              success: false,
+              error: `Failed to fetch tweet: ${response.status}`,
+              platform,
+              content: null,
+            };
+          }
+
+          const data = await response.json();
+          const fullText = data.legacy?.full_text || data.note_tweet?.note_tweet_results?.result?.text;
+
+          if (!fullText) {
+            return {
+              success: false,
+              error: "Could not extract tweet text",
+              platform,
+              content: null,
+            };
+          }
+
+          const authorName = data.core?.user_results?.result?.legacy?.name;
+          const authorUsername = data.core?.user_results?.result?.legacy?.screen_name;
+
+          return {
+            success: true,
+            platform,
+            content: {
+              text: fullText,
+              author: authorUsername ? `@${authorUsername}` : undefined,
+              authorName,
+              url: args.url,
+            },
+          };
+        }
+
+        case "tiktok": {
+          const apiKey = process.env.SCRAPE_CREATORS_API_KEY;
+          if (!apiKey) {
+            return {
+              success: false,
+              error: "TikTok extraction service not configured",
+              platform,
+              content: null,
+            };
+          }
+
+          const apiUrl = new URL("https://api.scrapecreators.com/v2/tiktok/video");
+          apiUrl.searchParams.append("url", args.url);
+          apiUrl.searchParams.append("get_transcript", "true");
+          apiUrl.searchParams.append("trim", "true");
+
+          const response = await fetch(apiUrl.toString(), {
+            method: 'GET',
+            headers: { 'x-api-key': apiKey },
+          });
+
+          if (!response.ok) {
+            return {
+              success: false,
+              error: `Failed to fetch TikTok video: ${response.status}`,
+              platform,
+              content: null,
+            };
+          }
+
+          const data = await response.json();
+
+          if (!data.success) {
+            return {
+              success: false,
+              error: "TikTok API request was not successful",
+              platform,
+              content: null,
+            };
+          }
+
+          const awemeDetail = data.aweme_detail;
+          if (!awemeDetail) {
+            return {
+              success: false,
+              error: "Invalid TikTok API response",
+              platform,
+              content: null,
+            };
+          }
+
+          const title = awemeDetail.desc || "TikTok Video";
+          const author = awemeDetail.author?.nickname || awemeDetail.author?.unique_id;
+
+          // Extract transcript
+          let transcript = data.transcript_only_text || data.transcript;
+          if (transcript && transcript.includes('WEBVTT')) {
+            const lines = transcript.split('\n');
+            const textLines: string[] = [];
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (trimmed && !trimmed.startsWith('WEBVTT') && !trimmed.includes('-->') && !trimmed.match(/^\d{2}:\d{2}:\d{2}/)) {
+                textLines.push(trimmed);
+              }
+            }
+            transcript = textLines.join(' ');
+          }
+
+          return {
+            success: true,
+            platform,
+            content: {
+              title,
+              author: author ? `@${author}` : undefined,
+              transcript: transcript || undefined,
+              url: args.url,
+            },
+          };
+        }
+
+        case "facebook_ad": {
+          const adId = extractFacebookAdId(args.url);
+          if (!adId) {
+            return {
+              success: false,
+              error: "Could not extract Facebook Ad ID from URL. Please provide a valid Facebook Ad Library URL with an ID parameter.",
+              platform,
+              content: null,
+            };
+          }
+
+          const apiKey = process.env.SCRAPE_CREATORS_API_KEY;
+          if (!apiKey) {
+            return {
+              success: false,
+              error: "Facebook Ad extraction service not configured",
+              platform,
+              content: null,
+            };
+          }
+
+          const apiUrl = new URL("https://api.scrapecreators.com/v1/facebook/adLibrary/ad");
+          apiUrl.searchParams.append("id", adId);
+          apiUrl.searchParams.append("get_transcript", "true");
+          apiUrl.searchParams.append("trim", "true");
+
+          const response = await fetch(apiUrl.toString(), {
+            method: 'GET',
+            headers: { 'x-api-key': apiKey },
+          });
+
+          if (!response.ok) {
+            return {
+              success: false,
+              error: `Failed to fetch Facebook Ad: ${response.status}`,
+              platform,
+              content: null,
+            };
+          }
+
+          const data = await response.json();
+          const snapshot = data.snapshot;
+
+          if (!snapshot) {
+            return {
+              success: false,
+              error: "Invalid Facebook Ad API response",
+              platform,
+              content: null,
+            };
+          }
+
+          let title = snapshot.title;
+          if (snapshot.cards && snapshot.cards.length > 0 && snapshot.cards[0].title) {
+            title = snapshot.cards[0].title;
+          }
+          title = title || data.pageName || "Facebook Ad";
+
+          const body = snapshot.body || "";
+          const linkDescription = snapshot.link_description || "";
+          const pageName = data.pageName || snapshot.page_name;
+
+          // Extract transcript from video if available
+          let transcript: string | undefined;
+          if (snapshot.videos && snapshot.videos.length > 0) {
+            transcript = snapshot.videos[0].transcript;
+          }
+
+          return {
+            success: true,
+            platform,
+            content: {
+              title,
+              pageName,
+              body,
+              linkDescription: linkDescription || undefined,
+              transcript: transcript || undefined,
+              url: args.url,
+            },
+          };
+        }
+
+        case "website":
+        default: {
+          const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
+          if (!firecrawlApiKey) {
+            return {
+              success: false,
+              error: "Website scraping service not configured",
+              platform,
+              content: null,
+            };
+          }
+
+          const firecrawl = new Firecrawl({ apiKey: firecrawlApiKey });
+
+          const result = await firecrawl.scrape(args.url, {
+            formats: ['markdown'],
+            onlyMainContent: true,
+          });
+
+          const resultData = result as any;
+          const markdown = resultData.data?.markdown || resultData.markdown || '';
+          const title = resultData.data?.metadata?.title || resultData.metadata?.title || args.url;
+
+          if (!markdown) {
+            return {
+              success: false,
+              error: "Could not extract content from website",
+              platform,
+              content: null,
+            };
+          }
+
+          return {
+            success: true,
+            platform,
+            content: {
+              title,
+              markdown,
+              url: args.url,
+            },
+          };
+        }
+      }
+    } catch (error: any) {
+      console.error(`[readLink] Error reading ${platform}:`, error);
+      return {
+        success: false,
+        error: error?.message || `Failed to read ${platform} content`,
+        platform,
+        content: null,
+      };
+    }
+  },
+});
 
 /**
  * Tool for AI to generate images on the canvas
@@ -112,6 +541,7 @@ function createCanvasChatAgent(
     },
     tools: {
       generateImage: generateImageTool,
+      readLink: readLinkTool,
     },
     usageHandler: async (ctx, args) => {
       const {

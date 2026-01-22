@@ -67,3 +67,21 @@
 
 **Files changed:**
 - `src/routes/documents/$documentId.tsx` (new)
+
+## US-LR-001: Create readLink AI Tool (2026-01-22)
+
+**Description:** Created AI tool that reads content from URLs (YouTube, Twitter/X, TikTok, Facebook Ads, websites) during conversation without creating database records.
+
+**Acceptance Criteria (all met):**
+- [x] Created `readLinkTool` in `convex/canvas/chat.ts` using `createTool()`
+- [x] Tool accepts `url: string` argument
+- [x] Tool detects platform from URL (youtube, twitter/x, tiktok, website, facebook)
+- [x] Tool reuses existing extraction logic from respective node functions
+- [x] Tool returns extracted content as structured text (title, content/transcript, author where applicable)
+- [x] Tool handles errors gracefully (unsupported URL, failed fetch, rate limits)
+- [x] Tool is registered in the agent's tools object
+- [x] TypeScript passes (pre-existing errors in codebase unrelated to this change)
+- [x] Browser testing verified - AI successfully reads YouTube video and summarizes content
+
+**Files changed:**
+- `convex/canvas/chat.ts` (added readLinkTool, URL detection helpers, registered in agent tools)

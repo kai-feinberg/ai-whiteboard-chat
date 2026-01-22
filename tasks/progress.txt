@@ -46,3 +46,19 @@
   - Toast notifications on save errors
 - Browser testing passed: title editing, content auto-save, "Saved" indicator all working
 - Next: US-LR-001 (readLink AI tool)
+
+### 2026-01-22: US-LR-001 - readLink AI Tool
+- Created `readLinkTool` in `convex/canvas/chat.ts`
+- Tool reads content from URLs without creating database records (read-only operation)
+- Supports 5 platforms:
+  - YouTube: Extracts video transcript via Scrape Creators API
+  - Twitter/X: Extracts tweet text and author via Scrape Creators API
+  - TikTok: Extracts video title, author, transcript (with WEBVTT parsing)
+  - Facebook Ads: Extracts ad title, body, link description, page name, transcript
+  - Website: Scrapes markdown content via Firecrawl API
+- URL detection via `detectPlatform()` helper function
+- Returns structured data: `{ success, platform, content, error }`
+- Registered in agent tools object alongside generateImage
+- Browser testing verified: AI successfully reads YouTube link and summarizes content
+- Pre-existing TS errors in codebase unrelated to this change
+- Next: US-LR-002 (Unsupported URL handling) or US-LR-003 (Tool display in chat UI)

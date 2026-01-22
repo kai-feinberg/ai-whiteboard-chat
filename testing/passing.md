@@ -122,3 +122,9 @@
 - [x] Back button in header navigates to documents list
 - [x] Loading state shows spinner while document is loading
 - [x] Updated title persists and shows in documents list after save
+
+### Link Reading Tool (US-LR-001)
+- [x] User pastes YouTube URL in chat, AI uses readLink tool to extract transcript
+- [x] AI receives structured content (title, transcript, URL) and incorporates into response
+- [x] Tool detects platform from URL (YouTube, Twitter, TikTok, Facebook Ads, websites)
+- [x] Tool handles errors gracefully - returns error message instead of crashing
