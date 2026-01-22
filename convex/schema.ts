@@ -240,4 +240,16 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_organization", ["organizationId"]),
+
+  // Documents - Org-scoped documents for saving notes and content
+  documents: defineTable({
+    organizationId: v.string(),
+    title: v.string(),
+    content: v.string(), // markdown
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    createdBy: v.string(), // userId
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_organization_updated", ["organizationId", "updatedAt"]),
 });

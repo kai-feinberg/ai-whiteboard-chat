@@ -1,1 +1,7 @@
 ## Progress Log
+
+### 2026-01-22: US-DOC-001 - Documents Schema
+- Added `documents` table to `convex/schema.ts`
+- Fields: organizationId, title, content (markdown), createdAt, updatedAt, createdBy
+- Indexes: by_organization, by_organization_updated
+- Note: Pre-existing TS errors in codebase unrelated to this change. Convex codegen passes.

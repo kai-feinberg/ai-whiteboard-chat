@@ -84,23 +84,6 @@ Collection of improvements to enhance AI chat capabilities, document management,
 
 ### Feature 2: Documents System
 
-#### US-DOC-001: Create Documents Schema
-
-**Description:** As a developer, I need database schema for org-scoped documents.
-
-**Required Reading:**
-- `convex/schema.ts` → existing table patterns
-- `convex/_FEATURE.md` files → schema conventions
-
-**Acceptance Criteria:**
-- [ ] Create `documents` table in `convex/schema.ts`
-- [ ] Fields: `organizationId`, `title`, `content` (markdown string), `createdAt`, `updatedAt`, `createdBy`
-- [ ] Index: `by_organization` on `organizationId`
-- [ ] Index: `by_organization_updated` on `[organizationId, updatedAt]` for sorting
-- [ ] `pnpm typecheck` passes
-
----
-
 #### US-DOC-002: Create Documents CRUD Functions
 
 **Description:** As a developer, I need Convex functions to create, read, update, delete documents.
@@ -375,7 +358,7 @@ Navigate: /canvas/{id}/chat (no full canvas load)
 
 Recommended sequence for minimal dependencies:
 
-1. **US-DOC-001** - Documents schema (foundation)
+1. ~~**US-DOC-001** - Documents schema (foundation)~~ ✅ DONE
 2. **US-DOC-002** - Documents CRUD (enables all doc features)
 3. **US-DOC-003** - Documents list page (user-visible)
 4. **US-DOC-004** - Document editor (core functionality)
