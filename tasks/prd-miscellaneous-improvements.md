@@ -341,7 +341,7 @@ Recommended sequence for minimal dependencies:
 1. ~~**US-DOC-001** - Documents schema (foundation)~~ ✅ DONE
 2. ~~**US-DOC-002** - Documents CRUD (enables all doc features)~~ ✅ DONE
 3. ~~**US-DOC-003** - Documents list page (user-visible)~~ ✅ DONE
-4. **US-DOC-004** - Document editor (core functionality)
+4. ~~**US-DOC-004** - Document editor (core functionality)~~ ✅ DONE
 5. **US-LR-001** - readLink tool (independent)
 6. **US-LR-002** - Unsupported URL handling (polish)
 7. **US-LR-003** - Tool display in chat UI (user-visible)

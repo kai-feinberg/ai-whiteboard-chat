@@ -30,4 +30,19 @@
   - Added "Documents" link with FileText icon
 - Browser testing passed: all acceptance criteria verified
 - Note: Pre-existing TS errors in codebase unrelated to this change
-- Next: US-DOC-004 (Document editor page)
+
+### 2026-01-22: US-DOC-004 - Document Editor Page
+- Created `src/routes/documents/$documentId.tsx`:
+  - Route `/documents/$documentId` with `beforeLoad` auth guard
+  - Editable title field - auto-saves on blur
+  - Large textarea for content - debounced auto-save (1s delay)
+  - "Saved" / "Saving..." indicator in header
+  - Back button navigates to /documents list
+  - Loading state with spinner
+  - 404 handling when document doesn't exist (Convex validates ID format)
+- Fixed race conditions from logic review:
+  - Uses refs (lastSavedContentRef, lastSavedTitleRef) to compare against last saved value
+  - Tracks pendingSavesRef to avoid premature "saved" status
+  - Toast notifications on save errors
+- Browser testing passed: title editing, content auto-save, "Saved" indicator all working
+- Next: US-LR-001 (readLink AI tool)

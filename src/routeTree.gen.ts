@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DocumentsIndexRouteImport } from './routes/documents/index'
 import { Route as SettingsOrganizationRouteImport } from './routes/settings/organization'
 import { Route as SettingsCustomAgentsRouteImport } from './routes/settings/custom-agents'
+import { Route as DocumentsDocumentIdRouteImport } from './routes/documents/$documentId'
 import { Route as CanvasCanvasIdIndexRouteImport } from './routes/canvas/$canvasId/index'
 import { Route as CanvasCanvasIdChatRouteImport } from './routes/canvas/$canvasId/chat'
 
@@ -53,6 +54,11 @@ const SettingsCustomAgentsRoute = SettingsCustomAgentsRouteImport.update({
   path: '/settings/custom-agents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocumentsDocumentIdRoute = DocumentsDocumentIdRouteImport.update({
+  id: '/documents/$documentId',
+  path: '/documents/$documentId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CanvasCanvasIdIndexRoute = CanvasCanvasIdIndexRouteImport.update({
   id: '/canvas/$canvasId/',
   path: '/canvas/$canvasId/',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/credits': typeof CreditsRoute
   '/pricing': typeof PricingRoute
+  '/documents/$documentId': typeof DocumentsDocumentIdRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/settings/organization': typeof SettingsOrganizationRoute
   '/documents': typeof DocumentsIndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/credits': typeof CreditsRoute
   '/pricing': typeof PricingRoute
+  '/documents/$documentId': typeof DocumentsDocumentIdRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/settings/organization': typeof SettingsOrganizationRoute
   '/documents': typeof DocumentsIndexRoute
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRoute
   '/credits': typeof CreditsRoute
   '/pricing': typeof PricingRoute
+  '/documents/$documentId': typeof DocumentsDocumentIdRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/settings/organization': typeof SettingsOrganizationRoute
   '/documents/': typeof DocumentsIndexRoute
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
     | '/'
     | '/credits'
     | '/pricing'
+    | '/documents/$documentId'
     | '/settings/custom-agents'
     | '/settings/organization'
     | '/documents'
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/credits'
     | '/pricing'
+    | '/documents/$documentId'
     | '/settings/custom-agents'
     | '/settings/organization'
     | '/documents'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/_authed'
     | '/credits'
     | '/pricing'
+    | '/documents/$documentId'
     | '/settings/custom-agents'
     | '/settings/organization'
     | '/documents/'
@@ -135,6 +147,7 @@ export interface RootRouteChildren {
   AuthedRoute: typeof AuthedRoute
   CreditsRoute: typeof CreditsRoute
   PricingRoute: typeof PricingRoute
+  DocumentsDocumentIdRoute: typeof DocumentsDocumentIdRoute
   SettingsCustomAgentsRoute: typeof SettingsCustomAgentsRoute
   SettingsOrganizationRoute: typeof SettingsOrganizationRoute
   DocumentsIndexRoute: typeof DocumentsIndexRoute
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsCustomAgentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/documents/$documentId': {
+      id: '/documents/$documentId'
+      path: '/documents/$documentId'
+      fullPath: '/documents/$documentId'
+      preLoaderRoute: typeof DocumentsDocumentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/canvas/$canvasId/': {
       id: '/canvas/$canvasId/'
       path: '/canvas/$canvasId'
@@ -215,6 +235,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthedRoute: AuthedRoute,
   CreditsRoute: CreditsRoute,
   PricingRoute: PricingRoute,
+  DocumentsDocumentIdRoute: DocumentsDocumentIdRoute,
   SettingsCustomAgentsRoute: SettingsCustomAgentsRoute,
   SettingsOrganizationRoute: SettingsOrganizationRoute,
   DocumentsIndexRoute: DocumentsIndexRoute,

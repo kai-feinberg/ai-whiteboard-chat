@@ -48,3 +48,22 @@
 **Files changed:**
 - `src/routes/documents/index.tsx` (new)
 - `src/components/app-sidebar.tsx` (added Documents nav link)
+
+## US-DOC-004: Create Document Editor Page (2026-01-22)
+
+**Description:** Created document editor page with auto-save functionality for editing documents.
+
+**Acceptance Criteria (all met):**
+- [x] Created route `/documents/$documentId` at `src/routes/documents/$documentId.tsx`
+- [x] Editable title field (auto-saves on blur)
+- [x] Large textarea/editor for content (markdown supported via placeholder text)
+- [x] Auto-save content on changes (debounced, ~1s delay)
+- [x] "Saved" / "Saving..." indicator in header
+- [x] Back button returns to documents list
+- [x] Loading state while fetching document
+- [x] 404 handling if document doesn't exist or wrong org (shown via Convex validation)
+- [x] Fixed race conditions with refs for last-saved values
+- [x] Toast notifications on save errors
+
+**Files changed:**
+- `src/routes/documents/$documentId.tsx` (new)

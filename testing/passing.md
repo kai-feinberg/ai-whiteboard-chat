@@ -104,7 +104,7 @@
 - [x] Loading states show skeleton placeholders
 - [x] Not found state shown for invalid session IDs (handled by Convex validation)
 
-### Documents System (US-DOC-003)
+### Documents System (US-DOC-003, US-DOC-004)
 - [x] User navigates to /documents and sees documents list page
 - [x] "Documents" link appears in main sidebar navigation
 - [x] Page shows empty state with icon and "Create Your First Document" button when no documents
@@ -115,3 +115,10 @@
 - [x] Clicking delete shows confirmation dialog with "Cancel" and "Delete" buttons
 - [x] Confirming delete removes document and shows toast notification
 - [x] Loading state shows skeleton cards while fetching
+- [x] Document editor page has editable title field that auto-saves on blur
+- [x] Document editor page has large textarea for content (markdown placeholder text)
+- [x] Content auto-saves with debounced ~1s delay after typing stops
+- [x] "Saved" / "Saving..." indicator shows in header based on save status
+- [x] Back button in header navigates to documents list
+- [x] Loading state shows spinner while document is loading
+- [x] Updated title persists and shows in documents list after save
