@@ -543,6 +543,98 @@ export const updateCanvas = mutation({
 });
 
 /**
+ * List canvases that have at least one chat node (for Chat Hub)
+ * Returns canvasId, canvasName, chatNodeCount, lastMessageTimestamp
+ * Sorted by lastMessageTimestamp descending
+ */
+export const listCanvasesWithChats = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Get all canvas_nodes of type "chat" for this organization
+    const chatCanvasNodes = await ctx.db
+      .query("canvas_nodes")
+      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+      .filter((q) => q.eq(q.field("nodeType"), "chat"))
+      .collect();
+
+    if (chatCanvasNodes.length === 0) {
+      return [];
+    }
+
+    // Group chat nodes by canvasId and count them
+    const canvasIdSet = new Set<Id<"canvases">>();
+    const chatNodeCountByCanvas = new Map<string, number>();
+
+    for (const node of chatCanvasNodes) {
+      canvasIdSet.add(node.canvasId);
+      const current = chatNodeCountByCanvas.get(node.canvasId) || 0;
+      chatNodeCountByCanvas.set(node.canvasId, current + 1);
+    }
+
+    // Batch fetch all canvases
+    const canvasIds = Array.from(canvasIdSet);
+    const canvases = await Promise.all(
+      canvasIds.map((id) => ctx.db.get(id))
+    );
+
+    // Filter out null canvases (deleted) and verify org ownership
+    const validCanvases = canvases.filter(
+      (canvas): canvas is NonNullable<typeof canvas> =>
+        canvas !== null && canvas.organizationId === organizationId
+    );
+
+    // For each canvas, find the most recent thread timestamp
+    // Query threads directly via by_canvas index (captures ALL thread activity, not just selectedThreadId)
+    const latestTimestampByCanvas = new Map<string, number>();
+
+    // Batch query threads for all canvases in parallel
+    const threadQueries = await Promise.all(
+      canvasIds.map((canvasId) =>
+        ctx.db
+          .query("threads")
+          .withIndex("by_canvas", (q) => q.eq("canvasId", canvasId))
+          .collect()
+      )
+    );
+
+    // Find latest updatedAt for each canvas
+    for (let i = 0; i < canvasIds.length; i++) {
+      const canvasId = canvasIds[i];
+      const threads = threadQueries[i];
+      for (const thread of threads) {
+        const current = latestTimestampByCanvas.get(canvasId) || 0;
+        if (thread.updatedAt > current) {
+          latestTimestampByCanvas.set(canvasId, thread.updatedAt);
+        }
+      }
+    }
+
+    // Build result array
+    const results = validCanvases.map((canvas) => ({
+      canvasId: canvas._id,
+      canvasName: canvas.title,
+      chatNodeCount: chatNodeCountByCanvas.get(canvas._id) || 0,
+      lastMessageTimestamp: latestTimestampByCanvas.get(canvas._id) || canvas.updatedAt,
+    }));
+
+    // Sort by lastMessageTimestamp descending
+    results.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
+
+    return results;
+  },
+});
+
+/**
  * Delete a canvas and all its nodes/edges
  * ACTION (not mutation) because it needs to call Autumn API (uses fetch)
  */

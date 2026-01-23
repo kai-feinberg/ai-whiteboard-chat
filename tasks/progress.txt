@@ -89,3 +89,17 @@
 - Logic review passed, applied suggestion to extract duplicated string to constant
 - Convex typecheck passes (pre-existing frontend errors unrelated)
 - Next: US-CHAT-002 (Chat hub query) or US-CHAT-001 (Chat hub page)
+
+### 2026-01-23: US-CHAT-002 - Chat Hub Query
+- Created `listCanvasesWithChats` query in `convex/canvas/functions.ts`
+- Query returns canvases that have at least one chat node
+- Returns: canvasId, canvasName, chatNodeCount, lastMessageTimestamp
+- Sorted by lastMessageTimestamp descending
+- Uses efficient batching with Promise.all:
+  - Gets chat canvas_nodes by organization (filters nodeType="chat")
+  - Batch fetches canvases
+  - Batch queries threads via by_canvas index for each canvas
+- Logic review caught issue: initial impl only used selectedThreadId for timestamps
+  - Fixed to query ALL threads per canvas via by_canvas index
+- Convex codegen passes (pre-existing frontend errors unrelated)
+- Next: US-CHAT-001 (Chat hub page) or US-NAV-001 (Dashboard chat links)

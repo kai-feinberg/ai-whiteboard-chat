@@ -118,3 +118,27 @@
 **Files changed:**
 - `convex/canvas/chat.ts` (added SUPPORTED_PLATFORMS_MSG constant, updated 3 error messages)
 
+---
+
+## US-CHAT-002: Create Chat Query for Hub (2026-01-23)
+
+**Description:** Created a Convex query that returns canvases with their chat metadata for the chat hub.
+
+**Acceptance Criteria (all met):**
+- [x] Created `listCanvasesWithChats` query in `convex/canvas/functions.ts`
+- [x] Returns canvases that have at least one chat node
+- [x] Includes: canvasId, canvasName, chatNodeCount, lastMessageTimestamp
+- [x] Sorted by lastMessageTimestamp descending
+- [x] Efficiently queries using indexes (no N+1 - uses batch Promise.all for canvases and threads via by_canvas index)
+- [x] Convex typecheck passes
+
+**Implementation Notes:**
+- Queries canvas_nodes by organization and filters for nodeType="chat"
+- Groups nodes by canvasId and counts them
+- Batch fetches canvases and threads using Promise.all
+- Uses threads.by_canvas index to get ALL thread activity (not just selectedThreadId)
+- Falls back to canvas.updatedAt if no threads exist
+
+**Files changed:**
+- `convex/canvas/functions.ts` (added listCanvasesWithChats query)
+

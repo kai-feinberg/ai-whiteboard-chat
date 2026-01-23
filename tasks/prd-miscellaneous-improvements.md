@@ -76,24 +76,6 @@ Collection of improvements to enhance AI chat capabilities, document management,
 
 ---
 
-#### US-CHAT-002: Create Chat Query for Hub
-
-**Description:** As a developer, I need a query that returns canvases with their chat metadata for the chat hub.
-
-**Required Reading:**
-- `convex/canvas/functions.ts` → existing canvas queries
-- `convex/chat/functions.ts` → chat node queries
-
-**Acceptance Criteria:**
-- [ ] Create `listCanvasesWithChats` query in `convex/canvas/functions.ts`
-- [ ] Returns canvases that have at least one chat node
-- [ ] Includes: canvasId, canvasName, chatNodeCount, lastMessageTimestamp
-- [ ] Sorted by lastMessageTimestamp descending
-- [ ] Efficiently queries using indexes (no N+1)
-- [ ] `pnpm typecheck` passes
-
----
-
 ## Functional Requirements
 
 ### Link Reading Tool
@@ -250,6 +232,6 @@ Recommended sequence for minimal dependencies:
 5. ~~**US-LR-001** - readLink tool (independent)~~ ✅ DONE
 6. ~~**US-LR-002** - Unsupported URL handling (polish)~~ ✅ DONE
 7. ~~**US-LR-003** - Tool display in chat UI (user-visible)~~ ✅ DONE
-8. **US-CHAT-002** - Chat hub query (foundation for UI)
+8. ~~**US-CHAT-002** - Chat hub query (foundation for UI)~~ ✅ DONE
 9. **US-CHAT-001** - Chat hub page (user-visible)
 10. **US-NAV-001** - Dashboard chat links (quick win)
