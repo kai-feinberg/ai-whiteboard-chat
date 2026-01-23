@@ -104,7 +104,7 @@
 - Convex codegen passes (pre-existing frontend errors unrelated)
 - Next: US-CHAT-001 (Chat hub page) or US-NAV-001 (Dashboard chat links)
 
-### 2026-01-23: US-CHAT-001 - Chat Hub Page
+### 2026-01-23: US-CHAT-001 - Chat Hub Page (SUPERSEDED BY US-NAV-001)
 - Created `/chats` route at `src/routes/chats/index.tsx`
 - Added "Chats" link to sidebar between Documents and Pricing (with MessageSquare icon)
 - Page displays canvases that have chat nodes:
@@ -118,4 +118,27 @@
 - Meets FR-NAV-2 (fast loading) - uses timestamp not message preview
 - Browser testing verified: navigation, card click, URL routing all work
 - Pre-existing TS errors in codebase unrelated to this change
-- Next: US-NAV-001 (Dashboard chat links) - FINAL STORY
+- **NOTE: This feature was superseded by US-NAV-001 which adds chat button directly to dashboard canvas cards**
+
+### 2026-01-23: US-NAV-001 - Add Chat Link to Canvas Cards
+- Added chat button (MessageSquare icon) to canvas cards on dashboard
+- Modified `convex/canvas/functions.ts`:
+  - Updated `listCanvases` query to include `hasChatNodes` boolean
+  - Queries canvas_nodes with nodeType="chat" filter and builds Set of canvas IDs with chats
+  - Removed now-unused `listCanvasesWithChats` query (dead code after /chats removal)
+- Modified `src/routes/index.tsx`:
+  - Added MessageSquare import from lucide-react
+  - Added chat button to canvas card hover actions (green styling)
+  - Button only shows if `canvas.hasChatNodes` is true
+  - Button has title="Open Chat" for tooltip
+  - Navigates to `/canvas/{canvasId}/chat` on click
+- Removed `/chats` route:
+  - Deleted `src/routes/chats/index.tsx`
+  - Removed "Chats" link from sidebar in `src/components/app-sidebar.tsx`
+- Logic review passed - caught dead code (listCanvasesWithChats) which was removed
+- Browser testing verified with agent-browser:
+  - Chat button appears on hover with green styling
+  - Clicking navigates to /canvas/{id}/chat
+  - Chat page loads correctly with "Back to Canvas" and thread sidebar
+- PRD COMPLETE - All miscellaneous improvements stories are done
+- Next developer: PRD is complete. Consider archiving tasks/prd-miscellaneous-improvements.md

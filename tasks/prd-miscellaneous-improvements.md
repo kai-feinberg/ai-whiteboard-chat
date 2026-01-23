@@ -34,27 +34,13 @@ Collection of improvements to enhance AI chat capabilities, document management,
 
 ### Feature 3: Full-Screen Chat Links
 
-#### US-NAV-001: Add Chat Link to Canvas Cards
-
-**Description:** As a user on the dashboard, I want quick access to a canvas's chat without opening the full canvas editor.
-
-**Required Reading:**
-- `src/routes/index.tsx` → canvas card rendering
-- `src/routes/canvas/$canvasId/chat.tsx` → chat route structure
-
-**Acceptance Criteria:**
-- [ ] Add chat icon/button to each canvas card on dashboard
-- [ ] Button navigates to `/canvas/{canvasId}/chat`
-- [ ] Button has tooltip "Open Chat"
-- [ ] Button only appears if canvas has at least one chat node (optional optimization)
-- [ ] `pnpm typecheck` passes
-- [ ] **Verify in browser using agent-browser skill**
+(US-NAV-001 completed - see completed-stories.md)
 
 ---
 
 ### Feature 4: Chat Switcher Page
 
-(US-CHAT-001 completed - see completed-stories.md)
+(US-CHAT-001 completed then superseded by US-NAV-001 - see completed-stories.md)
 
 ---
 
@@ -215,5 +201,5 @@ Recommended sequence for minimal dependencies:
 6. ~~**US-LR-002** - Unsupported URL handling (polish)~~ ✅ DONE
 7. ~~**US-LR-003** - Tool display in chat UI (user-visible)~~ ✅ DONE
 8. ~~**US-CHAT-002** - Chat hub query (foundation for UI)~~ ✅ DONE
-9. ~~**US-CHAT-001** - Chat hub page (user-visible)~~ ✅ DONE
-10. **US-NAV-001** - Dashboard chat links (quick win)
+9. ~~**US-CHAT-001** - Chat hub page (user-visible)~~ ✅ DONE (superseded by US-NAV-001)
+10. ~~**US-NAV-001** - Dashboard chat links (quick win)~~ ✅ DONE

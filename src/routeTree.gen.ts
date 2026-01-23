@@ -14,7 +14,6 @@ import { Route as CreditsRouteImport } from './routes/credits'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DocumentsIndexRouteImport } from './routes/documents/index'
-import { Route as ChatsIndexRouteImport } from './routes/chats/index'
 import { Route as SettingsOrganizationRouteImport } from './routes/settings/organization'
 import { Route as SettingsCustomAgentsRouteImport } from './routes/settings/custom-agents'
 import { Route as DocumentsDocumentIdRouteImport } from './routes/documents/$documentId'
@@ -43,11 +42,6 @@ const IndexRoute = IndexRouteImport.update({
 const DocumentsIndexRoute = DocumentsIndexRouteImport.update({
   id: '/documents/',
   path: '/documents/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChatsIndexRoute = ChatsIndexRouteImport.update({
-  id: '/chats/',
-  path: '/chats/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsOrganizationRoute = SettingsOrganizationRouteImport.update({
@@ -83,7 +77,6 @@ export interface FileRoutesByFullPath {
   '/documents/$documentId': typeof DocumentsDocumentIdRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/settings/organization': typeof SettingsOrganizationRoute
-  '/chats': typeof ChatsIndexRoute
   '/documents': typeof DocumentsIndexRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId': typeof CanvasCanvasIdIndexRoute
@@ -95,7 +88,6 @@ export interface FileRoutesByTo {
   '/documents/$documentId': typeof DocumentsDocumentIdRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/settings/organization': typeof SettingsOrganizationRoute
-  '/chats': typeof ChatsIndexRoute
   '/documents': typeof DocumentsIndexRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId': typeof CanvasCanvasIdIndexRoute
@@ -109,7 +101,6 @@ export interface FileRoutesById {
   '/documents/$documentId': typeof DocumentsDocumentIdRoute
   '/settings/custom-agents': typeof SettingsCustomAgentsRoute
   '/settings/organization': typeof SettingsOrganizationRoute
-  '/chats/': typeof ChatsIndexRoute
   '/documents/': typeof DocumentsIndexRoute
   '/canvas/$canvasId/chat': typeof CanvasCanvasIdChatRoute
   '/canvas/$canvasId/': typeof CanvasCanvasIdIndexRoute
@@ -123,7 +114,6 @@ export interface FileRouteTypes {
     | '/documents/$documentId'
     | '/settings/custom-agents'
     | '/settings/organization'
-    | '/chats'
     | '/documents'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId'
@@ -135,7 +125,6 @@ export interface FileRouteTypes {
     | '/documents/$documentId'
     | '/settings/custom-agents'
     | '/settings/organization'
-    | '/chats'
     | '/documents'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId'
@@ -148,7 +137,6 @@ export interface FileRouteTypes {
     | '/documents/$documentId'
     | '/settings/custom-agents'
     | '/settings/organization'
-    | '/chats/'
     | '/documents/'
     | '/canvas/$canvasId/chat'
     | '/canvas/$canvasId/'
@@ -162,7 +150,6 @@ export interface RootRouteChildren {
   DocumentsDocumentIdRoute: typeof DocumentsDocumentIdRoute
   SettingsCustomAgentsRoute: typeof SettingsCustomAgentsRoute
   SettingsOrganizationRoute: typeof SettingsOrganizationRoute
-  ChatsIndexRoute: typeof ChatsIndexRoute
   DocumentsIndexRoute: typeof DocumentsIndexRoute
   CanvasCanvasIdChatRoute: typeof CanvasCanvasIdChatRoute
   CanvasCanvasIdIndexRoute: typeof CanvasCanvasIdIndexRoute
@@ -203,13 +190,6 @@ declare module '@tanstack/react-router' {
       path: '/documents'
       fullPath: '/documents'
       preLoaderRoute: typeof DocumentsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/chats/': {
-      id: '/chats/'
-      path: '/chats'
-      fullPath: '/chats'
-      preLoaderRoute: typeof ChatsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/organization': {
@@ -258,7 +238,6 @@ const rootRouteChildren: RootRouteChildren = {
   DocumentsDocumentIdRoute: DocumentsDocumentIdRoute,
   SettingsCustomAgentsRoute: SettingsCustomAgentsRoute,
   SettingsOrganizationRoute: SettingsOrganizationRoute,
-  ChatsIndexRoute: ChatsIndexRoute,
   DocumentsIndexRoute: DocumentsIndexRoute,
   CanvasCanvasIdChatRoute: CanvasCanvasIdChatRoute,
   CanvasCanvasIdIndexRoute: CanvasCanvasIdIndexRoute,

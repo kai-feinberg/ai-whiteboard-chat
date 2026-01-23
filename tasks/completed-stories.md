@@ -144,11 +144,13 @@
 
 ---
 
-## US-CHAT-001: Create Chat Hub Page (2026-01-23)
+## US-CHAT-001: Create Chat Hub Page (2026-01-23) - SUPERSEDED BY US-NAV-001
 
 **Description:** Created dedicated chat hub page for quickly switching between canvas conversations without loading full canvas editor.
 
-**Acceptance Criteria (all met):**
+**Status:** REMOVED - Replaced by US-NAV-001 which adds chat button directly to canvas cards on dashboard. The `/chats` route was deleted and sidebar link removed.
+
+**Original Acceptance Criteria (all were met before removal):**
 - [x] Created route `/chats` at `src/routes/chats/index.tsx`
 - [x] Added "Chats" link in main navigation (sidebar)
 - [x] Page lists all canvases that have chat nodes
@@ -157,17 +159,35 @@
 - [x] Items sorted by most recent activity (lastMessageTimestamp descending)
 - [x] Empty state when no chats exist (MessageSquare icon + "No chats yet")
 - [x] Loading state with skeleton cards
+
+**Files changed (then deleted):**
+- `src/routes/chats/index.tsx` (DELETED in US-NAV-001)
+- `src/components/app-sidebar.tsx` (Chats nav link REMOVED in US-NAV-001)
+
+---
+
+## US-NAV-001: Add Chat Link to Canvas Cards (2026-01-23)
+
+**Description:** Added quick access chat button to canvas cards on the dashboard, allowing users to jump directly to canvas chat without opening the full canvas editor. This replaces the separate `/chats` page with a more direct workflow.
+
+**Acceptance Criteria (all met):**
+- [x] Added chat icon/button (MessageSquare) to each canvas card on dashboard
+- [x] Button navigates to `/canvas/{canvasId}/chat`
+- [x] Button has tooltip "Open Chat" (via title attribute)
+- [x] Button only appears if canvas has at least one chat node (optional optimization implemented)
 - [x] `pnpm typecheck` passes (pre-existing frontend errors unrelated)
 - [x] Browser testing verified with agent-browser
 
 **Implementation Notes:**
-- Pattern follows `documents/index.tsx` for consistency
-- Uses `listCanvasesWithChats` query from US-CHAT-002
-- Relative time formatting with `formatRelativeTime()` helper (shows "Just now", "Xm/h/d ago", or date)
-- Triple-layer auth: route beforeLoad, component check, query check
-- Meets FR-NAV-2 (fast loading) by using timestamp instead of message preview content
+- Extended `listCanvases` query to include `hasChatNodes` boolean for each canvas
+- Query efficiently checks chat nodes in single pass by querying canvas_nodes with nodeType="chat" filter
+- Button uses green hover styling to differentiate from rename (blue) and delete (red) buttons
+- Removed `/chats` route and sidebar link as this provides equivalent functionality with less navigation
+- Also removed now-unused `listCanvasesWithChats` query (dead code after /chats removal)
 
 **Files changed:**
-- `src/routes/chats/index.tsx` (new - 140 lines)
-- `src/components/app-sidebar.tsx` (added Chats nav link with MessageSquare icon)
+- `convex/canvas/functions.ts` (updated listCanvases to include hasChatNodes, removed listCanvasesWithChats)
+- `src/routes/index.tsx` (added MessageSquare button to canvas cards)
+- `src/routes/chats/index.tsx` (DELETED)
+- `src/components/app-sidebar.tsx` (removed Chats nav link)
 

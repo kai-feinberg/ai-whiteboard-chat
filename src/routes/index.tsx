@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Plus, Layout, Calendar, Trash2, Sparkles, Pencil, Check, X } from "lucide-react";
+import { Plus, Layout, Calendar, Trash2, Sparkles, Pencil, Check, X, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/tanstack-react-start";
 import { useCustomer, CheckoutDialog } from "autumn-js/react";
@@ -260,6 +260,20 @@ function Dashboard() {
               onClick={() => handleSelectCanvas(canvas._id)}
             >
               <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                {canvas.hasChatNodes && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-950/30 dark:hover:text-green-400"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate({ to: `/canvas/${canvas._id}/chat` });
+                    }}
+                    title="Open Chat"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"

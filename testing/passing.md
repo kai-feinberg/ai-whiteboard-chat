@@ -137,12 +137,11 @@
 - [x] Failed extractions include supported platforms in error message
 - [x] AI responds helpfully when given invalid URL, suggesting valid formats and supported platforms
 
-### Chat Hub Page (US-CHAT-001)
-- [x] User navigates to /chats and sees chat hub page
-- [x] "Chats" link appears in main sidebar navigation between Documents and Pricing
-- [x] Page shows title "Chats" with subtitle "Jump into your canvas conversations"
-- [x] Page lists canvases that have chat nodes with: canvas name, chat count, relative timestamp
-- [x] Items are sorted by most recent activity (descending)
-- [x] Clicking canvas card navigates to /canvas/{canvasId}/chat
-- [x] Empty state shows when no canvases have chat nodes (MessageSquare icon + "No chats yet" message)
-- [x] Loading state shows skeleton cards while fetching
+### Full-Screen Chat Links (US-NAV-001)
+- [x] Canvas cards on dashboard show chat button (MessageSquare icon) on hover
+- [x] Chat button only appears on canvas cards that have chat nodes
+- [x] Chat button has green hover styling
+- [x] Chat button has "Open Chat" tooltip
+- [x] Clicking chat button navigates to /canvas/{canvasId}/chat
+- [x] Chat page loads with "Back to Canvas" button and thread sidebar visible
+- [x] Sidebar navigation does not show "Chats" link (removed /chats route)
