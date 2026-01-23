@@ -137,6 +137,9 @@ importers:
       '@xyflow/react':
         specifier: ^12.9.2
         version: 12.9.2(@types/react@19.1.17)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      agentation:
+        specifier: ^1.3.0
+        version: 1.3.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       ai:
         specifier: ^5.0.76
         version: 5.0.76(zod@4.1.11)
@@ -3598,6 +3601,12 @@ packages:
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
+
+  agentation@1.3.0:
+    resolution: {integrity: sha512-Mq05RrE00bC0lrGSSr1uj7pAT6SnEFGr9TtDgtYUHNH685OAjDgFobEgEV7jgUu0xCWIfIukH7n/Gy05plFw8Q==}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
 
   ai@5.0.76:
     resolution: {integrity: sha512-ZCxi1vrpyCUnDbtYrO/W8GLvyacV9689f00yshTIQ3mFFphbD7eIv40a2AOZBv3GGRA7SSRYIDnr56wcS/gyQg==}
@@ -10774,6 +10783,11 @@ snapshots:
   acorn@8.15.0: {}
 
   agent-base@7.1.4: {}
+
+  agentation@1.3.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+    dependencies:
+      react: 19.1.1
+      react-dom: 19.1.1(react@19.1.1)
 
   ai@5.0.76(zod@4.1.11):
     dependencies:

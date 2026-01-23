@@ -56,6 +56,7 @@
     "@tiptap/starter-kit": "^3.7.2",
     "@useautumn/convex": "^0.0.15",
     "@xyflow/react": "^12.9.2",
+    "agentation": "^1.3.0",
     "ai": "^5.0.76",
     "atmn": "^0.0.28",
     "autumn-js": "^0.1.46",

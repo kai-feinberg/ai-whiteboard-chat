@@ -5,6 +5,7 @@ import {
   Outlet,
   useRouteContext,
 } from '@tanstack/react-router'
+import { Agentation } from 'agentation'
 import {
   ClerkProvider,
   SignInButton,
@@ -261,6 +262,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             </AutumnWrapper>
           </ConvexProviderWithClerk>
           <Scripts />
+          {process.env.NODE_ENV === 'development' && <Agentation />}
         </body>
       </html>
     </ClerkProvider>
