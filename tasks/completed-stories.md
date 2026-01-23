@@ -142,3 +142,32 @@
 **Files changed:**
 - `convex/canvas/functions.ts` (added listCanvasesWithChats query)
 
+---
+
+## US-CHAT-001: Create Chat Hub Page (2026-01-23)
+
+**Description:** Created dedicated chat hub page for quickly switching between canvas conversations without loading full canvas editor.
+
+**Acceptance Criteria (all met):**
+- [x] Created route `/chats` at `src/routes/chats/index.tsx`
+- [x] Added "Chats" link in main navigation (sidebar)
+- [x] Page lists all canvases that have chat nodes
+- [x] Each item shows: canvas name, chat node count, relative time (e.g., "32m ago")
+- [x] Clicking item navigates to `/canvas/{canvasId}/chat`
+- [x] Items sorted by most recent activity (lastMessageTimestamp descending)
+- [x] Empty state when no chats exist (MessageSquare icon + "No chats yet")
+- [x] Loading state with skeleton cards
+- [x] `pnpm typecheck` passes (pre-existing frontend errors unrelated)
+- [x] Browser testing verified with agent-browser
+
+**Implementation Notes:**
+- Pattern follows `documents/index.tsx` for consistency
+- Uses `listCanvasesWithChats` query from US-CHAT-002
+- Relative time formatting with `formatRelativeTime()` helper (shows "Just now", "Xm/h/d ago", or date)
+- Triple-layer auth: route beforeLoad, component check, query check
+- Meets FR-NAV-2 (fast loading) by using timestamp instead of message preview content
+
+**Files changed:**
+- `src/routes/chats/index.tsx` (new - 140 lines)
+- `src/components/app-sidebar.tsx` (added Chats nav link with MessageSquare icon)
+

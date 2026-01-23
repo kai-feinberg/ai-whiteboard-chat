@@ -54,25 +54,7 @@ Collection of improvements to enhance AI chat capabilities, document management,
 
 ### Feature 4: Chat Switcher Page
 
-#### US-CHAT-001: Create Chat Hub Page
-
-**Description:** As a user, I want a dedicated page showing all my canvas chats so I can quickly switch between conversations.
-
-**Required Reading:**
-- `src/routes/index.tsx` → list page patterns
-- `convex/canvas/functions.ts` → canvas queries
-- `convex/chat/functions.ts` → chat node queries
-
-**Acceptance Criteria:**
-- [ ] Create route `/chats` at `src/routes/chats/index.tsx`
-- [ ] Add "Chats" link in main navigation
-- [ ] Page lists all canvases that have chat nodes
-- [ ] Each item shows: canvas name, chat node count, last message preview (truncated)
-- [ ] Clicking item navigates to `/canvas/{canvasId}/chat`
-- [ ] Items sorted by most recent activity
-- [ ] Empty state when no chats exist
-- [ ] `pnpm typecheck` passes
-- [ ] **Verify in browser using agent-browser skill**
+(US-CHAT-001 completed - see completed-stories.md)
 
 ---
 
@@ -233,5 +215,5 @@ Recommended sequence for minimal dependencies:
 6. ~~**US-LR-002** - Unsupported URL handling (polish)~~ ✅ DONE
 7. ~~**US-LR-003** - Tool display in chat UI (user-visible)~~ ✅ DONE
 8. ~~**US-CHAT-002** - Chat hub query (foundation for UI)~~ ✅ DONE
-9. **US-CHAT-001** - Chat hub page (user-visible)
+9. ~~**US-CHAT-001** - Chat hub page (user-visible)~~ ✅ DONE
 10. **US-NAV-001** - Dashboard chat links (quick win)

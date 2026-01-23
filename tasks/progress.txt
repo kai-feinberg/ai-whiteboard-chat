@@ -103,3 +103,19 @@
   - Fixed to query ALL threads per canvas via by_canvas index
 - Convex codegen passes (pre-existing frontend errors unrelated)
 - Next: US-CHAT-001 (Chat hub page) or US-NAV-001 (Dashboard chat links)
+
+### 2026-01-23: US-CHAT-001 - Chat Hub Page
+- Created `/chats` route at `src/routes/chats/index.tsx`
+- Added "Chats" link to sidebar between Documents and Pricing (with MessageSquare icon)
+- Page displays canvases that have chat nodes:
+  - Canvas name, chat count ("1 chat" / "2 chats"), relative time ("32m ago")
+  - Sorted by lastMessageTimestamp descending (most recent first)
+  - Clicking card navigates to `/canvas/{canvasId}/chat`
+- Uses `listCanvasesWithChats` query from US-CHAT-002
+- Empty state with MessageSquare icon + "No chats yet" message
+- Loading state with skeleton cards
+- Pattern follows documents/index.tsx for consistency
+- Meets FR-NAV-2 (fast loading) - uses timestamp not message preview
+- Browser testing verified: navigation, card click, URL routing all work
+- Pre-existing TS errors in codebase unrelated to this change
+- Next: US-NAV-001 (Dashboard chat links) - FINAL STORY

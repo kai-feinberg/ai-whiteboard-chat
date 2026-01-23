@@ -136,3 +136,13 @@
 - [x] Invalid URL format returns helpful error with supported platforms list
 - [x] Failed extractions include supported platforms in error message
 - [x] AI responds helpfully when given invalid URL, suggesting valid formats and supported platforms
+
+### Chat Hub Page (US-CHAT-001)
+- [x] User navigates to /chats and sees chat hub page
+- [x] "Chats" link appears in main sidebar navigation between Documents and Pricing
+- [x] Page shows title "Chats" with subtitle "Jump into your canvas conversations"
+- [x] Page lists canvases that have chat nodes with: canvas name, chat count, relative timestamp
+- [x] Items are sorted by most recent activity (descending)
+- [x] Clicking canvas card navigates to /canvas/{canvasId}/chat
+- [x] Empty state shows when no canvases have chat nodes (MessageSquare icon + "No chats yet" message)
+- [x] Loading state shows skeleton cards while fetching
