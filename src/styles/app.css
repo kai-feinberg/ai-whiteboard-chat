@@ -225,6 +225,35 @@
     transform: translateY(0);
   }
 
+  /* Chat message links - distinct from bubble background */
+  .group.is-user a[data-streamdown="link"] {
+    color: oklch(0.75 0.14 220) !important; /* Darker blue for dark primary bg */
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .group.is-user a[data-streamdown="link"]:hover {
+    color: oklch(0.85 0.10 220) !important;
+  }
+
+  .group.is-assistant a[data-streamdown="link"] {
+    color: oklch(0.38 0.2 250) !important; /* Darker blue for light secondary bg */
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .group.is-assistant a[data-streamdown="link"]:hover {
+    color: oklch(0.30 0.22 250) !important;
+  }
+
+  .dark .group.is-assistant a[data-streamdown="link"] {
+    color: oklch(0.6 0.18 250) !important; /* Darker blue for dark mode */
+  }
+
+  .dark .group.is-assistant a[data-streamdown="link"]:hover {
+    color: oklch(0.7 0.15 250) !important;
+  }
+
   /* Sidebar grain texture - apply to sidebar container and inset with bg-sidebar */
   [data-sidebar="sidebar"],
   .bg-sidebar {
