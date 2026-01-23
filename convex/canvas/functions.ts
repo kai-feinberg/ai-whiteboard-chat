@@ -47,6 +47,54 @@ export const listCanvases = query({
 });
 
 /**
+ * List canvases that have at least one chat node
+ * Used for canvas switcher dropdown in chat page header
+ */
+export const listCanvasesWithChats = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const organizationId = identity.organizationId;
+    if (!organizationId || typeof organizationId !== "string") {
+      throw new Error("No organization selected. Please select an organization to continue.");
+    }
+
+    // Get all chat nodes for the organization
+    const chatCanvasNodes = await ctx.db
+      .query("canvas_nodes")
+      .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+      .filter((q) => q.eq(q.field("nodeType"), "chat"))
+      .collect();
+
+    // Get unique canvas IDs
+    const canvasIds = [...new Set(chatCanvasNodes.map((n) => n.canvasId))];
+
+    if (canvasIds.length === 0) {
+      return [];
+    }
+
+    // Fetch canvases and sort by updatedAt
+    const canvases = await Promise.all(
+      canvasIds.map((id) => ctx.db.get(id))
+    );
+
+    // Filter out nulls, verify org ownership, and sort by updatedAt descending
+    return canvases
+      .filter((c): c is NonNullable<typeof c> => c !== null && c.organizationId === organizationId)
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .map((canvas) => ({
+        _id: canvas._id,
+        title: canvas.title,
+        updatedAt: canvas.updatedAt,
+      }));
+  },
+});
+
+/**
  * Get a specific canvas by ID
  */
 export const getCanvas = query({

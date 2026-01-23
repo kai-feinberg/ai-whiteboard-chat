@@ -145,3 +145,13 @@
 - [x] Clicking chat button navigates to /canvas/{canvasId}/chat
 - [x] Chat page loads with "Back to Canvas" button and thread sidebar visible
 - [x] Sidebar navigation does not show "Chats" link (removed /chats route)
+
+### Canvas Switcher Dropdown (US-NAV-002)
+- [x] Dropdown shows in chat page header next to the current canvas name
+- [x] Dropdown trigger is a button with canvas title and chevron icon
+- [x] Clicking canvas name opens dropdown menu
+- [x] Loading state shows spinner while fetching canvas list
+- [x] Empty state shows "No other canvases with chats" when only current canvas has chats
+- [x] Current canvas would be highlighted with checkmark when multiple canvases exist
+- [x] Clicking different canvas navigates to `/canvas/{canvasId}/chat`
+- [x] After switching canvas, first thread is automatically selected so chat loads immediately

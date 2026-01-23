@@ -1,5 +1,5 @@
 // src/routes/canvas/$canvasId.chat.tsx
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -9,8 +9,14 @@ import { useUIMessages } from "@convex-dev/agent/react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, Check } from "lucide-react";
 import { useCustomer } from "autumn-js/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/canvas/$canvasId/chat")({
   beforeLoad: ({ context }) => {
@@ -36,7 +42,13 @@ export const Route = createFileRoute("/canvas/$canvasId/chat")({
 
 function FullScreenChat() {
   const { canvasId } = Route.useParams();
+  const navigate = useNavigate();
   const [selectedThreadId, setSelectedThreadId] = useState<Id<"threads"> | null>(null);
+
+  // Reset thread selection when canvas changes (e.g., via switcher dropdown)
+  useEffect(() => {
+    setSelectedThreadId(null);
+  }, [canvasId]);
 
   // Agent state management with localStorage persistence
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(() => {
@@ -87,6 +99,9 @@ function FullScreenChat() {
     api.canvas.functions.getCanvasWithNodes,
     { canvasId: canvasId as Id<"canvases"> }
   );
+
+  // Load canvases with chats for switcher dropdown
+  const canvasesWithChats = useQuery(api.canvas.functions.listCanvasesWithChats);
 
   // Load all threads for this canvas
   const threads = useQuery(
@@ -268,11 +283,44 @@ function FullScreenChat() {
               Back to Canvas
             </Button>
           </Link>
-          <div>
-            <h1 className="text-lg font-semibold">
-              {canvasData?.canvas?.title || "Canvas Chat"}
-            </h1>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="gap-2">
+                <span className="text-lg font-semibold">
+                  {canvasData?.canvas?.title || "Canvas Chat"}
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64">
+              {canvasesWithChats === undefined ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : canvasesWithChats.length <= 1 ? (
+                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  No other canvases with chats
+                </div>
+              ) : (
+                canvasesWithChats.map((canvas) => (
+                  <DropdownMenuItem
+                    key={canvas._id}
+                    onClick={() => {
+                      if (canvas._id !== canvasId) {
+                        navigate({ to: "/canvas/$canvasId/chat", params: { canvasId: canvas._id } });
+                      }
+                    }}
+                    className="flex items-center justify-between"
+                  >
+                    <span className="truncate">{canvas.title}</span>
+                    {canvas._id === canvasId && (
+                      <Check className="h-4 w-4 text-primary" />
+                    )}
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

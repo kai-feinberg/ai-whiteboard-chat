@@ -191,3 +191,31 @@
 - `src/routes/chats/index.tsx` (DELETED)
 - `src/components/app-sidebar.tsx` (removed Chats nav link)
 
+---
+
+## US-NAV-002: Add Canvas Switcher Dropdown to Chat Page Header (2026-01-23)
+
+**Description:** Added a dropdown to the chat page header that allows users to quickly switch between different canvas conversations without returning to the dashboard.
+
+**Acceptance Criteria (all met):**
+- [x] Dropdown shows in chat page header next to the current canvas name
+- [x] Dropdown lists all canvases that have at least one chat node
+- [x] Current canvas is visually highlighted in the dropdown (checkmark icon)
+- [x] Clicking a canvas navigates to `/canvas/{canvasId}/chat`
+- [x] Dropdown shows canvas names sorted by most recent activity (updatedAt desc)
+- [x] Loading state while fetching canvas list (spinner)
+- [x] Empty state if no other canvases with chats exist ("No other canvases with chats")
+- [x] After switching canvas, first thread is automatically selected so chat loads immediately
+
+**Implementation Notes:**
+- Created `listCanvasesWithChats` query in `convex/canvas/functions.ts`
+- Query efficiently fetches canvases by first getting chat nodes, then batching canvas lookups
+- Added organization ownership verification in the query
+- Used shadcn DropdownMenu component for the UI
+- Button shows canvas title with ChevronDown icon as dropdown trigger
+- Added useEffect to reset `selectedThreadId` when `canvasId` changes, triggering auto-select of first thread
+
+**Files changed:**
+- `convex/canvas/functions.ts` (added listCanvasesWithChats query)
+- `src/routes/canvas/$canvasId/chat.tsx` (added dropdown to header)
+

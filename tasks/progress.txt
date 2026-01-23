@@ -140,5 +140,28 @@
   - Chat button appears on hover with green styling
   - Clicking navigates to /canvas/{id}/chat
   - Chat page loads correctly with "Back to Canvas" and thread sidebar
-- PRD COMPLETE - All miscellaneous improvements stories are done
-- Next developer: PRD is complete. Consider archiving tasks/prd-miscellaneous-improvements.md
+- Browser testing verified with agent-browser
+- Note: PRD was marked complete but user added new story (US-NAV-002)
+
+### 2026-01-23: US-NAV-002 - Canvas Switcher Dropdown in Chat Header
+- Added dropdown to chat page header allowing quick switching between canvases
+- Modified `convex/canvas/functions.ts`:
+  - Added `listCanvasesWithChats` query (reintroduced, was removed in US-NAV-001)
+  - Query fetches chat nodes, groups by canvasId, batch fetches canvases
+  - Includes org ownership verification per logic review
+- Modified `src/routes/canvas/$canvasId/chat.tsx`:
+  - Added DropdownMenu imports (shadcn component)
+  - Added useNavigate hook for programmatic navigation
+  - Added canvasesWithChats query
+  - Replaced static title with dropdown trigger button (canvas title + ChevronDown)
+  - Dropdown shows loading spinner, empty state ("No other canvases with chats"), or canvas list
+  - Current canvas highlighted with Check icon
+- Logic review caught: missing org ownership check in query - fixed
+- Logic review caught: empty state message confusing - changed to "No other canvases with chats"
+- Browser testing found issue: switching canvases didn't auto-select a thread
+  - Root cause: `selectedThreadId` state persisted from previous canvas
+  - Fix: Added useEffect to reset `selectedThreadId` to null when `canvasId` changes
+  - This triggers existing auto-select effect to pick first thread from new canvas
+- Browser testing verified: dropdown opens, canvas switching works, thread auto-selects
+- PRD COMPLETE - All stories including new US-NAV-002 are done
+- Next developer: All features implemented. PRD miscellaneous improvements is complete.

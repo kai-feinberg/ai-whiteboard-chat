@@ -44,6 +44,12 @@ Collection of improvements to enhance AI chat capabilities, document management,
 
 ---
 
+### Feature 5: Canvas Switcher Dropdown
+
+(US-NAV-002 completed - see completed-stories.md)
+
+---
+
 ## Functional Requirements
 
 ### Link Reading Tool
@@ -64,6 +70,8 @@ Collection of improvements to enhance AI chat capabilities, document management,
 - **FR-NAV-1:** Chat links must not require loading full canvas state
 - **FR-NAV-2:** Chat hub must load quickly with minimal data fetching
 - **FR-NAV-3:** Navigation must preserve browser history for back button
+- **FR-NAV-4:** Canvas switcher dropdown must show only canvases with chats
+- **FR-NAV-5:** Canvas switcher must highlight current canvas
 
 ---
 
@@ -203,3 +211,4 @@ Recommended sequence for minimal dependencies:
 8. ~~**US-CHAT-002** - Chat hub query (foundation for UI)~~ ✅ DONE
 9. ~~**US-CHAT-001** - Chat hub page (user-visible)~~ ✅ DONE (superseded by US-NAV-001)
 10. ~~**US-NAV-001** - Dashboard chat links (quick win)~~ ✅ DONE
+11. ~~**US-NAV-002** - Canvas switcher dropdown in chat header~~ ✅ DONE
