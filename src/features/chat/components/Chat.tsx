@@ -13,8 +13,8 @@ import {
   PromptInput,
   PromptInputTextarea,
   PromptInputSubmit,
-  PromptInputBody,
 } from "@/components/ai-elements/prompt-input";
+import { ReadLinkTool, type ToolState } from "@/components/ai-elements/read-link-tool";
 import { MessageSquare, Loader2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { useSmoothText, type UIMessage } from "@convex-dev/agent/react";
@@ -33,6 +33,32 @@ export interface ChatProps {
   onAgentChange?: (agentId: string) => void;
   selectedModelId?: string | null;
   onModelChange?: (modelId: string) => void;
+}
+
+// Tool part type
+interface ToolPartType {
+  type: string;
+  toolCallId: string;
+  state: ToolState;
+  input?: unknown;
+  output?: unknown;
+  errorText?: string;
+}
+
+// Type guard for tool parts
+function isToolPart(part: unknown): part is ToolPartType {
+  return (
+    typeof part === "object" &&
+    part !== null &&
+    "type" in part &&
+    typeof (part as { type: string }).type === "string" &&
+    (part as { type: string }).type.startsWith("tool-")
+  );
+}
+
+// Extract tool name from part type (e.g., "tool-readLink" -> "readLink")
+function getToolNameFromType(type: string): string {
+  return type.replace(/^tool-/, "");
 }
 
 // Component for rendering a message with smooth text streaming
@@ -54,16 +80,40 @@ function StreamingMessage({ message }: { message: UIMessage }) {
     }
   };
 
+  // Extract readLink tool parts from message.parts
+  const readLinkParts = (message.parts || [])
+    .filter((part) => isToolPart(part) && getToolNameFromType((part as ToolPartType).type) === "readLink")
+    .map((part) => part as ToolPartType);
+
   return (
     <Message from={message.role} key={message.id}>
       <MessageContent>
-        {/* Show loading indicator if streaming and no text yet */}
-        {message.status === "streaming" && !visibleText && (
+        {/* Show loading indicator if streaming and no text yet and no tool parts */}
+        {message.status === "streaming" && !visibleText && readLinkParts.length === 0 && (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>AI is thinking...</span>
           </div>
         )}
+
+        {/* Render readLink tool results */}
+        {readLinkParts.map((part) => (
+          <ReadLinkTool
+            key={part.toolCallId}
+            state={part.state}
+            input={part.input as { url?: string } | string | undefined}
+            output={
+              part.output as
+                | {
+                    success?: boolean;
+                    platform?: string | null;
+                    content?: Record<string, unknown> | null;
+                    error?: string | null;
+                  }
+                | undefined
+            }
+          />
+        ))}
 
         {/* Show the text response */}
         {visibleText && <Response>{visibleText}</Response>}
@@ -97,14 +147,16 @@ export function Chat({
   messages,
   onSendMessage,
   isStreaming = false,
-  streams = [],
-  variant = "fullscreen",
+  streams: _streams = [],
+  variant: _variant = "fullscreen",
   className,
   selectedAgentId,
   onAgentChange,
   selectedModelId,
   onModelChange,
 }: ChatProps) {
+  void _streams; // Reserved for future streaming UI
+  void _variant; // Reserved for size variants
   const handleSubmit = async (message: { text?: string; files?: any[] }) => {
     if (!message.text?.trim() || isStreaming) return;
 

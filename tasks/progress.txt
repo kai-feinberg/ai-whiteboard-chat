@@ -62,3 +62,19 @@
 - Browser testing verified: AI successfully reads YouTube link and summarizes content
 - Pre-existing TS errors in codebase unrelated to this change
 - Next: US-LR-002 (Unsupported URL handling) or US-LR-003 (Tool display in chat UI)
+
+### 2026-01-23: US-LR-003 - Display readLink Tool Results in Chat UI
+- Integrated ReadLinkTool component into `src/features/chat/components/Chat.tsx`
+- Added tool part filtering using type guard `isToolPart()` that checks for `type.startsWith("tool-")`
+- ReadLinkTool component in `src/components/ai-elements/read-link-tool.tsx` was already created, just needed type fixes
+- Displays:
+  - Loading state: Clock icon with "Reading link..." header
+  - Success state: Green checkmark, platform badge (YouTube/Twitter/Website), title, truncated preview, "View original" link
+  - Error state: Red styling with error message
+- Fixed type errors:
+  - Added `getAuthor()` helper to properly type author extraction
+  - Changed conditional rendering to use explicit null checks
+  - Fixed unused variable warnings with void pattern
+- Browser testing verified: YouTube and website URLs both display tool cards correctly
+- Logic review passed - tool part type format `"tool-{toolName}"` confirmed matching SDK (verified via deltas.test.ts)
+- Next: US-LR-002 (Unsupported URL handling) or US-CHAT-002 (Chat hub query)

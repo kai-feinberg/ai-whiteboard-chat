@@ -85,3 +85,62 @@
 
 **Files changed:**
 - `convex/canvas/chat.ts` (added readLinkTool, URL detection helpers, registered in agent tools)
+
+## US-LR-003: Display readLink Tool Results in Chat UI (2026-01-23)
+
+**Description:** Integrated ReadLinkTool component into Chat.tsx to display extracted link content with loading states, platform badges, and clickable links.
+
+**Acceptance Criteria (all met):**
+- [x] readLink tool call shows loading state: "Reading link..."
+- [x] Completed tool shows extracted content: title, source platform, truncated preview
+- [x] Display includes link to original URL (clickable "View original")
+- [x] Error states displayed clearly (red styling with error message)
+- [x] Styling consistent with existing tool displays (border, card layout, icons)
+- [x] Browser testing verified with YouTube and website URLs
+
+**Files changed:**
+- `src/features/chat/components/Chat.tsx` (added tool part filtering and ReadLinkTool rendering)
+- `src/components/ai-elements/read-link-tool.tsx` (fixed type errors with unknown types)
+
+---
+
+#### US-LR-001: Create readLink AI Tool
+
+**Description:** As a user chatting with AI, I want to paste a URL and have the AI read its content so I can discuss it without creating a node.
+
+**Required Reading:**
+- `convex/canvas/chat.ts` → `generateImageTool` pattern (lines 30-100)
+- `convex/youtube/functions.ts` → `fetchYouTubeTranscript` extraction logic
+- `convex/twitter/functions.ts` → Twitter extraction
+- `convex/websites/functions.ts` → Firecrawl extraction
+- `convex/tiktok/functions.ts` → TikTok extraction
+- `convex/facebook-ads/functions.ts` → Facebook extraction
+
+**Acceptance Criteria:**
+- [ ] Create `readLinkTool` in `convex/canvas/chat.ts` using `createTool()`
+- [ ] Tool accepts `url: string` argument
+- [ ] Tool detects platform from URL (youtube, twitter/x, tiktok, website, facebook)
+- [ ] Tool reuses existing extraction logic from respective node functions
+- [ ] Tool returns extracted content as structured text (title, content/transcript, author where applicable)
+- [ ] Tool handles errors gracefully (unsupported URL, failed fetch, rate limits)
+- [ ] Tool is registered in the agent's tools object
+- [ ] `pnpm typecheck` passes
+- [ ] **Verify in browser using agent-browser skill** - Test by inputing at `http://localhost:3000/canvas/jd7fmnh9mq0s04t9nne70s5zw17zpwgd/chat`
+
+---
+
+#### US-LR-002: Handle Unsupported URLs Gracefully
+
+**Description:** As a user, when I paste an unsupported URL, I want clear feedback about what platforms are supported.
+
+**Required Reading:**
+- `convex/canvas/chat.ts` → tool error handling patterns
+
+**Acceptance Criteria:**
+- [ ] Tool returns helpful message listing supported platforms when URL not recognized
+- [ ] Supported platforms: YouTube, Twitter/X, TikTok, Facebook Ads, general websites (via Firecrawl)
+- [ ] Tool does NOT crash or throw unhandled errors
+- [ ] `pnpm typecheck` passes
+- [ ] **Verify in browser using agent-browser skill** - Test using this link in your prompt input: https://www.youtube.com/watch?v=VZCDQXaLHFc at this route `http://localhost:3000/canvas/jd7fmnh9mq0s04t9nne70s5zw17zpwgd/chat`
+
+---

@@ -22,63 +22,7 @@ Collection of improvements to enhance AI chat capabilities, document management,
 
 ### Feature 1: Link Reading Tool
 
-#### US-LR-001: Create readLink AI Tool
-
-**Description:** As a user chatting with AI, I want to paste a URL and have the AI read its content so I can discuss it without creating a node.
-
-**Required Reading:**
-- `convex/canvas/chat.ts` → `generateImageTool` pattern (lines 30-100)
-- `convex/youtube/functions.ts` → `fetchYouTubeTranscript` extraction logic
-- `convex/twitter/functions.ts` → Twitter extraction
-- `convex/websites/functions.ts` → Firecrawl extraction
-- `convex/tiktok/functions.ts` → TikTok extraction
-- `convex/facebook-ads/functions.ts` → Facebook extraction
-
-**Acceptance Criteria:**
-- [ ] Create `readLinkTool` in `convex/canvas/chat.ts` using `createTool()`
-- [ ] Tool accepts `url: string` argument
-- [ ] Tool detects platform from URL (youtube, twitter/x, tiktok, website, facebook)
-- [ ] Tool reuses existing extraction logic from respective node functions
-- [ ] Tool returns extracted content as structured text (title, content/transcript, author where applicable)
-- [ ] Tool handles errors gracefully (unsupported URL, failed fetch, rate limits)
-- [ ] Tool is registered in the agent's tools object
-- [ ] `pnpm typecheck` passes
-- [ ] **Verify in browser using agent-browser skill** - Test by inputing at `http://localhost:3000/canvas/jd7fmnh9mq0s04t9nne70s5zw17zpwgd/chat`
-
----
-
-#### US-LR-002: Handle Unsupported URLs Gracefully
-
-**Description:** As a user, when I paste an unsupported URL, I want clear feedback about what platforms are supported.
-
-**Required Reading:**
-- `convex/canvas/chat.ts` → tool error handling patterns
-
-**Acceptance Criteria:**
-- [ ] Tool returns helpful message listing supported platforms when URL not recognized
-- [ ] Supported platforms: YouTube, Twitter/X, TikTok, Facebook Ads, general websites (via Firecrawl)
-- [ ] Tool does NOT crash or throw unhandled errors
-- [ ] `pnpm typecheck` passes
-- [ ] **Verify in browser using agent-browser skill** - Test using this link in your prompt input: https://www.youtube.com/watch?v=VZCDQXaLHFc at this route `http://localhost:3000/canvas/jd7fmnh9mq0s04t9nne70s5zw17zpwgd/chat`
-
----
-
-#### US-LR-003: Display readLink Tool Results in Chat UI
-
-**Description:** As a user, I want to see the extracted link content displayed in the chat so I know what the AI read.
-
-**Required Reading:**
-- `src/components/ai-elements/tool.tsx` → existing tool display patterns
-- `src/routes/canvas/$canvasId/chat.tsx` → chat message rendering
-
-**Acceptance Criteria:**
-- [ ] readLink tool call shows loading state: "Reading link..."
-- [ ] Completed tool shows extracted content: title, source platform, truncated preview
-- [ ] Display includes link to original URL (clickable)
-- [ ] Error states displayed clearly (failed to fetch, unsupported)
-- [ ] Styling consistent with existing tool displays (e.g., generateImage)
-- [ ] `pnpm typecheck` passes
-- [ ] **Verify in browser using agent-browser skill** - Test at `http://localhost:3000/canvas/jd7fmnh9mq0s04t9nne70s5zw17zpwgd/chat`
+(All Link Reading Tool stories completed - see completed-stories.md)
 
 ---
 
@@ -344,7 +288,7 @@ Recommended sequence for minimal dependencies:
 4. ~~**US-DOC-004** - Document editor (core functionality)~~ ✅ DONE
 5. ~~**US-LR-001** - readLink tool (independent)~~ ✅ DONE
 6. **US-LR-002** - Unsupported URL handling (polish)
-7. **US-LR-003** - Tool display in chat UI (user-visible)
+7. ~~**US-LR-003** - Tool display in chat UI (user-visible)~~ ✅ DONE
 8. **US-CHAT-002** - Chat hub query (foundation for UI)
 9. **US-CHAT-001** - Chat hub page (user-visible)
 10. **US-NAV-001** - Dashboard chat links (quick win)
