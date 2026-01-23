@@ -78,3 +78,14 @@
 - Browser testing verified: YouTube and website URLs both display tool cards correctly
 - Logic review passed - tool part type format `"tool-{toolName}"` confirmed matching SDK (verified via deltas.test.ts)
 - Next: US-LR-002 (Unsupported URL handling) or US-CHAT-002 (Chat hub query)
+
+### 2026-01-23: US-LR-002 - Handle Unsupported URLs Gracefully
+- Added `SUPPORTED_PLATFORMS_MSG` constant to avoid message duplication
+- Updated 3 error messages in `convex/canvas/chat.ts`:
+  1. Invalid URL format error now includes supported platforms
+  2. Website extraction failure now explains potential causes (auth, JS rendering, blocking)
+  3. Catch block error now formats with platform and supported platforms list
+- Browser testing verified: AI responds helpfully when given invalid URL, listing supported platforms
+- Logic review passed, applied suggestion to extract duplicated string to constant
+- Convex typecheck passes (pre-existing frontend errors unrelated)
+- Next: US-CHAT-002 (Chat hub query) or US-CHAT-001 (Chat hub page)

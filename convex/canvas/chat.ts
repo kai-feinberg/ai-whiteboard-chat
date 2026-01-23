@@ -12,6 +12,11 @@ import { z } from "zod";
 import Firecrawl from "@mendable/firecrawl-js";
 
 /**
+ * Supported platforms message for error handling
+ */
+const SUPPORTED_PLATFORMS_MSG = "Supported platforms: YouTube, Twitter/X, TikTok, Facebook Ads, and general websites.";
+
+/**
  * Detect platform from URL
  */
 type Platform = "youtube" | "twitter" | "tiktok" | "facebook_ad" | "website";
@@ -85,7 +90,7 @@ const readLinkTool = createTool({
     } catch {
       return {
         success: false,
-        error: "Invalid URL format. Please provide a valid URL.",
+        error: `Invalid URL format. Please provide a valid URL. ${SUPPORTED_PLATFORMS_MSG}`,
         platform: null,
         content: null,
       };
@@ -410,7 +415,7 @@ const readLinkTool = createTool({
           if (!markdown) {
             return {
               success: false,
-              error: "Could not extract content from website",
+              error: `Could not extract content from this website. The page may be behind authentication, use JavaScript rendering, or block scraping. ${SUPPORTED_PLATFORMS_MSG}`,
               platform,
               content: null,
             };
@@ -431,7 +436,7 @@ const readLinkTool = createTool({
       console.error(`[readLink] Error reading ${platform}:`, error);
       return {
         success: false,
-        error: error?.message || `Failed to read ${platform} content`,
+        error: `Failed to read ${platform} content: ${error?.message || "Unknown error"}. ${SUPPORTED_PLATFORMS_MSG}`,
         platform,
         content: null,
       };

@@ -123,7 +123,7 @@
 - [x] Loading state shows spinner while document is loading
 - [x] Updated title persists and shows in documents list after save
 
-### Link Reading Tool (US-LR-001, US-LR-003)
+### Link Reading Tool (US-LR-001, US-LR-002, US-LR-003)
 - [x] User pastes YouTube URL in chat, AI uses readLink tool to extract transcript
 - [x] AI receives structured content (title, transcript, URL) and incorporates into response
 - [x] Tool detects platform from URL (YouTube, Twitter, TikTok, Facebook Ads, websites)
@@ -133,3 +133,6 @@
 - [x] Tool display includes clickable "View original" link to source URL
 - [x] Platform icons display correctly (YouTube red, Twitter blue, Globe for website)
 - [x] Styling consistent with existing tool displays (card with border, spacing)
+- [x] Invalid URL format returns helpful error with supported platforms list
+- [x] Failed extractions include supported platforms in error message
+- [x] AI responds helpfully when given invalid URL, suggesting valid formats and supported platforms

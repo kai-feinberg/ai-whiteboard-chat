@@ -28,46 +28,7 @@ Collection of improvements to enhance AI chat capabilities, document management,
 
 ### Feature 2: Documents System
 
-#### US-DOC-003: Create Documents List Page
-
-**Description:** As a user, I want to see all my documents in a dedicated section so I can find and manage them.
-
-**Required Reading:**
-- `src/routes/index.tsx` → dashboard patterns (canvas list)
-- `src/components/ui/` → UI component patterns
-- Use context7 MCP for shadcn/ui patterns
-
-**Acceptance Criteria:**
-- [ ] Create route `/documents` at `src/routes/documents/index.tsx`
-- [ ] Add "Documents" link in main navigation/header
-- [ ] Page lists all org documents with title, last updated date
-- [ ] "New Document" button creates empty document and navigates to editor
-- [ ] Delete button with confirmation dialog
-- [ ] Empty state when no documents exist
-- [ ] Loading state while fetching
-- [ ] `pnpm typecheck` passes
-- [ ] **Verify in browser using agent-browser skill**
-
----
-
-#### US-DOC-004: Create Document Editor Page
-
-**Description:** As a user, I want to edit a document with basic text/markdown so I can save notes and AI responses.
-
-**Required Reading:**
-- `src/routes/canvas/$canvasId.tsx` → route param patterns
-- Use context7 MCP for textarea/editor patterns
-
-**Acceptance Criteria:**
-- [ ] Create route `/documents/$documentId` at `src/routes/documents/$documentId.tsx`
-- [ ] Editable title field (auto-saves on blur or debounced)
-- [ ] Large textarea/editor for content (markdown supported)
-- [ ] Auto-save content on changes (debounced, ~1s delay)
-- [ ] "Saved" / "Saving..." indicator
-- [ ] Back button returns to documents list
-- [ ] 404 handling if document doesn't exist or wrong org
-- [ ] `pnpm typecheck` passes
-- [ ] **Verify in browser using agent-browser skill**
+(All Document System stories completed - see completed-stories.md)
 
 ---
 
@@ -287,7 +248,7 @@ Recommended sequence for minimal dependencies:
 3. ~~**US-DOC-003** - Documents list page (user-visible)~~ ✅ DONE
 4. ~~**US-DOC-004** - Document editor (core functionality)~~ ✅ DONE
 5. ~~**US-LR-001** - readLink tool (independent)~~ ✅ DONE
-6. **US-LR-002** - Unsupported URL handling (polish)
+6. ~~**US-LR-002** - Unsupported URL handling (polish)~~ ✅ DONE
 7. ~~**US-LR-003** - Tool display in chat UI (user-visible)~~ ✅ DONE
 8. **US-CHAT-002** - Chat hub query (foundation for UI)
 9. **US-CHAT-001** - Chat hub page (user-visible)
