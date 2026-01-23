@@ -212,3 +212,4 @@ Recommended sequence for minimal dependencies:
 9. ~~**US-CHAT-001** - Chat hub page (user-visible)~~ ✅ DONE (superseded by US-NAV-001)
 10. ~~**US-NAV-001** - Dashboard chat links (quick win)~~ ✅ DONE
 11. ~~**US-NAV-002** - Canvas switcher dropdown in chat header~~ ✅ DONE
+12. ~~**US-LR-004** - Enhanced loading indicator and full content modal~~ ✅ DONE

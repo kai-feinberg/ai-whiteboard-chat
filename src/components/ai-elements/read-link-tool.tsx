@@ -1,18 +1,28 @@
 "use client";
 
 import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
 import { cn } from "~/lib/utils";
 import {
   CheckCircleIcon,
-  ClockIcon,
   ExternalLinkIcon,
   AlertCircleIcon,
   YoutubeIcon,
   TwitterIcon,
   GlobeIcon,
   LinkIcon,
+  Loader2Icon,
+  ExpandIcon,
 } from "lucide-react";
-import type { ComponentProps } from "react";
+import { useState, type ComponentProps } from "react";
 
 // Platform icons
 const PlatformIcon = ({ platform }: { platform: string | null }) => {
@@ -73,6 +83,18 @@ const truncateText = (text: string, maxLength: number): string => {
   return text.substring(0, maxLength).trim() + "...";
 };
 
+// Get full text from content (without truncation)
+const getFullText = (content: Record<string, unknown> | null): string | null => {
+  if (!content) return null;
+  return (
+    (content.transcript as string) ||
+    (content.text as string) ||
+    (content.markdown as string) ||
+    (content.body as string) ||
+    null
+  );
+};
+
 // Extract title from content based on platform
 const getTitle = (content: Record<string, unknown> | null): string => {
   if (!content) return "Unknown";
@@ -125,6 +147,8 @@ export function ReadLinkTool({
   className,
   ...props
 }: ReadLinkToolProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // Parse input
   const url =
     typeof input === "string" ? input : typeof input === "object" ? input?.url : undefined;
@@ -137,12 +161,18 @@ export function ReadLinkTool({
   const platform = output?.platform ?? null;
   const content = output?.content ?? null;
   const errorMessage = output?.error ?? "Failed to read link";
+  const fullText = getFullText(content);
+  const author = getAuthor(content);
+  const preview = getPreview(content);
+  const title = getTitle(content);
+  const hasMoreContent = fullText !== null && fullText.length > 200;
 
   return (
     <div
       className={cn(
         "rounded-lg border bg-card p-3 my-2",
         isError && "border-destructive/50 bg-destructive/5",
+        isLoading && "border-primary/30 bg-primary/5",
         className
       )}
       {...props}
@@ -150,7 +180,7 @@ export function ReadLinkTool({
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
         {isLoading ? (
-          <ClockIcon className="size-4 animate-pulse text-muted-foreground" />
+          <Loader2Icon className="size-4 animate-spin text-primary" />
         ) : isError ? (
           <AlertCircleIcon className="size-4 text-destructive" />
         ) : (
@@ -169,9 +199,19 @@ export function ReadLinkTool({
         )}
       </div>
 
-      {/* Loading state */}
-      {isLoading && url && (
-        <div className="text-xs text-muted-foreground truncate">{url}</div>
+      {/* Loading state - enhanced with URL and progress indicator */}
+      {isLoading && (
+        <div className="space-y-2">
+          {url && (
+            <div className="text-xs text-muted-foreground truncate">{url}</div>
+          )}
+          <div className="flex items-center gap-2">
+            <div className="h-1 flex-1 bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary/60 rounded-full animate-pulse w-2/3" />
+            </div>
+            <span className="text-xs text-muted-foreground">Fetching content...</span>
+          </div>
+        </div>
       )}
 
       {/* Error state */}
@@ -183,34 +223,87 @@ export function ReadLinkTool({
       {isSuccess && content && (
         <div className="space-y-2">
           {/* Title */}
-          <div className="font-medium text-sm">{getTitle(content)}</div>
+          <div className="font-medium text-sm">{title}</div>
 
           {/* Author if available */}
-          {Boolean(getAuthor(content)) && (
+          {author && (
             <div className="text-xs text-muted-foreground">
-              by {getAuthor(content)}
+              by {author}
             </div>
           )}
 
           {/* Preview */}
-          {getPreview(content) !== null && (
+          {preview && (
             <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded max-h-24 overflow-y-auto">
-              {getPreview(content)}
+              {preview}
             </div>
           )}
 
-          {/* Link to original */}
-          {typeof content.url === "string" && (
-            <a
-              href={content.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-            >
-              <ExternalLinkIcon className="size-3" />
-              View original
-            </a>
-          )}
+          {/* Actions row */}
+          <div className="flex items-center gap-3">
+            {/* Link to original */}
+            {typeof content.url === "string" && (
+              <a
+                href={content.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <ExternalLinkIcon className="size-3" />
+                View original
+              </a>
+            )}
+
+            {/* View full content button */}
+            {hasMoreContent && (
+              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto py-0 px-1 text-xs text-primary hover:underline"
+                  >
+                    <ExpandIcon className="size-3 mr-1" />
+                    View full content
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <PlatformIcon platform={platform} />
+                      {title}
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                      Full content from {getPlatformLabel(platform)}
+                    </DialogDescription>
+                    {author && (
+                      <p className="text-sm text-muted-foreground">
+                        by {author}
+                      </p>
+                    )}
+                  </DialogHeader>
+                  <div className="flex-1 overflow-y-auto">
+                    <pre className="text-sm whitespace-pre-wrap font-sans bg-muted/50 p-4 rounded-lg">
+                      {fullText}
+                    </pre>
+                  </div>
+                  {typeof content.url === "string" && (
+                    <div className="pt-4 border-t">
+                      <a
+                        href={content.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                      >
+                        <ExternalLinkIcon className="size-4" />
+                        View original source
+                      </a>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -164,4 +164,22 @@
   - This triggers existing auto-select effect to pick first thread from new canvas
 - Browser testing verified: dropdown opens, canvas switching works, thread auto-selects
 - PRD COMPLETE - All stories including new US-NAV-002 are done
-- Next developer: All features implemented. PRD miscellaneous improvements is complete.
+
+### 2026-01-23: US-LR-004 - Enhanced Loading Indicator and Full Content Modal
+- Improved ReadLinkTool component with better UX for loading states and content viewing
+- Loading state changes:
+  - Replaced ClockIcon with Loader2Icon (animate-spin) for clearer visual feedback
+  - Added progress bar animation with pulse effect
+  - Added "Fetching content..." text
+  - Card now has primary border/background tint (border-primary/30 bg-primary/5) during loading
+- Full content modal:
+  - Added Dialog component with DialogTrigger button "View full content"
+  - Button only appears when transcript > 200 characters
+  - Modal shows platform icon, title, author (if available), scrollable full text
+  - "View original source" link at bottom of modal
+- Code cleanup from logic review:
+  - Added DialogDescription with sr-only class for accessibility compliance
+  - Hoisted computed values (author, preview, title, fullText) to avoid redundant function calls
+  - Made hasMoreContent check explicit: `fullText !== null && fullText.length > 200`
+- Browser testing verified: loading state, completed state, modal all working correctly
+- Next developer: PRD miscellaneous improvements is COMPLETE. All features implemented.

@@ -219,3 +219,31 @@
 - `convex/canvas/functions.ts` (added listCanvasesWithChats query)
 - `src/routes/canvas/$canvasId/chat.tsx` (added dropdown to header)
 
+---
+
+## US-LR-004: Enhanced Link Reading Tool Loading Indicator and Full Content Modal (2026-01-23)
+
+**Description:** Improved the ReadLinkTool component with a better loading indicator and a modal to view the full extracted content/transcript.
+
+**Acceptance Criteria (all met):**
+- [x] Loading state shows spinner icon (Loader2Icon) instead of clock icon
+- [x] Loading state displays URL being fetched and progress bar animation
+- [x] Loading state card has primary border/background tint for visibility
+- [x] "Fetching content..." text displayed during loading
+- [x] "View full content" button appears when transcript is longer than 200 characters
+- [x] Clicking "View full content" opens modal with full transcript
+- [x] Modal shows platform icon, title, author (if available), and scrollable full text
+- [x] Modal includes "View original source" link at bottom
+- [x] Modal has proper accessibility (DialogDescription for screen readers)
+
+**Implementation Notes:**
+- Replaced ClockIcon with Loader2Icon (animate-spin) for clearer loading indicator
+- Added progress bar animation with pulse effect
+- Used shadcn Dialog component for the full content modal
+- Added `getFullText()` helper to extract complete text without truncation
+- Hoisted computed values (author, preview, title) to avoid redundant function calls
+- Added DialogDescription with sr-only class for accessibility compliance
+
+**Files changed:**
+- `src/components/ai-elements/read-link-tool.tsx` (enhanced loading state, added modal)
+
