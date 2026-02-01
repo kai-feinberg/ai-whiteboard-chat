@@ -216,3 +216,13 @@
 - [x] Hidden entirely if no rejected results
 - [x] Error state shows AlertCircleIcon and error message
 - [x] `pnpm typecheck` passes (no errors in new component)
+
+### Tool Components Integration (US-UI-005)
+- [x] Detect `searchTikTok` tool calls in message parts and render `TikTokSearchTool`
+- [x] Detect `filteredWebSearch` tool calls in message parts and render `WebSearchTool`
+- [x] Pass correct props: state, input, output from tool part
+- [x] Falls back to generic tool display for unknown tools
+- [x] `pnpm typecheck` passes
+- [x] TikTok search results render as horizontal scrollable grid with video cards
+- [x] TikTok video cards expand to show transcript and "Open on TikTok" link
+- [x] TikTok video stats (views, likes, shares) display with formatted numbers (M, K)

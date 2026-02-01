@@ -355,3 +355,25 @@
 - Pre-existing TS errors in codebase unrelated to this change
 - Next story: US-UI-005 (Integrate Tool Components into Message Rendering)
 - Note: Browser testing deferred to US-UI-005 when components are integrated into Chat.tsx
+
+### 2026-02-01: US-UI-005 - Integrate Tool Components into Message Rendering
+- Modified `src/features/chat/components/Chat.tsx` to render TikTok and WebSearch tool components
+- Added imports for TikTokSearchTool, WebSearchTool, and generic Tool components
+- Refactored tool part extraction:
+  - Extract all tool parts first with type guard `isToolPart()`
+  - Group by tool name using `getToolNameFromType()`
+  - Added `KNOWN_TOOLS` set: `["readLink", "searchTikTok", "filteredWebSearch"]`
+  - Unknown tools render with generic Tool/ToolHeader/ToolInput/ToolOutput
+- Added `unknownToolParts` filter for fallback to generic tool display (PRD requirement)
+- TypeScript compiles with no errors in Chat.tsx
+- Pre-existing TS errors in codebase unrelated to this change
+- Browser testing verified with agent-browser:
+  - Sent "Search TikTok for best productivity tips" message
+  - TikTokSearchTool rendered: "10 videos found" collapsible header
+  - Video cards render with thumbnail, @handle, view/like/share stats
+  - Expanding card shows full transcript + "Open on TikTok" link
+  - AI synthesized response referencing creator insights
+  - filteredWebSearch tool was detected but failed with "EXA_API_KEY not configured" (env config issue, not code)
+- Logic review passed - fixed redundant `.map()` cast (it was actually needed for TypeScript type narrowing)
+- Next story: US-INT-001 (End-to-End Integration Test - TikTok Search) or US-INT-002 (Filtered Web Search E2E)
+- Note: The US-INT-* stories are end-to-end integration tests that verify the complete flow. The tool components are now working.

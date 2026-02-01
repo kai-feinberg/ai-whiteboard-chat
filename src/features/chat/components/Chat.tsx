@@ -15,6 +15,9 @@ import {
   PromptInputSubmit,
 } from "@/components/ai-elements/prompt-input";
 import { ReadLinkTool, type ToolState } from "@/components/ai-elements/read-link-tool";
+import { TikTokSearchTool, type TikTokSearchToolOutput } from "@/components/ai-elements/tiktok-results";
+import { WebSearchTool, type WebSearchToolOutput } from "@/components/ai-elements/web-search-results";
+import { Tool, ToolHeader, ToolInput, ToolOutput } from "@/components/ai-elements/tool";
 import { MessageSquare, Loader2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { useSmoothText, type UIMessage } from "@convex-dev/agent/react";
@@ -61,6 +64,9 @@ function getToolNameFromType(type: string): string {
   return type.replace(/^tool-/, "");
 }
 
+// Known tool names with custom UI rendering
+const KNOWN_TOOLS = new Set(["readLink", "searchTikTok", "filteredWebSearch"]);
+
 // Component for rendering a message with smooth text streaming
 function StreamingMessage({ message }: { message: UIMessage }) {
   const [visibleText] = useSmoothText(message.text, {
@@ -80,16 +86,25 @@ function StreamingMessage({ message }: { message: UIMessage }) {
     }
   };
 
-  // Extract readLink tool parts from message.parts
-  const readLinkParts = (message.parts || [])
-    .filter((part) => isToolPart(part) && getToolNameFromType((part as ToolPartType).type) === "readLink")
+  // Extract tool parts from message.parts
+  const toolParts: ToolPartType[] = (message.parts || [])
+    .filter(isToolPart)
     .map((part) => part as ToolPartType);
+
+  // Group by tool name
+  const readLinkParts = toolParts.filter((part) => getToolNameFromType(part.type) === "readLink");
+  const tiktokParts = toolParts.filter((part) => getToolNameFromType(part.type) === "searchTikTok");
+  const webSearchParts = toolParts.filter((part) => getToolNameFromType(part.type) === "filteredWebSearch");
+  // Unknown tools fallback to generic display
+  const unknownToolParts = toolParts.filter((part) => !KNOWN_TOOLS.has(getToolNameFromType(part.type)));
+
+  const hasAnyToolParts = toolParts.length > 0;
 
   return (
     <Message from={message.role} key={message.id}>
       <MessageContent>
         {/* Show loading indicator if streaming and no text yet and no tool parts */}
-        {message.status === "streaming" && !visibleText && readLinkParts.length === 0 && (
+        {message.status === "streaming" && !visibleText && !hasAnyToolParts && (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>AI is thinking...</span>
@@ -113,6 +128,38 @@ function StreamingMessage({ message }: { message: UIMessage }) {
                 | undefined
             }
           />
+        ))}
+
+        {/* Render searchTikTok tool results */}
+        {tiktokParts.map((part) => (
+          <TikTokSearchTool
+            key={part.toolCallId}
+            state={part.state}
+            input={part.input as { query?: string } | string | undefined}
+            output={part.output as TikTokSearchToolOutput | undefined}
+          />
+        ))}
+
+        {/* Render filteredWebSearch tool results */}
+        {webSearchParts.map((part) => (
+          <WebSearchTool
+            key={part.toolCallId}
+            state={part.state}
+            input={part.input as { query?: string } | string | undefined}
+            output={part.output as WebSearchToolOutput | undefined}
+          />
+        ))}
+
+        {/* Fallback: generic tool display for unknown tools */}
+        {unknownToolParts.map((part) => (
+          <Tool key={part.toolCallId}>
+            <ToolHeader
+              type={part.type as `tool-${string}`}
+              state={part.state}
+            />
+            <ToolInput input={part.input} />
+            <ToolOutput output={part.output} errorText={part.errorText} />
+          </Tool>
         ))}
 
         {/* Show the text response */}

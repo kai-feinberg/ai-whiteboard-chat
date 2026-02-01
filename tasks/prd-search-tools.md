@@ -23,25 +23,6 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ---
 
-### US-UI-005: Integrate Tool Components into Message Rendering
-
-**Description:** As a developer, I need to render the new tool components when tool calls appear in chat messages.
-
-**Required Reading:**
-- `src/components/ai-elements/message.tsx` or conversation rendering code
-- `src/components/ai-elements/tool.tsx` → existing tool display pattern
-
-**Acceptance Criteria:**
-- [ ] Detect `searchTikTok` and `filteredWebSearch` tool calls in message parts
-- [ ] Render `TikTokSearchTool` for searchTikTok calls
-- [ ] Render `WebSearchTool` for filteredWebSearch calls
-- [ ] Pass correct props: state, input, output from tool part
-- [ ] Falls back to generic tool display for unknown tools
-- [ ] `pnpm typecheck` passes
-- [ ] **Use agent-browser to test**: send message that triggers each tool, verify custom UI renders
-
----
-
 ### US-INT-001: End-to-End Integration Test - TikTok Search
 
 **Description:** As a developer, I need to verify the complete TikTok search flow works in a real browser session.

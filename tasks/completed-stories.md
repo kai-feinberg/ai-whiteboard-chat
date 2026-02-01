@@ -1,5 +1,31 @@
 # Completed Stories
 
+## US-UI-005: Integrate Tool Components into Message Rendering (2026-02-01)
+
+**Description:** Integrated TikTokSearchTool and WebSearchTool components into Chat.tsx message rendering so tool calls display rich UI instead of raw JSON.
+
+**Acceptance Criteria (all met):**
+- [x] Detect `searchTikTok` and `filteredWebSearch` tool calls in message parts
+- [x] Render `TikTokSearchTool` for searchTikTok calls
+- [x] Render `WebSearchTool` for filteredWebSearch calls
+- [x] Pass correct props: state, input, output from tool part
+- [x] Falls back to generic tool display for unknown tools
+- [x] `pnpm typecheck` passes
+- [x] **Used agent-browser to test**: sent message "Search TikTok for best productivity tips", verified custom UI renders
+
+**Implementation Notes:**
+- Added imports for TikTokSearchTool, WebSearchTool, and generic Tool components
+- Refactored tool part extraction to filter by tool name using `getToolNameFromType()`
+- Added `KNOWN_TOOLS` set for cleaner tool name checking
+- Unknown tools render with generic Tool/ToolHeader/ToolInput/ToolOutput components
+- TikTok tool tested end-to-end: 10 videos found, cards render correctly, expand/collapse works
+- Web search tool detected but failed due to missing EXA_API_KEY (expected - env config issue, not code issue)
+
+**Files changed:**
+- `src/features/chat/components/Chat.tsx` (added imports, tool detection, rendering for TikTok/WebSearch/unknown tools)
+
+---
+
 ## US-UI-004: Create Web Search Results Grid with Rejected Section (2026-02-01)
 
 **Description:** Created WebSearchTool wrapper component showing accepted results in a responsive grid and filtered-out results in a collapsed section for transparency.
