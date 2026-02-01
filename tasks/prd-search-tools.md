@@ -23,26 +23,6 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ---
 
-### US-FWS-003: Create filteredWebSearch Tool
-
-**Description:** As a user, I want the AI to search the web and automatically filter out junk so I get high-quality information.
-
-**Required Reading:**
-- `convex/chat/functions.ts` → agent creation pattern
-- Vercel AI SDK `tool()` helper docs via context7 MCP
-- `plans/deep-search.md` → tool definition pattern
-
-**Acceptance Criteria:**
-- [ ] Define `filteredWebSearch` tool with Zod schema: `{ query: string }`
-- [ ] Tool description explains it searches web and filters for quality
-- [ ] Tool orchestrates: search via Exa → filter via Haiku → return structured output
-- [ ] Output schema: `{ success, accepted[], rejected[], searchTime, filterTime, error? }`
-- [ ] Register tool in agent definition (modify `createChatAgent` or create new agent)
-- [ ] Tool accessible from chat sendMessage flow
-- [ ] `pnpm typecheck` passes
-
----
-
 ### US-TK-001: Implement TikTok Search API Integration
 
 **Description:** As a developer, I need to integrate the Scrape Creators API to search TikTok by keyword and fetch video transcripts.

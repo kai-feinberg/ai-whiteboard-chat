@@ -10,6 +10,7 @@ import { convertUsdToCredits } from "../ai/pricing";
 import { deductCreditsWithPriority } from "../ai/credits";
 import { z } from "zod";
 import Firecrawl from "@mendable/firecrawl-js";
+import { fetchExaSearch, filterSearchResults } from "../chat/tools";
 
 /**
  * Supported platforms message for error handling
@@ -445,6 +446,84 @@ const readLinkTool = createTool({
 });
 
 /**
+ * Tool for AI to search the web and filter results for quality
+ * Orchestrates: Exa search → Haiku filtering → structured output
+ */
+const filteredWebSearchTool = createTool({
+  description: "Search the web for articles and automatically filter out promotional content, spam, and paywalled articles. Returns curated, high-quality search results with full article text. Use this for informational queries that need web research, current events, product reviews, or technical information.",
+  args: z.object({
+    query: z.string().describe("Search query for web articles"),
+  }),
+  handler: async (_ctx, args) => {
+    console.log(`[filteredWebSearch] Searching for: ${args.query}`);
+
+    try {
+      // Phase 1: Search via Exa
+      const searchStart = Date.now();
+      const searchResults = await fetchExaSearch(args.query, 10);
+      const searchTime = Date.now() - searchStart;
+
+      console.log(`[filteredWebSearch] Exa returned ${searchResults.length} results in ${searchTime}ms`);
+
+      if (searchResults.length === 0) {
+        return {
+          success: true,
+          accepted: [],
+          rejected: [],
+          searchTime,
+          filterTime: 0,
+          message: `No web results found for "${args.query}"`,
+        };
+      }
+
+      // Phase 2: Filter through Haiku
+      const filterStart = Date.now();
+      const filtered = await filterSearchResults(searchResults);
+      const filterTime = Date.now() - filterStart;
+
+      console.log(`[filteredWebSearch] Filtering: ${filtered.accepted.length} accepted, ${filtered.rejected.length} rejected in ${filterTime}ms`);
+
+      // Transform to output format with summaries
+      const accepted = filtered.accepted.map((r) => ({
+        url: r.url,
+        title: r.title,
+        author: r.author,
+        publishedDate: r.publishedDate,
+        text: r.text,
+        summary: r.text.slice(0, 300) + (r.text.length > 300 ? "..." : ""),
+        image: r.image,
+        favicon: r.favicon,
+      }));
+
+      const rejected = filtered.rejected.map((r) => ({
+        url: r.url,
+        title: r.title,
+        reason: r.rejectionReason,
+        summary: r.text.slice(0, 200) + (r.text.length > 200 ? "..." : ""),
+      }));
+
+      return {
+        success: true,
+        accepted,
+        rejected,
+        searchTime,
+        filterTime,
+      };
+    } catch (error: any) {
+      console.error("[filteredWebSearch] Error:", error);
+      return {
+        success: false,
+        accepted: [],
+        rejected: [],
+        searchTime: 0,
+        filterTime: 0,
+        error: error?.message || "Unknown error occurred",
+      };
+    }
+  },
+});
+
+/**
  * Tool for AI to generate images on the canvas
  */
 const generateImageTool = createTool({
@@ -547,6 +626,7 @@ function createCanvasChatAgent(
     tools: {
       generateImage: generateImageTool,
       readLink: readLinkTool,
+      filteredWebSearch: filteredWebSearchTool,
     },
     usageHandler: async (ctx, args) => {
       const {

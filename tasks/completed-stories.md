@@ -1,5 +1,31 @@
 # Completed Stories
 
+## US-FWS-003: Create filteredWebSearch Tool (2026-02-01)
+
+**Description:** Created the `filteredWebSearch` AI tool that searches the web via Exa API and filters results through Claude Haiku to remove promotional, spam, and paywalled content.
+
+**Acceptance Criteria (all met):**
+- [x] Defined `filteredWebSearch` tool with Zod schema: `{ query: string }`
+- [x] Tool description explains it searches web and filters for quality
+- [x] Tool orchestrates: search via Exa → filter via Haiku → return structured output
+- [x] Output schema: `{ success, accepted[], rejected[], searchTime, filterTime, error? }`
+- [x] Registered tool in agent definition (added to `createCanvasChatAgent`)
+- [x] Tool accessible from chat sendMessage flow
+- [x] Convex codegen passes (pre-existing frontend TS errors unrelated)
+
+**Implementation Notes:**
+- Uses `createTool` from `@convex-dev/agent` (following existing readLinkTool pattern)
+- Imports helper functions `fetchExaSearch` and `filterSearchResults` from `convex/chat/tools.ts`
+- Two-phase execution with timing: Exa search phase, then Haiku filtering phase
+- Transforms results to include summaries (300 chars for accepted, 200 chars for rejected)
+- Error handling returns structured error response instead of throwing
+- Registered in agent's tools object alongside `generateImage`, `readLink`
+
+**Files changed:**
+- `convex/canvas/chat.ts` (added import, filteredWebSearchTool definition, tool registration)
+
+---
+
 ## US-FWS-002: Implement Haiku Filtering Step (2026-02-01)
 
 **Description:** Created filter function that evaluates Exa search results through Claude Haiku to remove promotional, spam, and paywalled content.

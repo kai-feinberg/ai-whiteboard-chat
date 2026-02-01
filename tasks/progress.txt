@@ -240,3 +240,19 @@
 - Convex codegen passes (pre-existing TS errors in frontend unrelated)
 - Logic review approved - all acceptance criteria met
 - Next story: US-FWS-003 (Create filteredWebSearch Tool)
+
+### 2026-02-01: US-FWS-003 - Create filteredWebSearch Tool
+- Created `filteredWebSearchTool` in `convex/canvas/chat.ts` using `createTool` pattern
+- Tool defined with Zod schema: `{ query: string }`
+- Tool orchestrates: search via Exa → filter via Haiku → return structured output
+- Output schema: `{ success, accepted[], rejected[], searchTime, filterTime, error? }`
+- Imports `fetchExaSearch` and `filterSearchResults` from `convex/chat/tools.ts`
+- Two-phase execution with timing measurement for both search and filter phases
+- Transforms results to include summaries (300 chars accepted, 200 chars rejected)
+- Error handling returns structured error response (success: false) instead of throwing
+- Registered tool in agent's tools object alongside `generateImage`, `readLink`
+- Convex codegen passes (pre-existing frontend TS errors unrelated)
+- Logic review approved - all acceptance criteria met
+- Browser testing verified: tool is registered and accessible from chat sendMessage flow
+- Note: AI doesn't always use the tool automatically - agent instructions may need to be updated to mention when to use filteredWebSearch (separate story)
+- Next story: US-TK-001 (Implement TikTok Search API Integration)
