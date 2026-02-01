@@ -329,5 +329,29 @@
   - Added aria-label for accessibility
 - TypeScript compiles with no errors in new component
 - Pre-existing TS errors in codebase unrelated to this change
-- Next story: US-UI-004 (Create Web Search Results Grid with Rejected Section)
+- Note: Browser testing deferred to US-UI-005 when components are integrated into Chat.tsx
+
+### 2026-02-01: US-UI-004 - Web Search Results Grid with Rejected Section
+- Extended `src/components/ai-elements/web-search-results.tsx` with WebSearchTool wrapper
+- Component structure:
+  - `WebSearchTool` wrapper handles tool state + renders results grid
+  - Loading state: "Searching & filtering web..." with spinner + progress bar
+  - Error state: AlertCircleIcon + error message
+  - Success state: collapsible accepted grid + collapsible rejected section
+- Accepted results grid:
+  - Responsive: 1 col mobile, 2 col tablet (`sm:grid-cols-2`), 3 col desktop (`lg:grid-cols-3`)
+  - Uses existing `WebSearchCard` component from US-UI-003
+  - Collapsible header: "X results found"
+- Rejected results section:
+  - Collapsed by default, hidden if no rejected results
+  - Uses muted styling: `text-muted-foreground`, `bg-muted/30`
+  - Shows title + italic rejection reason per result
+  - FilterIcon + "X results filtered out" header
+- Logic review findings (all addressed):
+  - HIGH: Two-phase loading logic was broken (both branches went to "filtering")
+    - FIXED: Simplified to single-phase since tool doesn't stream partial timing data
+  - LOW: Rejected trigger missing focus-visible styling - FIXED
+- TypeScript compiles with no errors in new component
+- Pre-existing TS errors in codebase unrelated to this change
+- Next story: US-UI-005 (Integrate Tool Components into Message Rendering)
 - Note: Browser testing deferred to US-UI-005 when components are integrated into Chat.tsx

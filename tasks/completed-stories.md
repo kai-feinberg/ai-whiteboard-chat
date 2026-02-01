@@ -1,5 +1,33 @@
 # Completed Stories
 
+## US-UI-004: Create Web Search Results Grid with Rejected Section (2026-02-01)
+
+**Description:** Created WebSearchTool wrapper component showing accepted results in a responsive grid and filtered-out results in a collapsed section for transparency.
+
+**Acceptance Criteria (all met):**
+- [x] Created `WebSearchTool` wrapper component in `src/components/ai-elements/web-search-results.tsx`
+- [x] Shows loading state with spinner: "Searching & filtering web..." (simplified from two-phase due to tool not streaming partial state)
+- [x] Accepted results in responsive grid (1 col mobile, 2 col tablet, 3 col desktop)
+- [x] Entire accepted results section is collapsible with "X results found" header
+- [x] Below accepted results: collapsed "X results filtered out" section
+- [x] Filtered section shows: title, rejection reason, muted styling
+- [x] Hidden entirely if no rejected results
+- [x] Error state if search failed (AlertCircleIcon + error message)
+- [x] `pnpm typecheck` passes (no errors in new component)
+
+**Implementation Notes:**
+- Loading state simplified to single phase since tool doesn't stream intermediate timing data
+- Responsive grid uses Tailwind classes: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+- Rejected section uses muted styling with FilterIcon and italic rejection reason
+- Accessibility: aria-labels on both collapsible triggers, focus-visible rings for keyboard navigation
+- `ToolState` type duplicated from tiktok-results.tsx (to be extracted to shared types in future)
+- Follows TikTokSearchTool patterns for consistency
+
+**Files changed:**
+- `src/components/ai-elements/web-search-results.tsx` (extended with WebSearchTool component)
+
+---
+
 ## US-UI-003: Web Search Results Card Component (2026-02-01)
 
 **Description:** Created UI component for displaying accepted web search results as article cards with metadata.

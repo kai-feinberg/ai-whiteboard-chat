@@ -205,3 +205,14 @@
 - [x] Handle missing images gracefully (hide image section)
 - [x] Clicking card opens article URL in new tab
 - [x] `pnpm typecheck` passes (no errors in new component)
+
+### Web Search Results Grid with Rejected Section (US-UI-004)
+- [x] `WebSearchTool` wrapper component created in `src/components/ai-elements/web-search-results.tsx`
+- [x] Shows loading state with spinner: "Searching & filtering web..."
+- [x] Accepted results in responsive grid (1 col mobile, 2 col tablet, 3 col desktop)
+- [x] Entire accepted results section is collapsible with "X results found" header
+- [x] Below accepted results: collapsed "X results filtered out" section
+- [x] Filtered section shows: title, rejection reason, muted styling
+- [x] Hidden entirely if no rejected results
+- [x] Error state shows AlertCircleIcon and error message
+- [x] `pnpm typecheck` passes (no errors in new component)

@@ -23,27 +23,6 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ---
 
-### US-UI-004: Create Web Search Results Grid with Rejected Section
-
-**Description:** As a user, I want to see accepted results in a grid and filtered-out results in a collapsed section for transparency.
-
-**Required Reading:**
-- `src/components/ui/collapsible.tsx` → nested collapsible pattern
-
-**Acceptance Criteria:**
-- [ ] Create `WebSearchTool` wrapper component
-- [ ] Shows two-phase loading: "Searching web..." → "Filtering results..."
-- [ ] Accepted results in responsive grid (1 col mobile, 2 col tablet, 3 col desktop)
-- [ ] Entire accepted results section is collapsible with "X results found" header
-- [ ] Below accepted results: collapsed "X results filtered out" section
-- [ ] Filtered section shows: title, rejection reason, muted styling
-- [ ] Hidden entirely if no rejected results
-- [ ] Error state if search failed
-- [ ] `pnpm typecheck` passes
-- [ ] **Use agent-browser to test**: loading phases show, grid renders, rejected section expands
-
----
-
 ### US-UI-005: Integrate Tool Components into Message Rendering
 
 **Description:** As a developer, I need to render the new tool components when tool calls appear in chat messages.
