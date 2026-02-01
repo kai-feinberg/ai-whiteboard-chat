@@ -226,3 +226,11 @@
 - [x] TikTok search results render as horizontal scrollable grid with video cards
 - [x] TikTok video cards expand to show transcript and "Open on TikTok" link
 - [x] TikTok video stats (views, likes, shares) display with formatted numbers (M, K)
+
+### TikTok Search E2E Integration Test (US-INT-001)
+- [x] Send message "Search TikTok for best productivity tips" in chat
+- [x] TikTok cards render in horizontal scroll grid showing thumbnail, @handle, engagement stats
+- [x] Clicking card header expands to show full transcript
+- [x] "Open on TikTok" link correctly opens video URL (e.g., tiktok.com/@ayshagonzalez/video/...)
+- [x] AI synthesizes response referencing creator insights (e.g., "Top Productivity Tips from TikTok")
+- [x] Clicking "10 videos found" header collapses/expands the results section

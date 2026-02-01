@@ -23,28 +23,6 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ---
 
-### US-INT-001: End-to-End Integration Test - TikTok Search
-
-**Description:** As a developer, I need to verify the complete TikTok search flow works in a real browser session.
-
-**Required Reading:**
-- `agent-browser` skill documentation
-- `scripts/browser-login.sh`
-
-**Acceptance Criteria:**
-- [ ] Start dev server with `pnpm dev`
-- [ ] Run `./scripts/browser-login.sh` to authenticate
-- [ ] Navigate to chat page, create new thread if needed
-- [ ] Send message: "Search TikTok for best productivity tips"
-- [ ] **Verify**: Loading spinner appears with "Searching TikTok..."
-- [ ] **Verify**: TikTok cards render in horizontal scroll grid
-- [ ] **Verify**: Cards show thumbnail, creator handle, engagement stats
-- [ ] **Verify**: Expanding a card shows transcript
-- [ ] **Verify**: "Open on TikTok" link opens correct URL
-- [ ] **Verify**: AI synthesizes response referencing creator insights
-
----
-
 ### US-INT-002: End-to-End Integration Test - Filtered Web Search
 
 **Description:** As a developer, I need to verify the complete filtered web search flow works in a real browser session.

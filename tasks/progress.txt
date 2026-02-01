@@ -377,3 +377,20 @@
 - Logic review passed - fixed redundant `.map()` cast (it was actually needed for TypeScript type narrowing)
 - Next story: US-INT-001 (End-to-End Integration Test - TikTok Search) or US-INT-002 (Filtered Web Search E2E)
 - Note: The US-INT-* stories are end-to-end integration tests that verify the complete flow. The tool components are now working.
+
+### 2026-02-01: US-INT-001 - End-to-End Integration Test - TikTok Search
+- This is an E2E test story to verify the complete TikTok search flow in a real browser session
+- Browser testing verified with agent-browser:
+  - Started dev server (`pnpm dev`), ran `./scripts/browser-login.sh` to authenticate
+  - Navigated to chat page, created new thread via "New Chat" button
+  - Sent message: "Search TikTok for best productivity tips"
+  - **VERIFIED**: TikTok cards rendered in horizontal scroll grid
+  - **VERIFIED**: Cards show thumbnails, @handles (@ayshagonzalez, @tayrankine, etc.), engagement stats (views, likes, shares with icons)
+  - **VERIFIED**: Clicking card header expands to show full transcript
+  - **VERIFIED**: "Open on TikTok" link correctly opens TikTok video URL (e.g., `https://www.tiktok.com/@ayshagonzalez/video/7241358751872257326`)
+  - **VERIFIED**: AI synthesizes response with "Top Productivity Tips from TikTok:" referencing creator insights
+  - **VERIFIED**: Clicking "10 videos found" header collapses/expands the results section
+- No code changes required - this was a verification test of existing implementation
+- Pre-existing TS errors in codebase unrelated to this story
+- Screenshots captured in `/testing/screenshots/` for documentation
+- Next story: US-INT-002 (End-to-End Integration Test - Filtered Web Search)

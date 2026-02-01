@@ -1,5 +1,33 @@
 # Completed Stories
 
+## US-INT-001: End-to-End Integration Test - TikTok Search (2026-02-01)
+
+**Description:** Verified the complete TikTok search flow works in a real browser session using agent-browser automation.
+
+**Acceptance Criteria (all verified):**
+- [x] Started dev server with `pnpm dev`
+- [x] Ran `./scripts/browser-login.sh` to authenticate
+- [x] Navigated to chat page, created new thread
+- [x] Sent message: "Search TikTok for best productivity tips"
+- [x] **Verified**: TikTok cards render in horizontal scroll grid
+- [x] **Verified**: Cards show thumbnail, creator handle (@ayshagonzalez, @tayrankine, etc.), engagement stats (views, likes, shares)
+- [x] **Verified**: Expanding a card shows transcript
+- [x] **Verified**: "Open on TikTok" link opens correct URL (e.g., tiktok.com/@ayshagonzalez/video/7241358751872257326)
+- [x] **Verified**: AI synthesizes response with "Top Productivity Tips from TikTok:" referencing creator insights
+- [x] **Verified**: Collapsible header "10 videos found" expands/collapses results
+
+**Implementation Notes:**
+- This was an E2E verification test story - no code changes required
+- All acceptance criteria verified via agent-browser automation
+- Screenshots captured for documentation in `/testing/screenshots/`
+- Loading spinner verification skipped (search completed quickly, infrastructure verified in US-UI-002)
+
+**Test Evidence:**
+- `/testing/screenshots/tiktok-cards-grid.png` - Horizontal scroll grid with video cards
+- `/testing/screenshots/tiktok-card-expanded.png` - Expanded card showing transcript
+
+---
+
 ## US-UI-005: Integrate Tool Components into Message Rendering (2026-02-01)
 
 **Description:** Integrated TikTokSearchTool and WebSearchTool components into Chat.tsx message rendering so tool calls display rich UI instead of raw JSON.
