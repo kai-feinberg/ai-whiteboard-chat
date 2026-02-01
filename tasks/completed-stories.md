@@ -1,5 +1,30 @@
 # Completed Stories
 
+## US-TK-002: Create searchTikTok Tool (2026-02-01)
+
+**Description:** Created the `searchTikTok` AI tool that searches TikTok for videos about a topic and returns videos with transcripts for the AI to synthesize creator insights.
+
+**Acceptance Criteria (all met):**
+- [x] Defined `searchTikTok` tool with Zod schema: `{ query: string }`
+- [x] Tool description explains it searches TikTok for videos with transcripts
+- [x] Output schema: `{ success, videos[], totalFound?, message?, error? }`
+- [x] Registered tool in agent definition alongside filteredWebSearch
+- [x] Tool accessible from chat sendMessage flow
+- [x] Convex codegen passes
+
+**Implementation Notes:**
+- Created `searchTikTokTool` using `createTool` from `@convex-dev/agent`
+- Imports `fetchTikTokSearch` from `../chat/tools` (created in US-TK-001)
+- Hardcoded limit of 10 videos per search (matches PRD default)
+- Returns structured response: success case with `videos[]` and `totalFound`, empty results with `message`, error case with `error` string
+- Error handling returns structured error response instead of throwing
+- Tool registered in agent's tools object at line 671
+
+**Files changed:**
+- `convex/canvas/chat.ts` (added import for fetchTikTokSearch, searchTikTokTool definition, registered in agent tools)
+
+---
+
 ## US-TK-001: Implement TikTok Search API Integration (2026-02-01)
 
 **Description:** Integrated the Scrape Creators API to search TikTok by keyword and fetch video transcripts.

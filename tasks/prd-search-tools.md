@@ -25,24 +25,6 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ---
 
-### US-TK-002: Create searchTikTok Tool
-
-**Description:** As a user, I want the AI to search TikTok for videos about a topic so I can get creator insights and social media perspectives.
-
-**Required Reading:**
-- `convex/chat/functions.ts` → agent tool registration
-- `plans/deep-search.md` → tool definition reference
-
-**Acceptance Criteria:**
-- [ ] Define `searchTikTok` tool with Zod schema: `{ query: string }`
-- [ ] Tool description explains it searches TikTok for videos with transcripts
-- [ ] Output schema: `{ success, videos[], totalFound?, message?, error? }`
-- [ ] Register tool in agent definition alongside filteredWebSearch
-- [ ] Tool accessible from chat sendMessage flow
-- [ ] `pnpm typecheck` passes
-
----
-
 ### US-UI-001: Create TikTok Results Card Component
 
 **Description:** As a user, I want to see TikTok search results as visual cards with thumbnails and engagement stats.

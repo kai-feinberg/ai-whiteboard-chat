@@ -10,7 +10,7 @@ import { convertUsdToCredits } from "../ai/pricing";
 import { deductCreditsWithPriority } from "../ai/credits";
 import { z } from "zod";
 import Firecrawl from "@mendable/firecrawl-js";
-import { fetchExaSearch, filterSearchResults } from "../chat/tools";
+import { fetchExaSearch, filterSearchResults, fetchTikTokSearch } from "../chat/tools";
 
 /**
  * Supported platforms message for error handling
@@ -524,6 +524,47 @@ const filteredWebSearchTool = createTool({
 });
 
 /**
+ * Tool for AI to search TikTok for videos with transcripts
+ * Searches via Scrape Creators API
+ */
+const searchTikTokTool = createTool({
+  description: "Search TikTok for videos about a topic. Returns videos with view counts, likes, shares, creator handles, and transcripts of what creators said. Use this when users ask about products, trends, recommendations, or any topic that could benefit from real social media insights and creator opinions.",
+  args: z.object({
+    query: z.string().describe("Search query (e.g., 'best umbrellas for rain')"),
+  }),
+  handler: async (_ctx, args) => {
+    console.log(`[searchTikTok] Searching for: ${args.query}`);
+
+    try {
+      const videos = await fetchTikTokSearch(args.query, 10);
+
+      console.log(`[searchTikTok] Found ${videos.length} videos`);
+
+      if (videos.length === 0) {
+        return {
+          success: true,
+          videos: [],
+          message: `No TikTok videos found for "${args.query}"`,
+        };
+      }
+
+      return {
+        success: true,
+        videos,
+        totalFound: videos.length,
+      };
+    } catch (error: any) {
+      console.error("[searchTikTok] Error:", error);
+      return {
+        success: false,
+        videos: [],
+        error: error?.message || "Unknown error occurred",
+      };
+    }
+  },
+});
+
+/**
  * Tool for AI to generate images on the canvas
  */
 const generateImageTool = createTool({
@@ -627,6 +668,7 @@ function createCanvasChatAgent(
       generateImage: generateImageTool,
       readLink: readLinkTool,
       filteredWebSearch: filteredWebSearchTool,
+      searchTikTok: searchTikTokTool,
     },
     usageHandler: async (ctx, args) => {
       const {

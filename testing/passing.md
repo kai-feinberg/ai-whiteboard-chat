@@ -170,3 +170,11 @@
 - [x] API errors handled: 401 (invalid key), 429 (rate limit), other HTTP errors
 - [x] Silent fallback to `"[No speech detected]"` if transcript fetch fails
 - [x] Convex codegen passes
+
+### searchTikTok AI Tool (US-TK-002)
+- [x] `searchTikTok` tool defined with Zod schema: `{ query: string }`
+- [x] Tool description explains it searches TikTok for videos with transcripts
+- [x] Output schema: `{ success, videos[], totalFound?, message?, error? }`
+- [x] Tool registered in agent definition alongside filteredWebSearch and readLink
+- [x] Tool accessible from chat sendMessage flow
+- [x] Convex codegen passes

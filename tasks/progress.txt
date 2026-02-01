@@ -276,3 +276,15 @@
 - Logic review found HIGH severity: parseWebVTT didn't handle STYLE/REGION/NOTE blocks or styling tags - FIXED
 - Logic review found LOW severity: empty videoUrl wasted API call - FIXED
 - Next story: US-TK-002 (Create searchTikTok Tool)
+
+### 2026-02-01: US-TK-002 - Create searchTikTok Tool
+- Created `searchTikTokTool` in `convex/canvas/chat.ts` using `createTool`
+- Tool defined with Zod schema: `{ query: string }`
+- Description explains it searches TikTok for videos with transcripts for creator insights
+- Output schema matches PRD: `{ success, videos[], totalFound?, message?, error? }`
+- Imports `fetchTikTokSearch` from `../chat/tools` (created in US-TK-001)
+- Error handling returns structured error response instead of throwing
+- Registered tool in agent's tools object alongside generateImage, readLink, filteredWebSearch
+- Convex codegen passes
+- Logic review passed - all acceptance criteria met
+- Next story: US-UI-001 (Create TikTok Results Card Component)
