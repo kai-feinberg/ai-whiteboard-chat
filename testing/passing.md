@@ -161,3 +161,12 @@
 - [x] Current canvas would be highlighted with checkmark when multiple canvases exist
 - [x] Clicking different canvas navigates to `/canvas/{canvasId}/chat`
 - [x] After switching canvas, first thread is automatically selected so chat loads immediately
+
+### TikTok Search API (US-TK-001)
+- [x] `fetchTikTokSearch` function searches TikTok via Scrape Creators API with `sort_by: most-liked`, `trim: true`
+- [x] `parseWebVTT` helper converts WebVTT transcripts to plain text (handles STYLE, REGION, NOTE blocks, tags)
+- [x] Transcripts fetched in parallel for all videos via `GET /v1/tiktok/video/transcript`
+- [x] Returns array with: `tiktokId`, `videoUrl`, `thumbnailUrl`, `creatorHandle`, `views`, `likes`, `shares`, `transcript`
+- [x] API errors handled: 401 (invalid key), 429 (rate limit), other HTTP errors
+- [x] Silent fallback to `"[No speech detected]"` if transcript fetch fails
+- [x] Convex codegen passes

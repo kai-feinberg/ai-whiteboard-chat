@@ -1,13 +1,13 @@
 // convex/chat/tools.ts
 // @feature search-tools
-// @service exa, ai-gateway
+// @service exa, ai-gateway, scrape-creators
 
 import { Exa } from "exa-js";
 import { generateText } from "ai";
 import { gateway } from "@ai-sdk/gateway";
 
 // ============================================================
-// TYPES
+// TYPES - EXA SEARCH
 // ============================================================
 
 export interface ExaSearchResult {
@@ -29,6 +29,58 @@ export interface FilterResult {
 export interface FilteredResults {
   accepted: ExaSearchResult[];
   rejected: Array<ExaSearchResult & { rejectionReason: string }>;
+}
+
+// ============================================================
+// TYPES - TIKTOK SEARCH
+// ============================================================
+
+interface TikTokSearchResponse {
+  success: boolean;
+  credits_remaining: number;
+  search_item_list: TikTokSearchItem[];
+  cursor: number;
+}
+
+interface TikTokSearchItem {
+  aweme_id: string;
+  desc: string;
+  url: string;
+  statistics: {
+    play_count: number;
+    digg_count: number;
+    share_count: number;
+    comment_count?: number;
+  };
+  video: {
+    cover: {
+      url_list: string[];
+    };
+    duration?: number;
+  };
+  author: {
+    unique_id: string;
+    nickname?: string;
+    follower_count: number;
+  };
+  create_time?: number;
+}
+
+interface TranscriptResponse {
+  id: string;
+  url: string;
+  transcript: string;
+}
+
+export interface TikTokVideoResult {
+  tiktokId: string;
+  videoUrl: string;
+  thumbnailUrl: string;
+  creatorHandle: string;
+  views: number;
+  likes: number;
+  shares: number;
+  transcript: string;
 }
 
 // ============================================================
@@ -183,4 +235,203 @@ export async function filterSearchResults(
   });
 
   return { accepted, rejected };
+}
+
+// ============================================================
+// TIKTOK SEARCH
+// ============================================================
+
+/**
+ * Parse WebVTT transcript to plain text
+ * WebVTT format: "WEBVTT\n\n00:00:00.120 --> 00:00:01.840\nText here\n\n..."
+ *
+ * Handles:
+ * - WEBVTT header
+ * - Timestamp lines (00:00:00.000 --> 00:00:01.000)
+ * - Cue identifiers (numeric)
+ * - NOTE blocks (comments)
+ * - STYLE/REGION blocks (CSS styling)
+ * - WebVTT styling tags (<v Speaker>, <b>, <i>, etc.)
+ *
+ * @param webvtt - Raw WebVTT formatted string
+ * @returns Plain text transcript or "[No speech detected]" if empty
+ */
+export function parseWebVTT(webvtt: string): string {
+  if (!webvtt || !webvtt.trim()) {
+    return "[No speech detected]";
+  }
+
+  const lines = webvtt.split("\n");
+  const textLines: string[] = [];
+  let inStyleOrRegion = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Skip empty lines
+    if (!trimmed) {
+      inStyleOrRegion = false; // Empty line ends STYLE/REGION blocks
+      continue;
+    }
+
+    // Skip WEBVTT header
+    if (trimmed === "WEBVTT") {
+      continue;
+    }
+
+    // Skip NOTE blocks (single line or start of block)
+    if (trimmed.startsWith("NOTE")) {
+      continue;
+    }
+
+    // Skip STYLE and REGION blocks (they end on empty line)
+    if (trimmed === "STYLE" || trimmed === "REGION") {
+      inStyleOrRegion = true;
+      continue;
+    }
+    if (inStyleOrRegion) {
+      continue;
+    }
+
+    // Skip timestamp lines
+    if (trimmed.includes("-->")) {
+      continue;
+    }
+
+    // Skip cue identifiers (purely numeric)
+    if (/^\d+$/.test(trimmed)) {
+      continue;
+    }
+
+    // Strip WebVTT styling tags (<v Speaker>, <b>, <i>, <c>, etc.)
+    const cleanedLine = trimmed.replace(/<[^>]+>/g, "");
+    if (cleanedLine) {
+      textLines.push(cleanedLine);
+    }
+  }
+
+  const text = textLines.join(" ").trim();
+  return text || "[No speech detected]";
+}
+
+/**
+ * Fetch transcript for a single TikTok video
+ * Silent fallback: returns "[No speech detected]" if transcript fetch fails
+ *
+ * @param videoUrl - TikTok video URL
+ * @returns Plain text transcript or "[No speech detected]"
+ */
+async function fetchTikTokTranscript(videoUrl: string): Promise<string> {
+  // Skip API call if no URL provided
+  if (!videoUrl) {
+    return "[No speech detected]";
+  }
+
+  const apiKey = process.env.SCRAPE_CREATORS_API_KEY;
+  if (!apiKey) {
+    return "[No speech detected]";
+  }
+
+  try {
+    const url = new URL(
+      "https://api.scrapecreators.com/v1/tiktok/video/transcript"
+    );
+    url.searchParams.set("url", videoUrl);
+    url.searchParams.set("language", "en");
+    url.searchParams.set("use_ai_as_fallback", "false");
+
+    const response = await fetch(url.toString(), {
+      headers: { "x-api-key": apiKey },
+    });
+
+    if (!response.ok) {
+      return "[No speech detected]";
+    }
+
+    const data = (await response.json()) as TranscriptResponse;
+
+    if (!data.transcript) {
+      return "[No speech detected]";
+    }
+
+    return parseWebVTT(data.transcript);
+  } catch {
+    return "[No speech detected]";
+  }
+}
+
+/**
+ * Search TikTok for videos via Scrape Creators API
+ * Fetches search results sorted by most-liked, then fetches transcripts in parallel
+ *
+ * @param query - Search query string
+ * @param limit - Maximum number of videos to return (default: 10)
+ * @returns Array of TikTokVideoResult with metadata and transcripts
+ * @throws Error for API key issues or rate limits
+ */
+export async function fetchTikTokSearch(
+  query: string,
+  limit: number = 10
+): Promise<TikTokVideoResult[]> {
+  const apiKey = process.env.SCRAPE_CREATORS_API_KEY;
+  if (!apiKey) {
+    throw new Error("SCRAPE_CREATORS_API_KEY not configured");
+  }
+
+  // Input validation
+  if (!query.trim()) {
+    throw new Error("Search query cannot be empty");
+  }
+
+  const url = new URL(
+    "https://api.scrapecreators.com/v1/tiktok/search/keyword"
+  );
+  url.searchParams.set("query", query);
+  url.searchParams.set("trim", "true");
+  url.searchParams.set("sort_by", "most-liked");
+
+  const response = await fetch(url.toString(), {
+    headers: { "x-api-key": apiKey },
+  });
+
+  if (!response.ok) {
+    const status = response.status;
+    if (status === 401) {
+      throw new Error("Invalid Scrape Creators API key");
+    }
+    if (status === 429) {
+      throw new Error("Rate limit exceeded - please try again later");
+    }
+    throw new Error(`TikTok search failed: ${status} ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as TikTokSearchResponse;
+
+  if (!data.success || !data.search_item_list?.length) {
+    return [];
+  }
+
+  const items = data.search_item_list.slice(0, limit);
+
+  // Map items to partial results (without transcripts)
+  const partialResults = items.map((item) => ({
+    tiktokId: item.aweme_id || "",
+    videoUrl: item.url || "",
+    thumbnailUrl: item.video?.cover?.url_list?.[0] || "",
+    creatorHandle: item.author?.unique_id || "unknown",
+    views: item.statistics?.play_count ?? 0,
+    likes: item.statistics?.digg_count ?? 0,
+    shares: item.statistics?.share_count ?? 0,
+  }));
+
+  // Fetch transcripts for all videos in parallel
+  const transcripts = await Promise.all(
+    partialResults.map((video) => fetchTikTokTranscript(video.videoUrl))
+  );
+
+  // Combine results with transcripts
+  return partialResults.map((video, index) => ({
+    ...video,
+    transcript: transcripts[index],
+  }));
 }

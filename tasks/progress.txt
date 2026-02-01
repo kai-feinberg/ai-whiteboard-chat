@@ -256,3 +256,23 @@
 - Browser testing verified: tool is registered and accessible from chat sendMessage flow
 - Note: AI doesn't always use the tool automatically - agent instructions may need to be updated to mention when to use filteredWebSearch (separate story)
 - Next story: US-TK-001 (Implement TikTok Search API Integration)
+
+### 2026-02-01: US-TK-001 - TikTok Search API Integration
+- Created `fetchTikTokSearch` function in `convex/chat/tools.ts`
+- Searches TikTok via Scrape Creators API: `GET /v1/tiktok/search/keyword`
+- Parameters: query, `sort_by: most-liked`, `trim: true`
+- Added types: `TikTokSearchResponse`, `TikTokSearchItem`, `TranscriptResponse`, `TikTokVideoResult`
+- Created `parseWebVTT` helper to convert WebVTT transcripts to plain text
+  - Handles WEBVTT header, timestamps, cue identifiers
+  - Handles STYLE/REGION blocks (CSS styling)
+  - Handles NOTE blocks (comments)
+  - Strips WebVTT styling tags (`<v Speaker>`, `<b>`, `<i>`, etc.)
+- Created private `fetchTikTokTranscript` helper with silent fallback
+- Transcripts fetched in parallel via `Promise.all`
+- API error handling: 401 (invalid key), 429 (rate limit), other HTTP errors
+- Silent fallback to `"[No speech detected]"` if transcript fails or videoUrl empty
+- `SCRAPE_CREATORS_API_KEY` already documented in `.env.example`
+- Convex codegen passes
+- Logic review found HIGH severity: parseWebVTT didn't handle STYLE/REGION/NOTE blocks or styling tags - FIXED
+- Logic review found LOW severity: empty videoUrl wasted API call - FIXED
+- Next story: US-TK-002 (Create searchTikTok Tool)

@@ -1,5 +1,31 @@
 # Completed Stories
 
+## US-TK-001: Implement TikTok Search API Integration (2026-02-01)
+
+**Description:** Integrated the Scrape Creators API to search TikTok by keyword and fetch video transcripts.
+
+**Acceptance Criteria (all met):**
+- [x] Created `fetchTikTokSearch` function in `convex/chat/tools.ts`
+- [x] Calls Scrape Creators search endpoint: `GET /v1/tiktok/search/keyword` with query, `sort_by: most-liked`, `trim: true`
+- [x] Created `parseWebVTT` helper to convert WebVTT to plain text (handles STYLE, REGION, NOTE blocks, styling tags)
+- [x] Fetches transcripts in parallel for all videos via `GET /v1/tiktok/video/transcript`
+- [x] Returns array: `{ tiktokId, videoUrl, thumbnailUrl, creatorHandle, views, likes, shares, transcript }`
+- [x] Handles API errors: 401 (invalid key), 429 (rate limit), other HTTP errors
+- [x] Silent fallback to `"[No speech detected]"` if transcript fetch fails
+- [x] `SCRAPE_CREATORS_API_KEY` already documented in `.env.example`
+- [x] Convex codegen passes
+
+**Implementation Notes:**
+- Added types for TikTok API responses: `TikTokSearchResponse`, `TikTokSearchItem`, `TranscriptResponse`, `TikTokVideoResult`
+- `parseWebVTT` handles all WebVTT edge cases: STYLE/REGION blocks, NOTE comments, cue identifiers, styling tags (`<v>`, `<b>`, etc.)
+- Private `fetchTikTokTranscript` helper has early return for empty videoUrl to avoid wasted API calls
+- Transcripts fetched in parallel via `Promise.all` for performance
+
+**Files changed:**
+- `convex/chat/tools.ts` (added types, parseWebVTT, fetchTikTokTranscript, fetchTikTokSearch)
+
+---
+
 ## US-FWS-003: Create filteredWebSearch Tool (2026-02-01)
 
 **Description:** Created the `filteredWebSearch` AI tool that searches the web via Exa API and filters results through Claude Haiku to remove promotional, spam, and paywalled content.

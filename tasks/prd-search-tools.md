@@ -23,25 +23,6 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ---
 
-### US-TK-001: Implement TikTok Search API Integration
-
-**Description:** As a developer, I need to integrate the Scrape Creators API to search TikTok by keyword and fetch video transcripts.
-
-**Required Reading:**
-- `convex/canvas/tiktok.ts` → may have existing patterns
-- `plans/deep-search.md` → TikTok API integration details
-
-**Acceptance Criteria:**
-- [ ] Create `fetchTikTokSearch` function in `convex/chat/tools.ts`
-- [ ] Call Scrape Creators search endpoint: `GET /v1/tiktok/search/keyword` with query, `sort_by: most-liked`, `trim: true`
-- [ ] Parse WebVTT transcripts to plain text (create `parseWebVTT` helper)
-- [ ] Fetch transcripts in parallel for all videos via `GET /v1/tiktok/video/transcript`
-- [ ] Return array: `{ tiktokId, videoUrl, thumbnailUrl, creatorHandle, views, likes, shares, transcript }`
-- [ ] Handle API errors (rate limits, invalid key)
-- [ ] Silent fallback to `"[No speech detected]"` if transcript fetch fails
-- [ ] Add `SCRAPE_CREATORS_API_KEY` environment variable documentation
-- [ ] `pnpm typecheck` passes
-
 ---
 
 ### US-TK-002: Create searchTikTok Tool
