@@ -1,5 +1,30 @@
 # Completed Stories
 
+## US-FWS-001: Implement Exa Search Integration (2026-02-01)
+
+**Description:** Integrated the Exa API to search the web and retrieve article content with full text.
+
+**Acceptance Criteria (all met):**
+- [x] Created `fetchExaSearch` helper function in new `convex/chat/tools.ts`
+- [x] Function calls `exa.searchAndContents()` with query, `text: true`, `type: "auto"`, `numResults`
+- [x] Returns array of results with: id, title, url, publishedDate, author, text, image, favicon
+- [x] Handles API errors gracefully (rate limits, invalid key, network errors)
+- [x] Installed `exa-js` package
+- [x] Added `EXA_API_KEY` environment variable documentation to `.env.example`
+- [x] Convex codegen passes
+
+**Implementation Notes:**
+- Added input validation: empty query throws error, numResults clamped to 1-100
+- Uses named import `{ Exa }` from exa-js (not default export)
+- Error handling distinguishes between 401/unauthorized, 429/rate limit, and other errors
+
+**Files changed:**
+- `convex/chat/tools.ts` (new)
+- `package.json` (added exa-js dependency)
+- `.env.example` (added EXA_API_KEY documentation)
+
+---
+
 ## US-DOC-001: Create Documents Schema (2026-01-22)
 
 **Description:** Created database schema for org-scoped documents.

@@ -211,3 +211,18 @@
   7. Call to Action (25-30s) - CTA and branding
 - All assets placed in `/remotion-assets/screenshots/`
 - Next developer: Set up Remotion project and implement video using VIDEO_PLAN.md
+
+### 2026-02-01: US-FWS-001 - Exa Search Integration
+- Created `convex/chat/tools.ts` with `fetchExaSearch` helper function
+- Function searches the web via Exa API and returns full article content
+- Installed `exa-js` package (v2.2.0)
+- Uses named import: `import { Exa } from "exa-js";` (not default export)
+- Added input validation: empty query throws error, numResults clamped to 1-100
+- Error handling:
+  - 401/unauthorized → "Invalid Exa API key"
+  - 429/rate limit → "Exa rate limit exceeded - please try again later"
+  - Other errors → "Exa search failed: {message}"
+- Added `EXA_API_KEY` to `.env.example` with documentation
+- Convex codegen passes
+- Logic review approved with minor suggestions (applied input validation fix)
+- Next story: US-FWS-002 (Implement Haiku Filtering Step)

@@ -28,6 +28,7 @@ import type * as canvas_twitter from "../canvas/twitter.js";
 import type * as canvas_website from "../canvas/website.js";
 import type * as canvas_youtube from "../canvas/youtube.js";
 import type * as chat_functions from "../chat/functions.js";
+import type * as chat_tools from "../chat/tools.js";
 import type * as credits_functions from "../credits/functions.js";
 import type * as documents_functions from "../documents/functions.js";
 import type * as http from "../http.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   "canvas/website": typeof canvas_website;
   "canvas/youtube": typeof canvas_youtube;
   "chat/functions": typeof chat_functions;
+  "chat/tools": typeof chat_tools;
   "credits/functions": typeof credits_functions;
   "documents/functions": typeof documents_functions;
   http: typeof http;

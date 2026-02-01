@@ -21,24 +21,6 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ## User Stories
 
-### US-FWS-001: Implement Exa Search Integration
-
-**Description:** As a developer, I need to integrate the Exa API to search the web and retrieve article content with full text.
-
-**Required Reading:**
-- `convex/chat/functions.ts` → existing agent pattern
-- `plans/deep-search.md` → reference implementation details
-- Exa API docs via context7 MCP
-
-**Acceptance Criteria:**
-- [ ] Create `fetchExaSearch` helper function in new `convex/chat/tools.ts`
-- [ ] Function calls `exa.searchAndContents()` with query, `text: true`, `type: "auto"`, `numResults: 10`
-- [ ] Returns array of results with: id, title, url, publishedDate, author, text, image, favicon
-- [ ] Handles API errors gracefully (rate limits, invalid key, network errors)
-- [ ] Install `exa-js` package if not present
-- [ ] Add `EXA_API_KEY` environment variable documentation
-- [ ] `pnpm typecheck` passes
-
 ---
 
 ### US-FWS-002: Implement Haiku Filtering Step
