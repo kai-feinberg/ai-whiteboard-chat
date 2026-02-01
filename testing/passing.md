@@ -178,3 +178,21 @@
 - [x] Tool registered in agent definition alongside filteredWebSearch and readLink
 - [x] Tool accessible from chat sendMessage flow
 - [x] Convex codegen passes
+
+### TikTok Results Card Component (US-UI-001)
+- [x] `TikTokResultsCard` component created in `src/components/ai-elements/tiktok-results.tsx`
+- [x] Card displays: thumbnail image, @creatorHandle, view/like/share counts with icons
+- [x] Card is collapsible - shows thumbnail/stats when collapsed, transcript when expanded
+- [x] Clicking "Open on TikTok" button opens video URL in new tab
+- [x] Format large numbers (1.2M, 45K, etc.)
+- [x] Handle missing thumbnails gracefully with ImageOffIcon fallback
+- [x] `pnpm typecheck` passes (no errors in new component)
+
+### TikTok Results Grid Component (US-UI-002)
+- [x] `TikTokSearchTool` wrapper component created
+- [x] Shows loading state with spinner: "Searching TikTok..."
+- [x] Results in horizontal scrollable grid (cards flex-shrink-0)
+- [x] Entire results section is collapsible - header shows "X videos found"
+- [x] Collapsed by default after initial render
+- [x] Shows error state if search failed
+- [x] `pnpm typecheck` passes (no errors in new component)

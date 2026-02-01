@@ -25,47 +25,6 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ---
 
-### US-UI-001: Create TikTok Results Card Component
-
-**Description:** As a user, I want to see TikTok search results as visual cards with thumbnails and engagement stats.
-
-**Required Reading:**
-- `src/components/ai-elements/read-link-tool.tsx` → existing tool card pattern
-- `src/components/ui/card.tsx` → Card component usage
-- `plans/deep-search.md` → TikTok card design reference
-
-**Acceptance Criteria:**
-- [ ] Create `TikTokResultsCard` component in `src/components/ai-elements/tiktok-results.tsx`
-- [ ] Card displays: thumbnail image, @creatorHandle, view/like/share counts with icons
-- [ ] Card is collapsible - shows thumbnail/stats when collapsed, transcript when expanded
-- [ ] Clicking "Open on TikTok" button opens video URL in new tab
-- [ ] Format large numbers (1.2M, 45K, etc.)
-- [ ] Handle missing thumbnails gracefully
-- [ ] `pnpm typecheck` passes
-- [ ] **Use agent-browser to test**: cards render, expand/collapse works, external link opens
-
----
-
-### US-UI-002: Create TikTok Results Grid Component
-
-**Description:** As a user, I want TikTok results displayed in a scrollable grid that can be collapsed/expanded.
-
-**Required Reading:**
-- `src/components/ai-elements/read-link-tool.tsx` → tool container pattern
-- `src/components/ui/collapsible.tsx` → Collapsible usage
-
-**Acceptance Criteria:**
-- [ ] Create `TikTokSearchTool` wrapper component
-- [ ] Shows loading state with spinner: "Searching TikTok..."
-- [ ] Results in horizontal scrollable grid (cards flex-shrink-0)
-- [ ] Entire results section is collapsible - header shows "X videos found"
-- [ ] Collapsed by default after initial render, user can expand
-- [ ] Shows error state if search failed
-- [ ] `pnpm typecheck` passes
-- [ ] **Use agent-browser to test**: loading state shows, grid renders, collapse/expand works
-
----
-
 ### US-UI-003: Create Web Search Results Card Component
 
 **Description:** As a user, I want to see accepted web search results as cards with article metadata.

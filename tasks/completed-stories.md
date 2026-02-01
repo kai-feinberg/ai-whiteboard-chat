@@ -1,5 +1,35 @@
 # Completed Stories
 
+## US-UI-001 & US-UI-002: TikTok Results Card and Grid Components (2026-02-01)
+
+**Description:** Created UI components for displaying TikTok search results - individual video cards with thumbnails/stats, and a collapsible grid wrapper.
+
+**Acceptance Criteria (all met):**
+- [x] Created `TikTokResultsCard` component in `src/components/ai-elements/tiktok-results.tsx`
+- [x] Card displays: thumbnail image, @creatorHandle, view/like/share counts with icons (Eye, Heart, Share2)
+- [x] Card is collapsible - shows thumbnail/stats when collapsed, transcript when expanded
+- [x] Clicking "Open on TikTok" button opens video URL in new tab
+- [x] Format large numbers (1.2M, 45K, etc.) via `formatNumber()` helper
+- [x] Handle missing thumbnails gracefully with ImageOffIcon fallback
+- [x] Created `TikTokSearchTool` wrapper component
+- [x] Shows loading state with spinner: "Searching TikTok..." with progress bar
+- [x] Results in horizontal scrollable grid (cards flex-shrink-0, gap-3)
+- [x] Entire results section is collapsible - header shows "X videos found"
+- [x] Collapsed by default after initial render (per PRD)
+- [x] Shows error state if search failed with AlertCircleIcon
+- [x] `pnpm typecheck` passes (no errors in new component)
+
+**Implementation Notes:**
+- TikTokIcon SVG reused from read-link-tool.tsx
+- `TikTokVideo` interface mirrors `TikTokVideoResult` from `convex/chat/tools.ts`
+- Follows ReadLinkTool patterns for consistency
+- Logic review fixes applied: fallback key for video mapping, aria-label for accessibility, collapsed default state
+
+**Files changed:**
+- `src/components/ai-elements/tiktok-results.tsx` (new - 296 lines)
+
+---
+
 ## US-TK-002: Create searchTikTok Tool (2026-02-01)
 
 **Description:** Created the `searchTikTok` AI tool that searches TikTok for videos about a topic and returns videos with transcripts for the AI to synthesize creator insights.

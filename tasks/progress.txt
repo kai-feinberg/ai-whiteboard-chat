@@ -288,3 +288,26 @@
 - Convex codegen passes
 - Logic review passed - all acceptance criteria met
 - Next story: US-UI-001 (Create TikTok Results Card Component)
+
+### 2026-02-01: US-UI-001 & US-UI-002 - TikTok Results Card and Grid Components
+- Created `src/components/ai-elements/tiktok-results.tsx` with two components:
+  1. `TikTokResultsCard` - Individual video card with:
+     - Thumbnail (9:16 aspect, capped height), ImageOffIcon fallback for missing images
+     - @creatorHandle text
+     - View/like/share stats with icons (EyeIcon, HeartIcon, Share2Icon)
+     - Collapsible: shows thumbnail+stats collapsed, transcript+link expanded
+     - "Open on TikTok" button opens video URL in new tab
+     - formatNumber() helper for 1.2M, 45K, etc.
+  2. `TikTokSearchTool` - Tool wrapper with:
+     - Loading state: Loader2Icon spinner + "Searching TikTok..." + progress bar
+     - Error state: AlertCircleIcon + error message
+     - Success state: collapsible header "X videos found" + horizontal scrollable grid
+     - Collapsed by default after initial render (per PRD US-UI-002)
+- Logic review fixes applied:
+  - Changed `isCollapsed` default to `true` per PRD spec
+  - Added fallback key for video mapping: `key={video.tiktokId || video.videoUrl || index}`
+  - Added `aria-label` on CollapsibleTrigger for accessibility
+- TypeScript compiles with no errors in new component
+- Pre-existing TS errors in codebase unrelated to this change
+- Next story: US-UI-003 (Create Web Search Results Card Component)
+- Note: Browser testing deferred to US-UI-005 when components are integrated into Chat.tsx
