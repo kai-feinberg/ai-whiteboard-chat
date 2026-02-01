@@ -3,28 +3,36 @@
 # Usage: ./scripts/browser-login.sh
 # Credentials: test+clerk_test@gmail.com / verification code: 424242
 
-echo "Opening browser and logging in..."
-
-# Open browser in headed mode
-agent-browser open http://localhost:3000 --headed
+echo "Closing all active browser sessions..."
+# Get all sessions and close them
+for session in $(agent-browser session list 2>/dev/null | grep -oE '^\S+'); do
+  agent-browser --session "$session" close 2>/dev/null
+done
+agent-browser close 2>/dev/null
 sleep 1
 
+echo "Opening browser and logging in..."
+agent-browser open http://localhost:3000 --headed
+sleep 2
+
 # Click Sign In button
-agent-browser snapshot -i > /dev/null
-agent-browser click @e1
+agent-browser click 'text="Sign In"'
 sleep 2
 
-# Fill email address (e3) and click Continue (e4)
-agent-browser snapshot -i > /dev/null
-agent-browser fill @e3 "test+clerk_test@gmail.com"
-agent-browser click @e4
-sleep 2
-
-# Fill verification code (e4) and click Continue (e6)
-agent-browser snapshot -i > /dev/null
-agent-browser fill @e4 "424242"
-agent-browser click @e6
+# Fill email address and click Continue
+agent-browser fill 'input[name="identifier"]' "test+clerk_test@gmail.com"
+agent-browser click 'button:has-text("Continue")'
 sleep 3
+
+# # Take snapshot to see the verification code page
+# echo "Taking snapshot of verification page..."
+# agent-browser snapshot -i
+
+# Fill verification code using ref from snapshot and click Continue
+agent-browser fill @e15 "424242"
+sleep 1
+agent-browser click @e17
+sleep 2
 
 echo "Login complete. Browser session is ready."
 echo "Use 'agent-browser snapshot -i' to interact with the page."

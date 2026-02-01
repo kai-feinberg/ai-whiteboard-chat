@@ -183,3 +183,31 @@
   - Made hasMoreContent check explicit: `fullText !== null && fullText.length > 200`
 - Browser testing verified: loading state, completed state, modal all working correctly
 - Next developer: PRD miscellaneous improvements is COMPLETE. All features implemented.
+
+### 2026-01-23: Remotion Hype Video Planning
+- Created comprehensive video plan for 25-30 second hype video in `remotion-assets/VIDEO_PLAN.md`
+- Captured 10 screenshots of key app screens for video assets:
+  - 01-dashboard.png - Canvas list view
+  - 02-chat-fullscreen.png - AI chat interface
+  - 03-canvas-with-chat.png - Infinite canvas with chat node
+  - 04-documents.png - Documents feature
+  - 05-custom-agents.png - Custom agents page
+  - 06-canvas-toolbar.png - Canvas with toolbar visible
+  - 07-link-tool-loading.png - Link reading tool loading state
+  - 08-link-tool-complete.png - Link reading tool completed state
+  - 09-link-tool-modal.png - Full content modal
+  - 10-canvas-switcher-dropdown.png - Canvas switcher dropdown
+- Documented brand guidelines extracted from app.css:
+  - Colors: Terracotta primary, warm cream background, chocolate sidebar
+  - Typography: Lexend (display), DM Sans (body), JetBrains Mono (code)
+  - Rounded 16px corners, organic feel with subtle textures
+- Scene-by-scene breakdown (7 scenes):
+  1. Logo Intro (0-3s) - Animated "Splat AI" logo
+  2. Problem Statement (3-6s) - Pain point text
+  3. Canvas Overview (6-11s) - Infinite canvas demo
+  4. AI Chat Feature (11-16s) - Chat interaction
+  5. Link Reading Tool (16-21s) - URL extraction feature
+  6. Feature Montage (21-25s) - Quick cuts of features
+  7. Call to Action (25-30s) - CTA and branding
+- All assets placed in `/remotion-assets/screenshots/`
+- Next developer: Set up Remotion project and implement video using VIDEO_PLAN.md
