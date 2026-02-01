@@ -23,22 +23,28 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ---
 
-### US-INT-002: End-to-End Integration Test - Filtered Web Search
+### US-INT-002: End-to-End Integration Test - Filtered Web Search [BLOCKED]
 
 **Description:** As a developer, I need to verify the complete filtered web search flow works in a real browser session.
+
+**Status:** BLOCKED - Requires `EXA_API_KEY` environment variable to be configured in Convex.
+- Run `npx convex env set EXA_API_KEY <your-key>` to unblock.
+- Tool implementation is complete and invoked correctly by AI agent.
+- Tested 2026-02-01: Tool call observed in server logs, fails with "EXA_API_KEY not configured".
 
 **Required Reading:**
 - `agent-browser` skill documentation
 
 **Acceptance Criteria:**
-- [ ] Using same browser session from US-INT-001
-- [ ] Send message: "Search the web for best practices for remote work"
-- [ ] **Verify**: Two-phase loading: "Searching web..." then "Filtering results..."
-- [ ] **Verify**: Accepted results render as cards with images/titles/dates
-- [ ] **Verify**: "X results filtered out" section appears if any rejected
-- [ ] **Verify**: Expanding rejected section shows titles + rejection reasons
-- [ ] **Verify**: Clicking card opens source article
-- [ ] **Verify**: AI synthesizes response citing accepted sources
+- [x] Using same browser session from US-INT-001
+- [x] Send message: "Search the web for best practices for remote work"
+- [x] **Verified**: Tool IS invoked by AI agent (observed in server logs)
+- [ ] **Blocked**: Two-phase loading: "Searching web..." then "Filtering results..."
+- [ ] **Blocked**: Accepted results render as cards with images/titles/dates
+- [ ] **Blocked**: "X results filtered out" section appears if any rejected
+- [ ] **Blocked**: Expanding rejected section shows titles + rejection reasons
+- [ ] **Blocked**: Clicking card opens source article
+- [ ] **Blocked**: AI synthesizes response citing accepted sources
 
 ---
 

@@ -394,3 +394,31 @@
 - Pre-existing TS errors in codebase unrelated to this story
 - Screenshots captured in `/testing/screenshots/` for documentation
 - Next story: US-INT-002 (End-to-End Integration Test - Filtered Web Search)
+
+### 2026-02-01: US-INT-002 - End-to-End Integration Test - Filtered Web Search - **BLOCKED**
+- This is an E2E test story to verify the complete filtered web search flow in a real browser session
+- Browser testing attempted with agent-browser:
+  - Started dev server (`pnpm dev`), authenticated via Clerk
+  - Navigated to chat page, created new thread
+  - Sent message: "Search the web for best practices for remote work"
+  - **OBSERVED**: AI agent DOES invoke the `filteredWebSearch` tool (verified in server logs)
+  - **BLOCKED**: Tool fails with error "EXA_API_KEY not configured"
+  - AI falls back to responding from training data instead of using search results
+- **Root cause**: `EXA_API_KEY` environment variable not set in Convex environment
+  - Checked `npx convex env list` - EXA not present
+  - Key is documented in `.env.example` but not configured for deployment
+- **Verified working (based on TikTok analog)**:
+  - WebSearchTool component follows identical patterns to working TikTokSearchTool
+  - Loading state, error state, collapsible grid, rejected section all implemented
+  - Component renders correctly when tool state is available (tested with code inspection)
+- **Cannot verify without API key**:
+  - [ ] Two-phase loading: "Searching web..." then "Filtering results..."
+  - [ ] Accepted results render as cards with images/titles/dates
+  - [ ] "X results filtered out" section appears if any rejected
+  - [ ] Expanding rejected section shows titles + rejection reasons
+  - [ ] Clicking card opens source article
+  - [ ] AI synthesizes response citing accepted sources
+- **Action required**: Configure `EXA_API_KEY` in Convex environment to unblock this test
+  - `npx convex env set EXA_API_KEY <your-key>`
+- No code changes required - implementation is complete, pending env configuration
+- Next developer: Configure EXA_API_KEY and re-run US-INT-002 E2E test
