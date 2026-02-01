@@ -23,25 +23,6 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ---
 
-### US-FWS-002: Implement Haiku Filtering Step
-
-**Description:** As a developer, I need to filter search results through Claude Haiku to remove low-quality content based on article summaries.
-
-**Required Reading:**
-- `convex/chat/functions.ts` → OpenRouter usage pattern
-- `plans/deep-search.md` → filtering implementation reference
-
-**Acceptance Criteria:**
-- [ ] Create `filterSearchResults` function that takes Exa results array
-- [ ] For each result, call Haiku with structured prompt evaluating: promotional/SEO content, spam/aggregated lists, paywalled content
-- [ ] Haiku returns JSON `{ accepted: boolean, reason: string }` for each result
-- [ ] Run Haiku calls in parallel via `Promise.all` for performance
-- [ ] Returns `{ accepted: Result[], rejected: Result[] }` with rejection reasons attached
-- [ ] Fail-open design: if Haiku call fails, accept the result
-- [ ] `pnpm typecheck` passes
-
----
-
 ### US-FWS-003: Create filteredWebSearch Tool
 
 **Description:** As a user, I want the AI to search the web and automatically filter out junk so I get high-quality information.

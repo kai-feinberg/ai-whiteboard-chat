@@ -226,3 +226,17 @@
 - Convex codegen passes
 - Logic review approved with minor suggestions (applied input validation fix)
 - Next story: US-FWS-002 (Implement Haiku Filtering Step)
+
+### 2026-02-01: US-FWS-002 - Haiku Filtering Step
+- Added `filterSearchResults` function to `convex/chat/tools.ts`
+- Uses AI Gateway with Claude Haiku (`anthropic/claude-3-5-haiku-20241022`) for evaluation
+- Evaluates each result against 3 criteria: promotional/SEO, spam/aggregated lists, paywalled
+- Parallel execution via `Promise.all` for performance
+- Fail-open design: if Haiku call fails, result is accepted by default
+- Returns `{ accepted: ExaSearchResult[], rejected: (ExaSearchResult & { rejectionReason })[] }`
+- JSON parsing handles markdown code block wrapping (common LLM output pattern)
+- Type validation ensures response has correct shape before returning
+- Added imports: `generateText` from "ai", `gateway` from "@ai-sdk/gateway"
+- Convex codegen passes (pre-existing TS errors in frontend unrelated)
+- Logic review approved - all acceptance criteria met
+- Next story: US-FWS-003 (Create filteredWebSearch Tool)

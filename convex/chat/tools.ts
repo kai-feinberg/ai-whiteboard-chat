@@ -1,8 +1,10 @@
 // convex/chat/tools.ts
 // @feature search-tools
-// @service exa
+// @service exa, ai-gateway
 
 import { Exa } from "exa-js";
+import { generateText } from "ai";
+import { gateway } from "@ai-sdk/gateway";
 
 // ============================================================
 // TYPES
@@ -17,6 +19,16 @@ export interface ExaSearchResult {
   text: string;
   image?: string;
   favicon?: string;
+}
+
+export interface FilterResult {
+  accepted: boolean;
+  reason: string;
+}
+
+export interface FilteredResults {
+  accepted: ExaSearchResult[];
+  rejected: Array<ExaSearchResult & { rejectionReason: string }>;
 }
 
 // ============================================================
@@ -82,4 +94,93 @@ export async function fetchExaSearch(
     }
     throw new Error("Exa search failed: Unknown error");
   }
+}
+
+// ============================================================
+// HAIKU FILTERING
+// ============================================================
+
+/**
+ * Evaluate a single search result using Claude Haiku via AI Gateway
+ * Uses fail-open design: accepts results if API call fails
+ *
+ * @param result - Search result to evaluate
+ * @returns FilterResult with accepted boolean and reason
+ */
+async function evaluateResultWithHaiku(
+  result: ExaSearchResult
+): Promise<FilterResult> {
+  try {
+    const { text: responseText } = await generateText({
+      model: gateway("anthropic/claude-3-5-haiku-20241022"),
+      system: `You evaluate search results for quality. You MUST respond with ONLY a JSON object, no other text.
+Format: {"accepted": boolean, "reason": "string"}
+Example accept: {"accepted": true, "reason": "Quality content"}
+Example reject: {"accepted": false, "reason": "Promotional content for X brand"}`,
+      prompt: `Evaluate this search result:
+
+Title: ${result.title || "Untitled"}
+URL: ${result.url}
+Summary: ${(result.text || "").slice(0, 500)}
+
+Reject if ANY apply:
+- Is this promotional content pushing a product/service?
+- Is this spam or low-quality aggregated content (e.g., "top 12 best XXX to try")?
+- Is this paywalled or requires signup to read?
+
+Respond with JSON only:`,
+      temperature: 0,
+    });
+
+    // Parse JSON - handle potential markdown wrapping
+    let jsonStr = responseText.trim();
+    if (jsonStr.startsWith("```")) {
+      jsonStr = jsonStr.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
+    }
+
+    const parsed = JSON.parse(jsonStr) as { accepted: boolean; reason: string };
+    if (typeof parsed.accepted !== "boolean" || typeof parsed.reason !== "string") {
+      throw new Error("Invalid response format");
+    }
+    return { accepted: parsed.accepted, reason: parsed.reason };
+  } catch (error) {
+    // Fail-open: accept the result if Haiku call fails
+    console.error("[filterSearchResults] Haiku evaluation error:", error);
+    return { accepted: true, reason: "Filter error - accepted by default" };
+  }
+}
+
+/**
+ * Filter search results through Claude Haiku to remove low-quality content
+ * Evaluates each result in parallel for performance
+ * Uses fail-open design: if Haiku call fails, result is accepted
+ *
+ * @param results - Array of ExaSearchResult to filter
+ * @returns FilteredResults with accepted and rejected arrays
+ */
+export async function filterSearchResults(
+  results: ExaSearchResult[]
+): Promise<FilteredResults> {
+  if (results.length === 0) {
+    return { accepted: [], rejected: [] };
+  }
+
+  // Evaluate all results in parallel
+  const evaluations = await Promise.all(
+    results.map((result) => evaluateResultWithHaiku(result))
+  );
+
+  const accepted: ExaSearchResult[] = [];
+  const rejected: Array<ExaSearchResult & { rejectionReason: string }> = [];
+
+  results.forEach((result, index) => {
+    const evaluation = evaluations[index];
+    if (evaluation.accepted) {
+      accepted.push(result);
+    } else {
+      rejected.push({ ...result, rejectionReason: evaluation.reason });
+    }
+  });
+
+  return { accepted, rejected };
 }

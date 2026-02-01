@@ -1,5 +1,29 @@
 # Completed Stories
 
+## US-FWS-002: Implement Haiku Filtering Step (2026-02-01)
+
+**Description:** Created filter function that evaluates Exa search results through Claude Haiku to remove promotional, spam, and paywalled content.
+
+**Acceptance Criteria (all met):**
+- [x] Created `filterSearchResults` function that takes Exa results array
+- [x] For each result, calls Haiku with structured prompt evaluating: promotional/SEO content, spam/aggregated lists, paywalled content
+- [x] Haiku returns JSON `{ accepted: boolean, reason: string }` for each result
+- [x] Runs Haiku calls in parallel via `Promise.all` for performance
+- [x] Returns `{ accepted: Result[], rejected: Result[] }` with rejection reasons attached
+- [x] Fail-open design: if Haiku call fails, accepts the result
+- [x] Convex codegen passes (pre-existing TS errors unrelated)
+
+**Implementation Notes:**
+- Uses AI Gateway with Claude Haiku (`anthropic/claude-3-5-haiku-20241022`)
+- JSON parsing handles markdown code block wrapping (common LLM output pattern)
+- Type validation ensures response has correct shape before returning
+- Private helper function `evaluateResultWithHaiku` handles individual result evaluation
+
+**Files changed:**
+- `convex/chat/tools.ts` (added filterSearchResults, evaluateResultWithHaiku, types, imports)
+
+---
+
 ## US-FWS-001: Implement Exa Search Integration (2026-02-01)
 
 **Description:** Integrated the Exa API to search the web and retrieve article content with full text.
