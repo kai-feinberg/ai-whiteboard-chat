@@ -196,3 +196,12 @@
 - [x] Collapsed by default after initial render
 - [x] Shows error state if search failed
 - [x] `pnpm typecheck` passes (no errors in new component)
+
+### Web Search Results Card Component (US-UI-003)
+- [x] `WebSearchCard` component created in `src/components/ai-elements/web-search-results.tsx`
+- [x] Card displays: featured image (if available), favicon, title (linked), author, date, summary
+- [x] Handle HTML entities in titles/summaries (decode `&amp;`, `&lt;`, etc.)
+- [x] Format dates as relative (Today, 3d ago, 2w ago, Jan 2024)
+- [x] Handle missing images gracefully (hide image section)
+- [x] Clicking card opens article URL in new tab
+- [x] `pnpm typecheck` passes (no errors in new component)

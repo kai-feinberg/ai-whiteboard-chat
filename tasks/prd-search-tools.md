@@ -23,28 +23,6 @@ Both tools include rich UI rendering of results as collapsible card grids with f
 
 ---
 
----
-
-### US-UI-003: Create Web Search Results Card Component
-
-**Description:** As a user, I want to see accepted web search results as cards with article metadata.
-
-**Required Reading:**
-- `src/components/ai-elements/read-link-tool.tsx` → card pattern
-- `plans/deep-search.md` → web card design reference
-
-**Acceptance Criteria:**
-- [ ] Create `WebSearchCard` component in `src/components/ai-elements/web-search-results.tsx`
-- [ ] Card displays: featured image (if available), favicon, title (linked), author, date, summary
-- [ ] Handle HTML entities in titles/summaries (decode `&amp;`, `&lt;`, etc.)
-- [ ] Format dates as relative (Today, 3d ago, 2w ago, Jan 2024)
-- [ ] Handle missing images gracefully (hide image section)
-- [ ] Clicking card opens article URL in new tab
-- [ ] `pnpm typecheck` passes
-- [ ] **Use agent-browser to test**: cards render with correct data, links work
-
----
-
 ### US-UI-004: Create Web Search Results Grid with Rejected Section
 
 **Description:** As a user, I want to see accepted results in a grid and filtered-out results in a collapsed section for transparency.

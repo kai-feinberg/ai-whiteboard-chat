@@ -311,3 +311,23 @@
 - Pre-existing TS errors in codebase unrelated to this change
 - Next story: US-UI-003 (Create Web Search Results Card Component)
 - Note: Browser testing deferred to US-UI-005 when components are integrated into Chat.tsx
+
+### 2026-02-01: US-UI-003 - Web Search Results Card Component
+- Created `src/components/ai-elements/web-search-results.tsx` with:
+  - `WebSearchCard` component - individual article card with:
+    - Featured image (aspect-video) hidden when missing or on error
+    - Favicon with GlobeIcon fallback
+    - Title (linked, line-clamp-2), summary (line-clamp-2), author, date
+    - Clicking card opens article URL in new tab
+  - `decodeHtmlEntities()` helper using DOMParser for comprehensive entity support
+    - SSR guard with basic regex fallback when document unavailable
+  - `formatRelativeDate()` helper - Today, 1d ago, Nd ago, Nw ago, or "Mon YYYY"
+    - Handles future dates gracefully
+- Logic review fixes applied:
+  - Changed HTML entity decoding to use browser's built-in textarea.innerHTML decoder
+  - Added future date handling (returns formatted month/year instead of negative days)
+  - Added aria-label for accessibility
+- TypeScript compiles with no errors in new component
+- Pre-existing TS errors in codebase unrelated to this change
+- Next story: US-UI-004 (Create Web Search Results Grid with Rejected Section)
+- Note: Browser testing deferred to US-UI-005 when components are integrated into Chat.tsx

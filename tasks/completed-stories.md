@@ -1,5 +1,31 @@
 # Completed Stories
 
+## US-UI-003: Web Search Results Card Component (2026-02-01)
+
+**Description:** Created UI component for displaying accepted web search results as article cards with metadata.
+
+**Acceptance Criteria (all met):**
+- [x] Created `WebSearchCard` component in `src/components/ai-elements/web-search-results.tsx`
+- [x] Card displays: featured image (if available), favicon, title (linked), author, date, summary
+- [x] Handle HTML entities in titles/summaries (decode `&amp;`, `&lt;`, etc.)
+- [x] Format dates as relative (Today, 3d ago, 2w ago, Jan 2024)
+- [x] Handle missing images gracefully (hide image section)
+- [x] Clicking card opens article URL in new tab
+- [x] `pnpm typecheck` passes (no errors in new component)
+
+**Implementation Notes:**
+- `decodeHtmlEntities()` uses DOMParser for comprehensive entity support on client, with SSR fallback
+- `formatRelativeDate()` handles future dates gracefully
+- Image/favicon error handling via `onError` callbacks with state flags
+- GlobeIcon fallback for missing favicons
+- Accessibility: aria-label on link, focus-visible ring for keyboard navigation
+- Follows patterns from TikTok results and read-link-tool components
+
+**Files changed:**
+- `src/components/ai-elements/web-search-results.tsx` (new - 169 lines)
+
+---
+
 ## US-UI-001 & US-UI-002: TikTok Results Card and Grid Components (2026-02-01)
 
 **Description:** Created UI components for displaying TikTok search results - individual video cards with thumbnails/stats, and a collapsible grid wrapper.
