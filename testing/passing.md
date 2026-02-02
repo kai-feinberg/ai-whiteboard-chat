@@ -234,3 +234,14 @@
 - [x] "Open on TikTok" link correctly opens video URL (e.g., tiktok.com/@ayshagonzalez/video/...)
 - [x] AI synthesizes response referencing creator insights (e.g., "Top Productivity Tips from TikTok")
 - [x] Clicking "10 videos found" header collapses/expands the results section
+
+### Filtered Web Search E2E Integration Test (US-INT-002)
+- [x] Send message "Search the web for best practices for remote work" in chat
+- [x] filteredWebSearch tool IS invoked by AI agent (observed in server logs)
+- [x] Accepted results render as cards with images/titles/dates in responsive grid (Indeed, CMU, GitLab articles)
+- [x] "X results filtered out" section appears (4 rejected: promotional Slack/Remote content, incomplete content)
+- [x] Expanding rejected section shows titles + rejection reasons (e.g., "Promotional content for Slack product")
+- [x] Clicking card opens source article in new tab (verified via target="_blank" links)
+- [x] AI synthesizes response citing accepted sources (handbook/documentation, OKRs, inclusive meetings, etc.)
+- [x] Clicking header collapses/expands the accepted results section
+- [x] Clicking filtered header collapses/expands the rejected results section

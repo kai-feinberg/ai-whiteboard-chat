@@ -422,3 +422,21 @@
   - `npx convex env set EXA_API_KEY <your-key>`
 - No code changes required - implementation is complete, pending env configuration
 - Next developer: Configure EXA_API_KEY and re-run US-INT-002 E2E test
+
+### 2026-02-02: US-INT-002 - End-to-End Integration Test - Filtered Web Search - **COMPLETED**
+- `EXA_API_KEY` was configured in Convex environment, unblocking the test
+- Browser testing verified with agent-browser:
+  - Started dev server (`pnpm dev`), authenticated via Clerk
+  - Navigated to chat page, created new thread via "New Chat" button
+  - Sent message: "Search the web for best practices for remote work"
+  - **VERIFIED**: AI agent invokes `filteredWebSearch` tool successfully
+  - **VERIFIED**: Accepted results render as cards with images/titles/dates (6 results from Indeed, CMU, GitLab)
+  - **VERIFIED**: "4 results filtered out" section appears with rejected promotional content
+  - **VERIFIED**: Expanding rejected section shows titles + rejection reasons (e.g., "Promotional content for Slack product")
+  - **VERIFIED**: Cards have `target="_blank"` links to source articles (indeed.com, cmu.edu, gitlab.com)
+  - **VERIFIED**: AI synthesizes response citing accepted sources (handbook/documentation, OKRs, inclusive meetings, culture building)
+  - **VERIFIED**: Clicking header collapses/expands both accepted and rejected sections
+- Note: Loading state shows "Searching & filtering web..." (single phase, not two-phase as originally spec'd - tool doesn't stream intermediate state)
+- Screenshots saved: `testing/screenshots/web-search-cards-grid.png`, `testing/screenshots/web-search-rejected.png`
+- No code changes required - this was a verification test
+- Next story: US-INT-003 (End-to-End Collapse/Expand UI Test)

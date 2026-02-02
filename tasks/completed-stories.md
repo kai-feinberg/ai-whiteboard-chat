@@ -511,3 +511,34 @@
 **Files changed:**
 - `src/components/ai-elements/read-link-tool.tsx` (enhanced loading state, added modal)
 
+---
+
+## US-INT-002: End-to-End Integration Test - Filtered Web Search (2026-02-02)
+
+**Description:** Verified the complete filtered web search flow works in a real browser session using agent-browser automation. Previously blocked due to missing `EXA_API_KEY` - now unblocked.
+
+**Acceptance Criteria (all verified):**
+- [x] Using browser session authenticated via Clerk
+- [x] Sent message: "Search the web for best practices for remote work"
+- [x] **Verified**: Tool IS invoked by AI agent
+- [x] **Verified**: Accepted results render as cards with images/titles/dates (Indeed, CMU, GitLab articles)
+- [x] **Verified**: "4 results filtered out" section appears with rejected content
+- [x] **Verified**: Expanding rejected section shows titles + rejection reasons (e.g., "Promotional content for Slack product")
+- [x] **Verified**: Clicking card opens source article (verified target="_blank" links to indeed.com, cmu.edu, gitlab.com)
+- [x] **Verified**: AI synthesizes response citing accepted sources (handbook/documentation, OKRs, inclusive meetings, etc.)
+- [x] **Verified**: Collapsible headers work for both accepted and rejected sections
+
+**Implementation Notes:**
+- This was an E2E verification test story - no code changes required
+- `EXA_API_KEY` was configured in Convex environment to unblock the test
+- All acceptance criteria verified via agent-browser automation
+- Screenshots captured for documentation:
+  - `/testing/screenshots/web-search-cards-grid.png` - Responsive card grid with article results
+  - `/testing/screenshots/web-search-rejected.png` - Expanded rejected section with rejection reasons
+
+**Test Evidence:**
+- Accepted results: 6 high-quality articles from Indeed, CMU, GitLab
+- Rejected results: 4 items filtered (3 promotional Slack/Remote content, 1 incomplete content)
+- Card links verified: `target="_blank"` to external URLs
+- Collapse/expand: Both accepted and rejected sections toggle correctly
+
