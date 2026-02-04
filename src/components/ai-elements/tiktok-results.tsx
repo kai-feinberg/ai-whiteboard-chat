@@ -78,7 +78,7 @@ export function TikTokResultsCard({
   return (
     <Card
       className={cn(
-        "w-56 flex-shrink-0 overflow-hidden transition-shadow hover:shadow-md",
+        "overflow-hidden transition-shadow hover:shadow-md",
         className
       )}
       {...props}
@@ -223,7 +223,7 @@ export function TikTokSearchTool({
   return (
     <div
       className={cn(
-        "my-2 rounded-lg border bg-card p-3",
+        "my-2 rounded-lg border bg-card p-3 max-w-full overflow-hidden",
         isLoading && "border-primary/30 bg-primary/5",
         isError && "border-destructive/50 bg-destructive/5",
         className
@@ -266,12 +266,19 @@ export function TikTokSearchTool({
         <Collapsible open={!isCollapsed} onOpenChange={(o) => setIsCollapsed(!o)}>
           <CollapsibleTrigger className="flex w-full items-center gap-2 text-left">
             <TikTokIcon className="size-4 text-foreground" />
-            <span className="flex-1 text-sm font-medium">
-              {resultCount} {resultCount === 1 ? "video" : "videos"} found
-            </span>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-medium">
+                {resultCount} {resultCount === 1 ? "video" : "videos"} found
+              </span>
+              {query && (
+                <p className="truncate text-xs text-muted-foreground">
+                  "{query}"
+                </p>
+              )}
+            </div>
             <ChevronDownIcon
               className={cn(
-                "size-4 text-muted-foreground transition-transform duration-200",
+                "size-4 flex-shrink-0 text-muted-foreground transition-transform duration-200",
                 isCollapsed && "-rotate-90"
               )}
             />
@@ -279,7 +286,7 @@ export function TikTokSearchTool({
 
           <CollapsibleContent>
             {videos.length > 0 ? (
-              <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
+              <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {videos.map((video, index) => (
                   <TikTokResultsCard
                     key={video.tiktokId || video.videoUrl || index}
