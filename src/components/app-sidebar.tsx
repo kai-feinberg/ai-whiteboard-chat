@@ -1,8 +1,10 @@
 import * as React from "react"
-import { LayoutDashboard, FileText, CreditCard, Sparkles, Bot, Building2 } from "lucide-react"
+import { LayoutDashboard, FileText, CreditCard, Sparkles, Bot, Building2, MessageSquare } from "lucide-react"
 import { Link, useMatchRoute } from "@tanstack/react-router"
 import { UserButton, OrganizationSwitcher } from "@clerk/tanstack-react-start"
 import { useCustomer } from "autumn-js/react"
+import { useQuery } from "convex/react"
+import { api } from "../../convex/_generated/api"
 import { Button } from "@/components/ui/button"
 // import { DevCreditsAdjuster } from "@/components/dev-credits-adjuster"
 
@@ -149,6 +151,13 @@ function UserCreditsCard() {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const matchRoute = useMatchRoute();
 
+  // Get most recent canvas with a chat for quick access
+  const canvasesWithChats = useQuery(api.canvas.functions.listCanvasesWithChats);
+  const mostRecentChatCanvas = canvasesWithChats?.[0];
+
+  // Check if current route is a chat route
+  const isChatActive = matchRoute({ to: "/canvas/$canvasId/chat", fuzzy: true });
+
   return (
     <Sidebar {...props} className="border-none shadow-none">
       <SidebarHeader className="pb-4">
@@ -162,25 +171,53 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup className="px-3">
           <SidebarMenu className="gap-1.5">
-            {data.navMain.map((item) => {
+            {data.navMain.map((item, index) => {
               const Icon = item.icon;
               const isActive = matchRoute({ to: item.url, fuzzy: item.url === "/" ? false : true });
 
               return (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild size="lg" isActive={!!isActive}>
-                    <Link
-                      to={item.url}
-                      className={isActive
-                        ? "font-semibold text-sidebar-foreground text-[16px] bg-sidebar-footer !outline-1 outline-sidebar-border rounded-lg"
-                        : "font-medium text-sidebar-foreground/70 text-[16px] hover:text-sidebar-foreground bg-transparent hover:bg-transparent rounded-lg"
-                      }
-                    >
-                      <Icon className="h-5 w-5" />
-                      {item.title}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <React.Fragment key={item.title}>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild size="lg" isActive={!!isActive}>
+                      <Link
+                        to={item.url}
+                        className={isActive
+                          ? "font-semibold text-sidebar-foreground text-[16px] bg-sidebar-footer !outline-1 outline-sidebar-border rounded-lg"
+                          : "font-medium text-sidebar-foreground/70 text-[16px] hover:text-sidebar-foreground bg-transparent hover:bg-transparent rounded-lg"
+                        }
+                      >
+                        <Icon className="h-5 w-5" />
+                        {item.title}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  {/* Insert Chat after Documents (index 1) */}
+                  {index === 1 && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild size="lg" isActive={!!isChatActive} disabled={!mostRecentChatCanvas}>
+                        {mostRecentChatCanvas ? (
+                          <Link
+                            to="/canvas/$canvasId/chat"
+                            params={{ canvasId: mostRecentChatCanvas._id }}
+                            className={isChatActive
+                              ? "font-semibold text-sidebar-foreground text-[16px] bg-sidebar-footer !outline-1 outline-sidebar-border rounded-lg"
+                              : "font-medium text-sidebar-foreground/70 text-[16px] hover:text-sidebar-foreground bg-transparent hover:bg-transparent rounded-lg"
+                            }
+                          >
+                            <MessageSquare className="h-5 w-5" />
+                            Chat
+                          </Link>
+                        ) : (
+                          <span className="font-medium text-sidebar-foreground/40 text-[16px] cursor-not-allowed">
+                            <MessageSquare className="h-5 w-5" />
+                            Chat
+                          </span>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+                </React.Fragment>
               );
             })}
           </SidebarMenu>
