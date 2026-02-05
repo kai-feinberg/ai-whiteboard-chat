@@ -429,9 +429,11 @@ export async function fetchTikTokSearch(
     partialResults.map((video) => fetchTikTokTranscript(video.videoUrl))
   );
 
-  // Combine results with transcripts
-  return partialResults.map((video, index) => ({
-    ...video,
-    transcript: transcripts[index],
-  }));
+  // Combine results with transcripts and filter out videos with no speech
+  return partialResults
+    .map((video, index) => ({
+      ...video,
+      transcript: transcripts[index],
+    }))
+    .filter((video) => video.transcript !== "[No speech detected]");
 }

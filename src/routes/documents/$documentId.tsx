@@ -200,15 +200,17 @@ function DocumentEditorPage() {
 
       {/* Editor */}
       <div className="flex-1 p-4 overflow-auto">
-        <Textarea
-          value={content}
-          onChange={(e) => {
-            setContent(e.target.value);
-            setSaveStatus("idle");
-          }}
-          placeholder="Start writing your notes here... (Markdown supported)"
-          className="w-full h-full min-h-[calc(100vh-200px)] resize-none border-none shadow-none focus-visible:ring-0 text-base font-mono"
-        />
+        <div className="max-w-3xl mx-auto">
+          <Textarea
+            value={content}
+            onChange={(e) => {
+              setContent(e.target.value);
+              setSaveStatus("idle");
+            }}
+            placeholder="Start writing your notes here... (Markdown supported)"
+            className="w-full h-full min-h-[calc(100vh-200px)] resize-none border-none shadow-none focus-visible:ring-0 text-base font-mono"
+          />
+        </div>
       </div>
     </div>
   );

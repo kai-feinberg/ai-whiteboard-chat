@@ -7,6 +7,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "~/components/ui/dialog";
 import { cn } from "~/lib/utils";
 import {
   ExternalLinkIcon,
@@ -69,103 +76,113 @@ export function TikTokResultsCard({
   className,
   ...props
 }: TikTokResultsCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
 
   const hasTranscript =
     video.transcript && video.transcript !== "[No speech detected]";
 
   return (
-    <Card
-      className={cn(
-        "overflow-hidden transition-shadow hover:shadow-md",
-        className
-      )}
-      {...props}
-    >
-      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-        <CollapsibleTrigger asChild>
-          <button
-            className="w-full text-left cursor-pointer"
-            aria-label={`Video by @${video.creatorHandle}. ${isExpanded ? "Click to collapse" : "Click to expand transcript"}`}
-          >
-            {/* Thumbnail - 9:16 aspect ratio, capped height */}
-            <div className="relative aspect-[9/16] max-h-32 w-full overflow-hidden bg-muted">
-              {video.thumbnailUrl && !imgError ? (
-                <img
-                  src={video.thumbnailUrl}
-                  alt={`Video by @${video.creatorHandle}`}
-                  className="h-full w-full object-cover"
-                  onError={() => setImgError(true)}
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <ImageOffIcon className="size-8 text-muted-foreground/50" />
-                </div>
-              )}
-              {/* Expand indicator */}
-              <div className="absolute bottom-1 right-1 rounded bg-black/60 p-0.5">
-                <ChevronDownIcon
-                  className={cn(
-                    "size-3 text-white transition-transform duration-200",
-                    isExpanded && "rotate-180"
-                  )}
-                />
-              </div>
+    <>
+      <Card
+        className={cn(
+          "overflow-hidden transition-shadow hover:shadow-md cursor-pointer",
+          className
+        )}
+        onClick={() => setIsModalOpen(true)}
+        {...props}
+      >
+        {/* Thumbnail - 9:16 aspect ratio, capped height */}
+        <div className="relative aspect-[9/16] max-h-32 w-full overflow-hidden bg-muted">
+          {video.thumbnailUrl && !imgError ? (
+            <img
+              src={video.thumbnailUrl}
+              alt={`Video by @${video.creatorHandle}`}
+              className="h-full w-full object-cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <ImageOffIcon className="size-8 text-muted-foreground/50" />
             </div>
+          )}
+        </div>
 
-            {/* Creator handle and stats */}
-            <CardContent className="p-3">
-              <p className="truncate text-sm font-semibold">
-                @{video.creatorHandle}
-              </p>
-              <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+        {/* Creator handle and stats */}
+        <CardContent className="p-3">
+          <p className="truncate text-sm font-semibold">
+            @{video.creatorHandle}
+          </p>
+          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <EyeIcon className="size-3.5" />
+              {formatNumber(video.views)}
+            </span>
+            <span className="flex items-center gap-1">
+              <HeartIcon className="size-3.5" />
+              {formatNumber(video.likes)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Share2Icon className="size-3.5" />
+              {formatNumber(video.shares)}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Transcript Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TikTokIcon className="size-5" />
+              @{video.creatorHandle}
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-1">
-                  <EyeIcon className="size-3.5" />
+                  <EyeIcon className="size-4" />
                   {formatNumber(video.views)}
                 </span>
                 <span className="flex items-center gap-1">
-                  <HeartIcon className="size-3.5" />
+                  <HeartIcon className="size-4" />
                   {formatNumber(video.likes)}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Share2Icon className="size-3.5" />
+                  <Share2Icon className="size-4" />
                   {formatNumber(video.shares)}
                 </span>
               </div>
-            </CardContent>
-          </button>
-        </CollapsibleTrigger>
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* Expanded content: transcript + link */}
-        <CollapsibleContent>
-          <div className="space-y-3 border-t px-3 pb-3 pt-3">
-            {/* Transcript */}
+          {/* Transcript with capped scrollable height */}
+          <div className="space-y-3">
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">
+              <p className="mb-2 text-sm font-medium text-muted-foreground">
                 Transcript
               </p>
-              <div className="max-h-32 overflow-y-auto rounded bg-muted/50 p-2 text-xs">
+              <div className="max-h-[50vh] overflow-y-auto rounded-md bg-muted/50 p-4 text-sm leading-relaxed">
                 {hasTranscript ? video.transcript : "[No speech detected]"}
               </div>
             </div>
 
             {/* Open on TikTok button */}
-            <Button variant="outline" size="sm" className="w-full" asChild>
+            <Button variant="outline" className="w-full" asChild>
               <a
                 href={video.videoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <TikTokIcon className="mr-2 size-3.5" />
+                <TikTokIcon className="mr-2 size-4" />
                 Open on TikTok
-                <ExternalLinkIcon className="ml-1 size-3" />
+                <ExternalLinkIcon className="ml-1 size-3.5" />
               </a>
             </Button>
           </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -216,9 +233,13 @@ export function TikTokSearchTool({
   const isError = state === "output-error" || (output && !output.success);
   const isSuccess = state === "output-available" && output?.success;
 
-  const videos = output?.videos ?? [];
+  const allVideos = output?.videos ?? [];
+  // Filter out videos with no speech detected
+  const videos = allVideos.filter(
+    (v) => v.transcript && v.transcript !== "[No speech detected]"
+  );
   const errorMessage = output?.error ?? "TikTok search failed";
-  const resultCount = output?.totalFound ?? videos.length;
+  const resultCount = videos.length;
 
   return (
     <div
