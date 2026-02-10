@@ -23,6 +23,7 @@ export default defineSchema({
     organizationId: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
+    systemPrompt: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
     createdBy: v.string(), // userId

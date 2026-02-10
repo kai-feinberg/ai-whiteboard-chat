@@ -334,6 +334,7 @@ function FullScreenChat() {
           onCreateThread={handleCreateThread}
           onDeleteThread={handleDeleteThread}
           contextMessages={contextMessages}
+          canvasId={canvasId as Id<"canvases">}
           className="w-64 border-r"
         />
 

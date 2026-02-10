@@ -837,6 +837,7 @@ function CanvasEditor() {
                   <p>Facebook Ad</p>
                 </TooltipContent>
               </Tooltip>
+
             </div>
           </TooltipProvider>
         </Panel>
@@ -888,6 +889,7 @@ function CanvasEditor() {
         placeholder="https://www.facebook.com/ads/library?id=... or Ad ID"
         inputType="text"
       />
+
       </div>
     </CanvasContext.Provider>
   );

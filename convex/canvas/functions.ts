@@ -564,6 +564,7 @@ export const updateCanvas = mutation({
     canvasId: v.id("canvases"),
     title: v.optional(v.string()),
     description: v.optional(v.string()),
+    systemPrompt: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -596,6 +597,9 @@ export const updateCanvas = mutation({
     }
     if (args.description !== undefined) {
       updates.description = args.description;
+    }
+    if (args.systemPrompt !== undefined) {
+      updates.systemPrompt = args.systemPrompt;
     }
 
     await ctx.db.patch(args.canvasId, updates);

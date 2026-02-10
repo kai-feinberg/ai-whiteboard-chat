@@ -272,6 +272,7 @@ export function ChatNode({ data }: NodeProps<ChatNodeData>) {
             onCreateThread={handleCreateThread}
             onDeleteThread={handleDeleteThread}
             contextMessages={contextMessages}
+            canvasId={data.canvasId}
             className="w-48 border-r overflow-y-auto"
           />
 

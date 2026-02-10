@@ -797,6 +797,12 @@ export const sendMessage = action({
       args.modelId
     );
 
+    // Fetch canvas doc for per-canvas system prompt
+    const canvasDoc = await ctx.runQuery(internal.canvas.chat.getCanvasInternal, {
+      canvasId,
+      organizationId,
+    });
+
     // Gather context from connected nodes
     const contextMessages: any[] = await ctx.runQuery(internal.canvas.chat.getNodeContextInternal, {
       canvasNodeId: args.canvasNodeId,
@@ -819,10 +825,15 @@ export const sendMessage = action({
       systemMessage += "# Organization Business Context\n\n" + orgSettings.businessContext + "\n\n---\n\n";
     }
 
-    // 2. Add agent-specific system prompt
+    // 2. Add canvas-specific system prompt if present
+    if (canvasDoc?.systemPrompt) {
+      systemMessage += "# Canvas Instructions\n\n" + canvasDoc.systemPrompt + "\n\n---\n\n";
+    }
+
+    // 3. Add agent-specific system prompt
     systemMessage += "# Your Role and Instructions\n\n" + agent.systemPrompt;
 
-    // 3. Add context from connected nodes
+    // 4. Add context from connected nodes
     if (contextMessages.length > 0) {
       const contextContent = contextMessages.map((msg: any) => msg.content).join("\n\n");
       systemMessage += "\n\n---\n\n# Attached Context from User\n\nThe user has connected the following content to this chat for you to reference:\n\n" + contextContent;
@@ -830,6 +841,7 @@ export const sendMessage = action({
 
     console.log('[Canvas Chat] System prompt:', {
       hasAgentPrompt: !!agent.systemPrompt,
+      hasCanvasPrompt: !!canvasDoc?.systemPrompt,
       hasContext: contextMessages.length > 0,
       totalSystemMessageLength: systemMessage.length,
       systemMessagePreview: systemMessage.substring(0, 300),
@@ -1019,6 +1031,23 @@ export const getNodeContextInternal = internalQuery({
     }
 
     return contextMessages;
+  },
+});
+
+/**
+ * Internal query to get canvas doc (for per-canvas system prompt)
+ */
+export const getCanvasInternal = internalQuery({
+  args: {
+    canvasId: v.id("canvases"),
+    organizationId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const canvas = await ctx.db.get(args.canvasId);
+    if (!canvas || canvas.organizationId !== args.organizationId) {
+      return null;
+    }
+    return canvas;
   },
 });
 
