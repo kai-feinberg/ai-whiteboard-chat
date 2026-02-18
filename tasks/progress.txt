@@ -440,3 +440,49 @@
 - Screenshots saved: `testing/screenshots/web-search-cards-grid.png`, `testing/screenshots/web-search-rejected.png`
 - No code changes required - this was a verification test
 - Next story: US-INT-003 (End-to-End Collapse/Expand UI Test)
+
+### 2026-02-18: US-DOC-001, US-DOC-002, US-DOC-003 - Documents Plate.js Editor Migration
+
+**US-DOC-001: Update Convex Schema and Functions**
+- Schema already had `content: v.optional(v.any())` - was already correct
+- Functions already supported `v.any()` for content field
+- No changes needed - this was already done
+
+**US-DOC-002: Create Document-Specific Plate Editor Component**
+- Created `src/features/documents/components/document-editor.tsx`:
+  - Accepts `initialValue: Value`, `onChange`, `readOnly`, `className` props
+  - Uses `usePlateEditor` with DocumentEditorKit plugins
+  - Returns Plate editor with EditorContainer/Editor
+- Created `src/features/documents/plugins/document-editor-kit.ts`:
+  - Includes: BasicBlocksKit, BasicMarksKit, ListKit, AutoformatKit, BlockPlaceholderKit, TrailingBlockPlugin
+  - Excludes: AI, comments, suggestions, media uploads, tables, TOC, columns, math
+
+**US-DOC-003: Document Editor Page with Plate Integration**
+- Modified `src/routes/documents/$documentId.tsx`:
+  - Replaced Textarea with DocumentEditor component
+  - Content state changed from `string` to `Value` type
+  - Content comparison uses JSON.stringify for deep comparison
+  - Handles null/undefined content as EMPTY_VALUE
+- Modified `src/routes/documents/index.tsx`:
+  - Added EMPTY_PLATE_VALUE constant with `Value` type annotation
+  - createDocument now passes default empty Plate value
+
+**Logic Review Fixes:**
+- Fixed inconsistent content initialization between state and ref (empty array bug)
+- Added `Value` type annotation to EMPTY_PLATE_VALUE constant
+
+**Known Issue - Persistence:**
+- Created `tasks/document-persistence-issue.md` documenting the problem
+- Plate.js `usePlateEditor` only uses `initialValue` on mount
+- Content saves correctly to database but doesn't load when navigating back
+- Potential solutions documented in issue file
+- Browser verification blocked by this issue
+
+**TypeScript:**
+- All document-related files pass typecheck
+- Pre-existing errors in codebase unrelated to these changes
+
+**Next developer:** 
+- Resolve persistence issue (see `tasks/document-persistence-issue.md`)
+- Options: use `key` prop to force remount, or investigate Plate controlled mode
+- Stories US-DOC-004 through US-DOC-006 still pending in PRD

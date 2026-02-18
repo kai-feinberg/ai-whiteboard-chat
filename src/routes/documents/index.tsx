@@ -1,11 +1,11 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { Plus, FileText, Calendar, Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import { useAuth } from "@clerk/tanstack-react-start";
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../../../convex/_generated/api'
+import { Plus, FileText, Calendar, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { useAuth } from '@clerk/tanstack-react-start'
 import {
   Dialog,
   DialogContent,
@@ -13,83 +13,95 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import * as React from "react";
-import type { Id } from "../../../convex/_generated/dataModel";
+} from '@/components/ui/dialog'
+import * as React from 'react'
+import type { Id } from '../../../convex/_generated/dataModel'
+import type { Value } from 'platejs'
 
-export const Route = createFileRoute("/documents/")({
+const EMPTY_PLATE_VALUE: Value = [{ type: 'p', children: [{ text: '' }] }]
+
+export const Route = createFileRoute('/documents/')({
   beforeLoad: ({ context }) => {
     if (!context.userId) {
-      throw new Error("Not authenticated");
+      throw new Error('Not authenticated')
     }
     if (!context.orgId) {
-      throw new Error("No organization selected");
+      throw new Error('No organization selected')
     }
   },
   component: DocumentsPage,
-});
+})
 
 function DocumentsPage() {
-  const navigate = useNavigate();
-  const { orgId } = useAuth();
-  const documents = useQuery(api.documents.functions.listMyDocuments);
-  const createDocument = useMutation(api.documents.functions.createDocument);
-  const deleteDocument = useMutation(api.documents.functions.deleteDocument);
+  const navigate = useNavigate()
+  const { orgId } = useAuth()
+  const documents = useQuery(api.documents.functions.listMyDocuments)
+  const createDocument = useMutation(api.documents.functions.createDocument)
+  const deleteDocument = useMutation(api.documents.functions.deleteDocument)
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const [documentToDelete, setDocumentToDelete] = React.useState<Id<"documents"> | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [documentToDelete, setDocumentToDelete] =
+    React.useState<Id<'documents'> | null>(null)
 
   const handleCreateDocument = async () => {
     try {
-      const documentId = await createDocument({ title: "Untitled Document" });
-      toast.success("Document created");
-      navigate({ to: `/documents/${documentId}` });
+      const documentId = await createDocument({
+        title: 'Untitled Document',
+        content: EMPTY_PLATE_VALUE,
+      })
+      toast.success('Document created')
+      navigate({ to: `/documents/${documentId}` })
     } catch (error) {
-      console.error("[Documents] Error creating document:", error);
+      console.error('[Documents] Error creating document:', error)
       toast.error(
-        error instanceof Error ? error.message : "Failed to create document"
-      );
+        error instanceof Error ? error.message : 'Failed to create document',
+      )
     }
-  };
+  }
 
-  const handleDeleteDocument = (documentId: Id<"documents">, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDocumentToDelete(documentId);
-    setDeleteDialogOpen(true);
-  };
+  const handleDeleteDocument = (
+    documentId: Id<'documents'>,
+    e: React.MouseEvent,
+  ) => {
+    e.stopPropagation()
+    setDocumentToDelete(documentId)
+    setDeleteDialogOpen(true)
+  }
 
   const confirmDelete = async () => {
-    if (!documentToDelete) return;
+    if (!documentToDelete) return
 
     try {
-      await deleteDocument({ documentId: documentToDelete });
-      toast.success("Document deleted");
+      await deleteDocument({ documentId: documentToDelete })
+      toast.success('Document deleted')
     } catch (error) {
-      console.error("[Documents] Error deleting document:", error);
+      console.error('[Documents] Error deleting document:', error)
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete document"
-      );
+        error instanceof Error ? error.message : 'Failed to delete document',
+      )
     } finally {
-      setDeleteDialogOpen(false);
-      setDocumentToDelete(null);
+      setDeleteDialogOpen(false)
+      setDocumentToDelete(null)
     }
-  };
+  }
 
-  const handleSelectDocument = (documentId: Id<"documents">) => {
-    navigate({ to: `/documents/${documentId}` });
-  };
+  const handleSelectDocument = (documentId: Id<'documents'>) => {
+    navigate({ to: `/documents/${documentId}` })
+  }
 
   if (!orgId) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">No Organization Selected</h2>
+          <h2 className="text-xl font-semibold mb-2">
+            No Organization Selected
+          </h2>
           <p className="text-muted-foreground">
             Please select an organization to view documents.
           </p>
         </div>
       </div>
-    );
+    )
   }
 
   // Loading state
@@ -123,7 +135,7 @@ function DocumentsPage() {
           ))}
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -149,7 +161,8 @@ function DocumentsPage() {
             <FileText className="h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">No documents yet</h3>
             <p className="text-muted-foreground text-center mb-6 max-w-md">
-              Create your first document to start saving notes and organizing content
+              Create your first document to start saving notes and organizing
+              content
             </p>
             <Button onClick={handleCreateDocument} size="lg">
               <Plus className="h-5 w-5 mr-2" />
@@ -178,7 +191,7 @@ function DocumentsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-muted-foreground" />
-                  {doc.title || "Untitled Document"}
+                  {doc.title || 'Untitled Document'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -199,11 +212,15 @@ function DocumentsPage() {
           <DialogHeader>
             <DialogTitle>Delete Document</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this document? This cannot be undone.
+              Are you sure you want to delete this document? This cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
@@ -213,5 +230,5 @@ function DocumentsPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }
