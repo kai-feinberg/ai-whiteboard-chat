@@ -2,33 +2,43 @@
 // @feature search-tools
 // @service exa, ai-gateway, scrape-creators
 
-import { Exa } from "exa-js";
-import { generateText } from "ai";
-import { gateway } from "@ai-sdk/gateway";
+import { Exa } from 'exa-js'
+import { generateText } from 'ai'
+import { gateway } from '@ai-sdk/gateway'
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+
+/** Maximum character length for article text to prevent context overflow */
+const MAX_ARTICLE_LENGTH = 8000
+
+/** Maximum word count for article text */
+const MAX_ARTICLE_WORDS = 1200
 
 // ============================================================
 // TYPES - EXA SEARCH
 // ============================================================
 
 export interface ExaSearchResult {
-  id: string;
-  title: string;
-  url: string;
-  publishedDate?: string;
-  author?: string;
-  text: string;
-  image?: string;
-  favicon?: string;
+  id: string
+  title: string
+  url: string
+  publishedDate?: string
+  author?: string
+  text: string
+  image?: string
+  favicon?: string
 }
 
 export interface FilterResult {
-  accepted: boolean;
-  reason: string;
+  accepted: boolean
+  reason: string
 }
 
 export interface FilteredResults {
-  accepted: ExaSearchResult[];
-  rejected: Array<ExaSearchResult & { rejectionReason: string }>;
+  accepted: ExaSearchResult[]
+  rejected: Array<ExaSearchResult & { rejectionReason: string }>
 }
 
 // ============================================================
@@ -36,51 +46,51 @@ export interface FilteredResults {
 // ============================================================
 
 interface TikTokSearchResponse {
-  success: boolean;
-  credits_remaining: number;
-  search_item_list: TikTokSearchItem[];
-  cursor: number;
+  success: boolean
+  credits_remaining: number
+  search_item_list: TikTokSearchItem[]
+  cursor: number
 }
 
 interface TikTokSearchItem {
-  aweme_id: string;
-  desc: string;
-  url: string;
+  aweme_id: string
+  desc: string
+  url: string
   statistics: {
-    play_count: number;
-    digg_count: number;
-    share_count: number;
-    comment_count?: number;
-  };
+    play_count: number
+    digg_count: number
+    share_count: number
+    comment_count?: number
+  }
   video: {
     cover: {
-      url_list: string[];
-    };
-    duration?: number;
-  };
+      url_list: string[]
+    }
+    duration?: number
+  }
   author: {
-    unique_id: string;
-    nickname?: string;
-    follower_count: number;
-  };
-  create_time?: number;
+    unique_id: string
+    nickname?: string
+    follower_count: number
+  }
+  create_time?: number
 }
 
 interface TranscriptResponse {
-  id: string;
-  url: string;
-  transcript: string;
+  id: string
+  url: string
+  transcript: string
 }
 
 export interface TikTokVideoResult {
-  tiktokId: string;
-  videoUrl: string;
-  thumbnailUrl: string;
-  creatorHandle: string;
-  views: number;
-  likes: number;
-  shares: number;
-  transcript: string;
+  tiktokId: string
+  videoUrl: string
+  thumbnailUrl: string
+  creatorHandle: string
+  views: number
+  likes: number
+  shares: number
+  transcript: string
 }
 
 // ============================================================
@@ -97,54 +107,54 @@ export interface TikTokVideoResult {
  */
 export async function fetchExaSearch(
   query: string,
-  numResults: number = 10
+  numResults: number = 10,
 ): Promise<ExaSearchResult[]> {
   // Input validation
   if (!query.trim()) {
-    throw new Error("Search query cannot be empty");
+    throw new Error('Search query cannot be empty')
   }
-  const clampedNumResults = Math.min(Math.max(numResults, 1), 100);
+  const clampedNumResults = Math.min(Math.max(numResults, 1), 100)
 
-  const apiKey = process.env.EXA_API_KEY;
+  const apiKey = process.env.EXA_API_KEY
   if (!apiKey) {
-    throw new Error("EXA_API_KEY not configured");
+    throw new Error('EXA_API_KEY not configured')
   }
 
-  const exa = new Exa(apiKey);
+  const exa = new Exa(apiKey)
 
   try {
     const response = await exa.searchAndContents(query, {
       text: true,
-      type: "auto",
+      type: 'auto',
       numResults: clampedNumResults,
-    });
+    })
 
     if (!response.results || response.results.length === 0) {
-      return [];
+      return []
     }
 
     return response.results.map((result) => ({
-      id: result.id || "",
-      title: result.title || "",
-      url: result.url || "",
+      id: result.id || '',
+      title: result.title || '',
+      url: result.url || '',
       publishedDate: result.publishedDate || undefined,
       author: result.author || undefined,
-      text: result.text || "",
+      text: result.text || '',
       image: result.image || undefined,
       favicon: result.favicon || undefined,
-    }));
+    }))
   } catch (error) {
     if (error instanceof Error) {
-      const msg = error.message.toLowerCase();
-      if (msg.includes("unauthorized") || msg.includes("401")) {
-        throw new Error("Invalid Exa API key");
+      const msg = error.message.toLowerCase()
+      if (msg.includes('unauthorized') || msg.includes('401')) {
+        throw new Error('Invalid Exa API key')
       }
-      if (msg.includes("rate") || msg.includes("429")) {
-        throw new Error("Exa rate limit exceeded - please try again later");
+      if (msg.includes('rate') || msg.includes('429')) {
+        throw new Error('Exa rate limit exceeded - please try again later')
       }
-      throw new Error(`Exa search failed: ${error.message}`);
+      throw new Error(`Exa search failed: ${error.message}`)
     }
-    throw new Error("Exa search failed: Unknown error");
+    throw new Error('Exa search failed: Unknown error')
   }
 }
 
@@ -160,20 +170,20 @@ export async function fetchExaSearch(
  * @returns FilterResult with accepted boolean and reason
  */
 async function evaluateResultWithHaiku(
-  result: ExaSearchResult
+  result: ExaSearchResult,
 ): Promise<FilterResult> {
   try {
     const { text: responseText } = await generateText({
-      model: gateway("anthropic/claude-3-5-haiku-20241022"),
+      model: gateway('anthropic/claude-3-5-haiku-20241022'),
       system: `You evaluate search results for quality. You MUST respond with ONLY a JSON object, no other text.
 Format: {"accepted": boolean, "reason": "string"}
 Example accept: {"accepted": true, "reason": "Quality content"}
 Example reject: {"accepted": false, "reason": "Promotional content for X brand"}`,
       prompt: `Evaluate this search result:
 
-Title: ${result.title || "Untitled"}
+Title: ${result.title || 'Untitled'}
 URL: ${result.url}
-Summary: ${(result.text || "").slice(0, 500)}
+Summary: ${(result.text || '').slice(0, 500)}
 
 Reject if ANY apply:
 - Is this promotional content pushing a product/service?
@@ -182,23 +192,29 @@ Reject if ANY apply:
 
 Respond with JSON only:`,
       temperature: 0,
-    });
+    })
 
     // Parse JSON - handle potential markdown wrapping
-    let jsonStr = responseText.trim();
-    if (jsonStr.startsWith("```")) {
-      jsonStr = jsonStr.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
+    let jsonStr = responseText.trim()
+    if (jsonStr.startsWith('```')) {
+      jsonStr = jsonStr
+        .replace(/```json?\n?/g, '')
+        .replace(/```/g, '')
+        .trim()
     }
 
-    const parsed = JSON.parse(jsonStr) as { accepted: boolean; reason: string };
-    if (typeof parsed.accepted !== "boolean" || typeof parsed.reason !== "string") {
-      throw new Error("Invalid response format");
+    const parsed = JSON.parse(jsonStr) as { accepted: boolean; reason: string }
+    if (
+      typeof parsed.accepted !== 'boolean' ||
+      typeof parsed.reason !== 'string'
+    ) {
+      throw new Error('Invalid response format')
     }
-    return { accepted: parsed.accepted, reason: parsed.reason };
+    return { accepted: parsed.accepted, reason: parsed.reason }
   } catch (error) {
     // Fail-open: accept the result if Haiku call fails
-    console.error("[filterSearchResults] Haiku evaluation error:", error);
-    return { accepted: true, reason: "Filter error - accepted by default" };
+    console.error('[filterSearchResults] Haiku evaluation error:', error)
+    return { accepted: true, reason: 'Filter error - accepted by default' }
   }
 }
 
@@ -211,30 +227,86 @@ Respond with JSON only:`,
  * @returns FilteredResults with accepted and rejected arrays
  */
 export async function filterSearchResults(
-  results: ExaSearchResult[]
+  results: ExaSearchResult[],
 ): Promise<FilteredResults> {
   if (results.length === 0) {
-    return { accepted: [], rejected: [] };
+    return { accepted: [], rejected: [] }
   }
 
   // Evaluate all results in parallel
   const evaluations = await Promise.all(
-    results.map((result) => evaluateResultWithHaiku(result))
-  );
+    results.map((result) => evaluateResultWithHaiku(result)),
+  )
 
-  const accepted: ExaSearchResult[] = [];
-  const rejected: Array<ExaSearchResult & { rejectionReason: string }> = [];
+  const accepted: ExaSearchResult[] = []
+  const rejected: Array<ExaSearchResult & { rejectionReason: string }> = []
 
   results.forEach((result, index) => {
-    const evaluation = evaluations[index];
+    const evaluation = evaluations[index]
     if (evaluation.accepted) {
-      accepted.push(result);
+      // Truncate article text to prevent context overflow
+      const truncatedResult = truncateArticleText(result)
+      accepted.push(truncatedResult)
     } else {
-      rejected.push({ ...result, rejectionReason: evaluation.reason });
+      rejected.push({ ...result, rejectionReason: evaluation.reason })
     }
-  });
+  })
 
-  return { accepted, rejected };
+  return { accepted, rejected }
+}
+
+// ============================================================
+// ARTICLE TRUNCATION
+// ============================================================
+
+/**
+ * Truncate article text to prevent context overflow in AI threads
+ * Limits by both character count and word count for better control
+ *
+ * @param result - ExaSearchResult with article text
+ * @returns ExaSearchResult with truncated text if needed
+ */
+function truncateArticleText(result: ExaSearchResult): ExaSearchResult {
+  if (!result.text) return result
+
+  // Check if truncation is needed
+  const charCount = result.text.length
+  const wordCount = result.text.split(/\s+/).filter(Boolean).length
+
+  if (charCount <= MAX_ARTICLE_LENGTH && wordCount <= MAX_ARTICLE_WORDS) {
+    return result
+  }
+
+  // Truncate by word count first (more natural breaks)
+  let truncated = result.text
+
+  if (wordCount > MAX_ARTICLE_WORDS) {
+    const words = result.text.split(/\s+/)
+    truncated = words.slice(0, MAX_ARTICLE_WORDS).join(' ')
+  }
+
+  // Then apply character limit if still too long
+  if (truncated.length > MAX_ARTICLE_LENGTH) {
+    truncated = truncated.slice(0, MAX_ARTICLE_LENGTH)
+    // Try to break at a sentence or word boundary
+    const lastSentence = truncated.lastIndexOf('.')
+    const lastSpace = truncated.lastIndexOf(' ')
+    const breakPoint =
+      lastSentence > truncated.length * 0.8 ? lastSentence : lastSpace
+    if (breakPoint > truncated.length * 0.7) {
+      truncated = truncated.slice(0, breakPoint)
+    }
+  }
+
+  // Add truncation indicator
+  truncated =
+    truncated.trim() +
+    '\n\n[Article truncated for length - full content available at source URL]'
+
+  return {
+    ...result,
+    text: truncated,
+  }
 }
 
 // ============================================================
@@ -258,60 +330,60 @@ export async function filterSearchResults(
  */
 export function parseWebVTT(webvtt: string): string {
   if (!webvtt || !webvtt.trim()) {
-    return "[No speech detected]";
+    return '[No speech detected]'
   }
 
-  const lines = webvtt.split("\n");
-  const textLines: string[] = [];
-  let inStyleOrRegion = false;
+  const lines = webvtt.split('\n')
+  const textLines: string[] = []
+  let inStyleOrRegion = false
 
   for (const line of lines) {
-    const trimmed = line.trim();
+    const trimmed = line.trim()
 
     // Skip empty lines
     if (!trimmed) {
-      inStyleOrRegion = false; // Empty line ends STYLE/REGION blocks
-      continue;
+      inStyleOrRegion = false // Empty line ends STYLE/REGION blocks
+      continue
     }
 
     // Skip WEBVTT header
-    if (trimmed === "WEBVTT") {
-      continue;
+    if (trimmed === 'WEBVTT') {
+      continue
     }
 
     // Skip NOTE blocks (single line or start of block)
-    if (trimmed.startsWith("NOTE")) {
-      continue;
+    if (trimmed.startsWith('NOTE')) {
+      continue
     }
 
     // Skip STYLE and REGION blocks (they end on empty line)
-    if (trimmed === "STYLE" || trimmed === "REGION") {
-      inStyleOrRegion = true;
-      continue;
+    if (trimmed === 'STYLE' || trimmed === 'REGION') {
+      inStyleOrRegion = true
+      continue
     }
     if (inStyleOrRegion) {
-      continue;
+      continue
     }
 
     // Skip timestamp lines
-    if (trimmed.includes("-->")) {
-      continue;
+    if (trimmed.includes('-->')) {
+      continue
     }
 
     // Skip cue identifiers (purely numeric)
     if (/^\d+$/.test(trimmed)) {
-      continue;
+      continue
     }
 
     // Strip WebVTT styling tags (<v Speaker>, <b>, <i>, <c>, etc.)
-    const cleanedLine = trimmed.replace(/<[^>]+>/g, "");
+    const cleanedLine = trimmed.replace(/<[^>]+>/g, '')
     if (cleanedLine) {
-      textLines.push(cleanedLine);
+      textLines.push(cleanedLine)
     }
   }
 
-  const text = textLines.join(" ").trim();
-  return text || "[No speech detected]";
+  const text = textLines.join(' ').trim()
+  return text || '[No speech detected]'
 }
 
 /**
@@ -324,39 +396,39 @@ export function parseWebVTT(webvtt: string): string {
 async function fetchTikTokTranscript(videoUrl: string): Promise<string> {
   // Skip API call if no URL provided
   if (!videoUrl) {
-    return "[No speech detected]";
+    return '[No speech detected]'
   }
 
-  const apiKey = process.env.SCRAPE_CREATORS_API_KEY;
+  const apiKey = process.env.SCRAPE_CREATORS_API_KEY
   if (!apiKey) {
-    return "[No speech detected]";
+    return '[No speech detected]'
   }
 
   try {
     const url = new URL(
-      "https://api.scrapecreators.com/v1/tiktok/video/transcript"
-    );
-    url.searchParams.set("url", videoUrl);
-    url.searchParams.set("language", "en");
-    url.searchParams.set("use_ai_as_fallback", "false");
+      'https://api.scrapecreators.com/v1/tiktok/video/transcript',
+    )
+    url.searchParams.set('url', videoUrl)
+    url.searchParams.set('language', 'en')
+    url.searchParams.set('use_ai_as_fallback', 'false')
 
     const response = await fetch(url.toString(), {
-      headers: { "x-api-key": apiKey },
-    });
+      headers: { 'x-api-key': apiKey },
+    })
 
     if (!response.ok) {
-      return "[No speech detected]";
+      return '[No speech detected]'
     }
 
-    const data = (await response.json()) as TranscriptResponse;
+    const data = (await response.json()) as TranscriptResponse
 
     if (!data.transcript) {
-      return "[No speech detected]";
+      return '[No speech detected]'
     }
 
-    return parseWebVTT(data.transcript);
+    return parseWebVTT(data.transcript)
   } catch {
-    return "[No speech detected]";
+    return '[No speech detected]'
   }
 }
 
@@ -371,63 +443,61 @@ async function fetchTikTokTranscript(videoUrl: string): Promise<string> {
  */
 export async function fetchTikTokSearch(
   query: string,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<TikTokVideoResult[]> {
-  const apiKey = process.env.SCRAPE_CREATORS_API_KEY;
+  const apiKey = process.env.SCRAPE_CREATORS_API_KEY
   if (!apiKey) {
-    throw new Error("SCRAPE_CREATORS_API_KEY not configured");
+    throw new Error('SCRAPE_CREATORS_API_KEY not configured')
   }
 
   // Input validation
   if (!query.trim()) {
-    throw new Error("Search query cannot be empty");
+    throw new Error('Search query cannot be empty')
   }
 
-  const url = new URL(
-    "https://api.scrapecreators.com/v1/tiktok/search/keyword"
-  );
-  url.searchParams.set("query", query);
-  url.searchParams.set("trim", "true");
-  url.searchParams.set("sort_by", "most-liked");
+  const url = new URL('https://api.scrapecreators.com/v1/tiktok/search/keyword')
+  url.searchParams.set('query', query)
+  url.searchParams.set('trim', 'true')
+  url.searchParams.set('sort_by', 'most-liked')
 
   const response = await fetch(url.toString(), {
-    headers: { "x-api-key": apiKey },
-  });
+    headers: { 'x-api-key': apiKey },
+  })
 
   if (!response.ok) {
-    const status = response.status;
+    const status = response.status
     if (status === 401) {
-      throw new Error("Invalid Scrape Creators API key");
+      throw new Error('Invalid Scrape Creators API key')
     }
     if (status === 429) {
-      throw new Error("Rate limit exceeded - please try again later");
+      throw new Error('Rate limit exceeded - please try again later')
     }
-    throw new Error(`TikTok search failed: ${status} ${response.statusText}`);
+    throw new Error(`TikTok search failed: ${status} ${response.statusText}`)
   }
 
-  const data = (await response.json()) as TikTokSearchResponse;
+  const data = (await response.json()) as TikTokSearchResponse
 
   if (!data.success || !data.search_item_list?.length) {
-    return [];
+    return []
   }
 
-  const items = data.search_item_list.slice(0, limit);
+  const items = data.search_item_list.slice(0, limit)
 
   // Map items to partial results (without transcripts)
   const partialResults = items.map((item) => ({
-    tiktokId: item.aweme_id || "",
-    videoUrl: item.url || "",
-    thumbnailUrl: item.video?.cover?.url_list?.[0] || "",
-    creatorHandle: item.author?.unique_id || "unknown",
+    tiktokId: item.aweme_id || '',
+    videoUrl: item.url || '',
+    thumbnailUrl: item.video?.cover?.url_list?.[0] || '',
+    creatorHandle: item.author?.unique_id || 'unknown',
     views: item.statistics?.play_count ?? 0,
     likes: item.statistics?.digg_count ?? 0,
     shares: item.statistics?.share_count ?? 0,
-  }));
+  }))
 
   // Fetch transcripts for all videos in parallel
   const transcripts = await Promise.all(
-    partialResults.map((video) => fetchTikTokTranscript(video.videoUrl))
-  );
+    partialResults.map((video) => fetchTikTokTranscript(video.videoUrl)),
+  )
 
   // Combine results with transcripts and filter out videos with no speech
   return partialResults
@@ -435,5 +505,5 @@ export async function fetchTikTokSearch(
       ...video,
       transcript: transcripts[index],
     }))
-    .filter((video) => video.transcript !== "[No speech detected]");
+    .filter((video) => video.transcript !== '[No speech detected]')
 }

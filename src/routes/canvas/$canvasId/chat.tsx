@@ -1,30 +1,31 @@
 // src/routes/canvas/$canvasId.chat.tsx
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useAction, useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
-import { Chat } from "@/features/chat/components/Chat";
-import { ThreadSidebar } from "@/features/chat/components/ThreadSidebar";
-import { useUIMessages } from "@convex-dev/agent/react";
-import { toast } from "sonner";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, ChevronDown, Check } from "lucide-react";
-import { useCustomer } from "autumn-js/react";
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useQuery, useAction, useMutation } from 'convex/react'
+import { api } from '../../../../convex/_generated/api'
+import type { Id } from '../../../../convex/_generated/dataModel'
+import { Chat } from '@/features/chat/components/Chat'
+import { ThreadSidebar } from '@/features/chat/components/ThreadSidebar'
+import { useUIMessages } from '@convex-dev/agent/react'
+import { toast } from 'sonner'
+import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft, Loader2, ChevronDown, Check, Menu } from 'lucide-react'
+import { useCustomer } from 'autumn-js/react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 
-export const Route = createFileRoute("/canvas/$canvasId/chat")({
+export const Route = createFileRoute('/canvas/$canvasId/chat')({
   beforeLoad: ({ context }) => {
     if (!context.userId) {
-      throw new Error("Not authenticated");
+      throw new Error('Not authenticated')
     }
     if (!context.orgId) {
-      throw new Error("No organization selected");
+      throw new Error('No organization selected')
     }
   },
   component: FullScreenChat,
@@ -36,207 +37,214 @@ export const Route = createFileRoute("/canvas/$canvasId/chat")({
           <p className="text-muted-foreground">{error.message}</p>
         </div>
       </div>
-    );
+    )
   },
-});
+})
 
 function FullScreenChat() {
-  const { canvasId } = Route.useParams();
-  const navigate = useNavigate();
-  const [selectedThreadId, setSelectedThreadId] = useState<Id<"threads"> | null>(null);
+  const { canvasId } = Route.useParams()
+  const navigate = useNavigate()
+  const [selectedThreadId, setSelectedThreadId] =
+    useState<Id<'threads'> | null>(null)
 
   // Reset thread selection when canvas changes (e.g., via switcher dropdown)
   useEffect(() => {
-    setSelectedThreadId(null);
-  }, [canvasId]);
+    setSelectedThreadId(null)
+  }, [canvasId])
 
   // Agent state management with localStorage persistence
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(() => {
     // Try to load from localStorage on mount
-    if (typeof window !== "undefined" && canvasId) {
-      const stored = localStorage.getItem(`canvas-agent-${canvasId}`);
-      return stored || null;
+    if (typeof window !== 'undefined' && canvasId) {
+      const stored = localStorage.getItem(`canvas-agent-${canvasId}`)
+      return stored || null
     }
-    return null;
-  });
+    return null
+  })
 
   // Model state management with localStorage persistence
   const [selectedModelId, setSelectedModelId] = useState<string | null>(() => {
     // Try to load from localStorage on mount
-    if (typeof window !== "undefined" && canvasId) {
-      const stored = localStorage.getItem(`canvas-model-${canvasId}`);
-      return stored || "anthropic/claude-haiku-4.5"; // Default to Claude Haiku
+    if (typeof window !== 'undefined' && canvasId) {
+      const stored = localStorage.getItem(`canvas-model-${canvasId}`)
+      return stored || 'anthropic/claude-haiku-4.5' // Default to Claude Haiku
     }
-    return "anthropic/claude-haiku-4.5"; // Default to Claude Haiku
-  });
+    return 'anthropic/claude-haiku-4.5' // Default to Claude Haiku
+  })
 
   // Load default agent on mount if no stored agent
-  const defaultAgent = useQuery(api.agents.functions.getDefaultAgent);
+  const defaultAgent = useQuery(api.agents.functions.getDefaultAgent)
   useEffect(() => {
     if (defaultAgent && !selectedAgentId) {
-      setSelectedAgentId(defaultAgent);
+      setSelectedAgentId(defaultAgent)
     }
-  }, [defaultAgent, selectedAgentId]);
+  }, [defaultAgent, selectedAgentId])
 
   // Persist agent selection to localStorage
   const handleAgentChange = (agentId: string) => {
-    setSelectedAgentId(agentId);
-    if (typeof window !== "undefined" && canvasId) {
-      localStorage.setItem(`canvas-agent-${canvasId}`, agentId);
+    setSelectedAgentId(agentId)
+    if (typeof window !== 'undefined' && canvasId) {
+      localStorage.setItem(`canvas-agent-${canvasId}`, agentId)
     }
-  };
+  }
 
   // Persist model selection to localStorage
   const handleModelChange = (modelId: string) => {
-    setSelectedModelId(modelId);
-    if (typeof window !== "undefined" && canvasId) {
-      localStorage.setItem(`canvas-model-${canvasId}`, modelId);
+    setSelectedModelId(modelId)
+    if (typeof window !== 'undefined' && canvasId) {
+      localStorage.setItem(`canvas-model-${canvasId}`, modelId)
     }
-  };
+  }
 
   // Load canvas data
-  const canvasData = useQuery(
-    api.canvas.functions.getCanvasWithNodes,
-    { canvasId: canvasId as Id<"canvases"> }
-  );
+  const canvasData = useQuery(api.canvas.functions.getCanvasWithNodes, {
+    canvasId: canvasId as Id<'canvases'>,
+  })
 
   // Load canvases with chats for switcher dropdown
-  const canvasesWithChats = useQuery(api.canvas.functions.listCanvasesWithChats);
+  const canvasesWithChats = useQuery(api.canvas.functions.listCanvasesWithChats)
 
   // Load all threads for this canvas
-  const threads = useQuery(
-    api.canvas.threads.listCanvasThreads,
-    canvasId ? { canvasId: canvasId as Id<"canvases"> } : "skip"
-  ) ?? [];
+  const threads =
+    useQuery(
+      api.canvas.threads.listCanvasThreads,
+      canvasId ? { canvasId: canvasId as Id<'canvases'> } : 'skip',
+    ) ?? []
 
   // Auto-select first thread on load
   useEffect(() => {
     if (threads.length > 0 && !selectedThreadId) {
-      setSelectedThreadId(threads[0]._id);
+      setSelectedThreadId(threads[0]._id)
     }
-  }, [threads, selectedThreadId]);
+  }, [threads, selectedThreadId])
 
   // Get selected thread data
-  const selectedThread = threads.find((t) => t._id === selectedThreadId);
+  const selectedThread = threads.find((t) => t._id === selectedThreadId)
 
   // Load messages for selected thread
   const messagesQuery = useUIMessages(
     api.chat.functions.listMessages,
-    selectedThread?.agentThreadId ? { threadId: selectedThread.agentThreadId } : "skip",
+    selectedThread?.agentThreadId
+      ? { threadId: selectedThread.agentThreadId }
+      : 'skip',
     {
       initialNumItems: 50,
       stream: true,
-    }
-  );
+    },
+  )
 
-  const messages = messagesQuery.results;
-  const isStreaming = messages?.some((m) => m.status === "streaming") ?? false;
+  const messages = messagesQuery.results
+  const isStreaming = messages?.some((m) => m.status === 'streaming') ?? false
 
   // Find first chat node on canvas for context gathering
-  const chatNode = canvasData?.nodes?.find((node) => node.nodeType === "chat");
+  const chatNode = canvasData?.nodes?.find((node) => node.nodeType === 'chat')
 
   // Get context from connected nodes (using first chat node)
   const contextMessages = useQuery(
     api.canvas.nodes.getNodeContext,
-    chatNode ? { canvasNodeId: chatNode._id } : "skip"
-  );
+    chatNode ? { canvasNodeId: chatNode._id } : 'skip',
+  )
 
   // Actions
-  const createThread = useAction(api.canvas.threads.createCanvasThread);
-  const deleteThreadMutation = useMutation(api.chat.functions.deleteThread);
-  const sendMessage = useAction(api.canvas.chat.sendMessage);
+  const createThread = useAction(api.canvas.threads.createCanvasThread)
+  const deleteThreadMutation = useMutation(api.chat.functions.deleteThread)
+  const sendMessage = useAction(api.canvas.chat.sendMessage)
 
   const handleCreateThread = async () => {
     if (!canvasId) {
-      toast.error("Cannot create thread: missing canvas ID");
-      return;
+      toast.error('Cannot create thread: missing canvas ID')
+      return
     }
 
     try {
       const result = await createThread({
-        canvasId: canvasId as Id<"canvases">,
+        canvasId: canvasId as Id<'canvases'>,
         modelId: selectedModelId || undefined,
-      });
-      toast.success("New thread created");
-      setSelectedThreadId(result.threadId);
+      })
+      toast.success('New thread created')
+      setSelectedThreadId(result.threadId)
     } catch (error) {
-      console.error("[FullScreenChat] Error creating thread:", error);
-      toast.error("Failed to create thread");
+      console.error('[FullScreenChat] Error creating thread:', error)
+      toast.error('Failed to create thread')
     }
-  };
+  }
 
-  const handleSelectThread = async (threadId: Id<"threads">) => {
-    setSelectedThreadId(threadId);
-  };
+  const handleSelectThread = async (threadId: Id<'threads'>) => {
+    setSelectedThreadId(threadId)
+  }
 
-  const handleDeleteThread = async (threadId: Id<"threads">) => {
+  const handleDeleteThread = async (threadId: Id<'threads'>) => {
     try {
-      await deleteThreadMutation({ threadId });
-      toast.success("Thread deleted");
+      await deleteThreadMutation({ threadId })
+      toast.success('Thread deleted')
 
       // If deleted thread was selected, select another or clear
       if (selectedThreadId === threadId) {
-        const remainingThreads = threads.filter((t) => t._id !== threadId);
+        const remainingThreads = threads.filter((t) => t._id !== threadId)
         if (remainingThreads.length > 0) {
-          setSelectedThreadId(remainingThreads[0]._id);
+          setSelectedThreadId(remainingThreads[0]._id)
         } else {
-          setSelectedThreadId(null);
+          setSelectedThreadId(null)
         }
       }
     } catch (error) {
-      console.error("[FullScreenChat] Error deleting thread:", error);
-      toast.error("Failed to delete thread");
+      console.error('[FullScreenChat] Error deleting thread:', error)
+      toast.error('Failed to delete thread')
     }
-  };
+  }
 
   // Get customer data for credit balance
-  const { customer, refetch } = useCustomer();
+  const { customer, refetch } = useCustomer()
 
-  const handleSendMessage = async (message: string, agentId?: string, modelId?: string) => {
+  const handleSendMessage = async (
+    message: string,
+    agentId?: string,
+    modelId?: string,
+  ) => {
     if (!selectedThreadId) {
-      toast.error("Please select a thread first");
-      return;
+      toast.error('Please select a thread first')
+      return
     }
 
     // Find any chat node on the canvas to use for context gathering
     // Prioritize the first chat node found
-    const chatNode = canvasData?.nodes?.find((node) => node.nodeType === "chat");
+    const chatNode = canvasData?.nodes?.find((node) => node.nodeType === 'chat')
 
     if (!chatNode) {
-      toast.error("No chat node found on canvas. Please add a chat node first.");
-      return;
+      toast.error('No chat node found on canvas. Please add a chat node first.')
+      return
     }
 
     // Check credit balance before sending
-    const monthlyBalance = customer?.features?.ai_credits?.balance || 0;
-    const topUpBalance = customer?.features?.topup_credits?.balance || 0;
-    const totalBalance = monthlyBalance + topUpBalance;
+    const monthlyBalance = customer?.features?.ai_credits?.balance || 0
+    const topUpBalance = customer?.features?.topup_credits?.balance || 0
+    const totalBalance = monthlyBalance + topUpBalance
 
     // Block send if no credits
     if (totalBalance <= 0) {
-      toast.error("Out of credits! Purchase top-up credits to continue.", {
+      toast.error('Out of credits! Purchase top-up credits to continue.', {
         duration: 5000,
         action: {
-          label: "Buy Credits",
+          label: 'Buy Credits',
           onClick: () => {
-            window.location.href = "/credits";
+            window.location.href = '/credits'
           },
         },
-      });
-      return;
+      })
+      return
     }
 
     // Warn if credits low but allow send
     if (totalBalance < 100) {
-      toast.warning("Low credits! Consider purchasing more.", {
+      toast.warning('Low credits! Consider purchasing more.', {
         duration: 4000,
         action: {
-          label: "Buy Credits",
+          label: 'Buy Credits',
           onClick: () => {
-            window.location.href = "/credits";
+            window.location.href = '/credits'
           },
         },
-      });
+      })
     }
 
     try {
@@ -246,53 +254,96 @@ function FullScreenChat() {
         message,
         agentId: agentId || selectedAgentId || undefined,
         modelId: modelId || selectedModelId || undefined,
-      });
+      })
       // Refetch credits after message to update sidebar
-      await refetch();
+      await refetch()
     } catch (error) {
-      console.error("[FullScreenChat] Error sending message:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to send message";
+      console.error('[FullScreenChat] Error sending message:', error)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to send message'
 
       // Enhanced error handling for credit errors
-      if (errorMessage.includes("No credits remaining") || errorMessage.includes("Insufficient credits")) {
-        toast.error("Out of credits! Purchase top-up credits to continue.", {
+      if (
+        errorMessage.includes('No credits remaining') ||
+        errorMessage.includes('Insufficient credits')
+      ) {
+        toast.error('Out of credits! Purchase top-up credits to continue.', {
           duration: 5000,
           action: {
-            label: "Buy Credits",
+            label: 'Buy Credits',
             onClick: () => {
-              window.location.href = "/credits";
+              window.location.href = '/credits'
             },
           },
-        });
+        })
       } else {
-        toast.error(errorMessage);
+        toast.error(errorMessage)
       }
     }
-  };
+  }
 
-  const isChatReady = selectedThread?.agentThreadId && messages !== undefined;
+  const isChatReady = selectedThread?.agentThreadId && messages !== undefined
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const handleSelectThreadMobile = async (threadId: Id<'threads'>) => {
+    await handleSelectThread(threadId)
+    setSidebarOpen(false)
+  }
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="border-b bg-background px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/canvas/$canvasId" params={{ canvasId }}>
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Canvas
+      {/* Header - Mobile responsive */}
+      <div className="border-b bg-background px-2 sm:px-4 py-2 sm:py-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+          {/* Mobile sidebar toggle */}
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden shrink-0"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[280px] p-0">
+              <ThreadSidebar
+                threads={threads}
+                selectedThreadId={selectedThreadId}
+                onSelectThread={handleSelectThreadMobile}
+                onCreateThread={handleCreateThread}
+                onDeleteThread={handleDeleteThread}
+                contextMessages={contextMessages}
+                canvasId={canvasId as Id<'canvases'>}
+                className="w-full border-r-0"
+              />
+            </SheetContent>
+          </Sheet>
+
+          <Link
+            to="/canvas/$canvasId"
+            params={{ canvasId }}
+            className="shrink-0"
+          >
+            <Button variant="ghost" size="sm" className="px-2 sm:px-3">
+              <ArrowLeft className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Back to Canvas</span>
             </Button>
           </Link>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="gap-2">
-                <span className="text-lg font-semibold">
-                  {canvasData?.canvas?.title || "Canvas Chat"}
+              <Button
+                variant="ghost"
+                className="gap-1 sm:gap-2 px-2 sm:px-3 min-w-0"
+              >
+                <span className="text-base sm:text-lg font-semibold truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px]">
+                  {canvasData?.canvas?.title || 'Canvas Chat'}
                 </span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64">
+            <DropdownMenuContent align="start" className="w-56 sm:w-64">
               {canvasesWithChats === undefined ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -307,14 +358,17 @@ function FullScreenChat() {
                     key={canvas._id}
                     onClick={() => {
                       if (canvas._id !== canvasId) {
-                        navigate({ to: "/canvas/$canvasId/chat", params: { canvasId: canvas._id } });
+                        navigate({
+                          to: '/canvas/$canvasId/chat',
+                          params: { canvasId: canvas._id },
+                        })
                       }
                     }}
                     className="flex items-center justify-between"
                   >
                     <span className="truncate">{canvas.title}</span>
                     {canvas._id === canvasId && (
-                      <Check className="h-4 w-4 text-primary" />
+                      <Check className="h-4 w-4 text-primary shrink-0 ml-2" />
                     )}
                   </DropdownMenuItem>
                 ))
@@ -326,7 +380,7 @@ function FullScreenChat() {
 
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Thread Sidebar */}
+        {/* Thread Sidebar - Desktop only */}
         <ThreadSidebar
           threads={threads}
           selectedThreadId={selectedThreadId}
@@ -334,12 +388,12 @@ function FullScreenChat() {
           onCreateThread={handleCreateThread}
           onDeleteThread={handleDeleteThread}
           contextMessages={contextMessages}
-          canvasId={canvasId as Id<"canvases">}
-          className="w-64 border-r"
+          canvasId={canvasId as Id<'canvases'>}
+          className="hidden md:flex w-64 border-r"
         />
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           {isChatReady ? (
             <Chat
               key={selectedThread.agentThreadId}
@@ -356,26 +410,24 @@ function FullScreenChat() {
             />
           ) : selectedThreadId ? (
             <div className="flex items-center justify-center flex-1">
-              <div className="text-center">
+              <div className="text-center px-4">
                 <Loader2 className="h-8 w-8 animate-spin mb-2 text-muted-foreground mx-auto" />
                 <p className="text-sm text-muted-foreground">Loading chat...</p>
               </div>
             </div>
           ) : (
             <div className="flex items-center justify-center flex-1">
-              <div className="text-center">
+              <div className="text-center px-4">
                 <p className="text-sm font-medium mb-1">No Thread Selected</p>
                 <p className="text-xs text-muted-foreground mb-4">
                   Create or select a thread to start chatting
                 </p>
-                <Button onClick={handleCreateThread}>
-                  Create New Thread
-                </Button>
+                <Button onClick={handleCreateThread}>Create New Thread</Button>
               </div>
             </div>
           )}
         </div>
       </div>
     </div>
-  );
+  )
 }
