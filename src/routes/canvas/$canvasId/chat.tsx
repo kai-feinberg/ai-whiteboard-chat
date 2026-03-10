@@ -18,6 +18,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Input } from '@/components/ui/input'
+import { useRef } from 'react'
 
 export const Route = createFileRoute('/canvas/$canvasId/chat')({
   beforeLoad: ({ context }) => {
@@ -96,10 +98,59 @@ function FullScreenChat() {
     }
   }
 
+  // Editable title state
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [titleValue, setTitleValue] = useState('')
+  const titleInputRef = useRef<HTMLInputElement>(null)
+
   // Load canvas data
   const canvasData = useQuery(api.canvas.functions.getCanvasWithNodes, {
     canvasId: canvasId as Id<'canvases'>,
   })
+
+  // Update title mutation
+  const updateCanvas = useMutation(api.canvas.functions.updateCanvas)
+
+  // Title editing handlers
+  const handleTitleClick = () => {
+    if (canvasData?.canvas?.title) {
+      setTitleValue(canvasData.canvas.title)
+    }
+    setIsEditingTitle(true)
+  }
+
+  const handleTitleSave = async () => {
+    if (titleValue.trim() && titleValue !== canvasData?.canvas?.title) {
+      try {
+        await updateCanvas({
+          canvasId: canvasId as Id<'canvases'>,
+          title: titleValue.trim(),
+        })
+        toast.success('Title updated')
+      } catch (error) {
+        console.error('[Chat] Error updating title:', error)
+        toast.error('Failed to update title')
+      }
+    }
+    setIsEditingTitle(false)
+  }
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleSave()
+    } else if (e.key === 'Escape') {
+      setIsEditingTitle(false)
+      setTitleValue(canvasData?.canvas?.title || '')
+    }
+  }
+
+  // Focus title input when editing starts
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus()
+      titleInputRef.current.select()
+    }
+  }, [isEditingTitle])
 
   // Load canvases with chats for switcher dropdown
   const canvasesWithChats = useQuery(api.canvas.functions.listCanvasesWithChats)
@@ -331,50 +382,68 @@ function FullScreenChat() {
             </Button>
           </Link>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="gap-1 sm:gap-2 px-2 sm:px-3 min-w-0"
+          <div className="flex items-center gap-1">
+            {isEditingTitle ? (
+              <Input
+                ref={titleInputRef}
+                value={titleValue}
+                onChange={(e) => setTitleValue(e.target.value)}
+                onBlur={handleTitleSave}
+                onKeyDown={handleTitleKeyDown}
+                className="h-8 text-base sm:text-lg font-semibold bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 w-[120px] sm:w-[200px] md:w-[300px]"
+              />
+            ) : (
+              <span
+                onClick={handleTitleClick}
+                className="text-base sm:text-lg font-semibold truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px] cursor-pointer hover:text-primary transition-colors select-none"
+                title="Click to edit"
               >
-                <span className="text-base sm:text-lg font-semibold truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px]">
-                  {canvasData?.canvas?.title || 'Canvas Chat'}
-                </span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 sm:w-64">
-              {canvasesWithChats === undefined ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-              ) : canvasesWithChats.length <= 1 ? (
-                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  No other canvases with chats
-                </div>
-              ) : (
-                canvasesWithChats.map((canvas) => (
-                  <DropdownMenuItem
-                    key={canvas._id}
-                    onClick={() => {
-                      if (canvas._id !== canvasId) {
-                        navigate({
-                          to: '/canvas/$canvasId/chat',
-                          params: { canvasId: canvas._id },
-                        })
-                      }
-                    }}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="truncate">{canvas.title}</span>
-                    {canvas._id === canvasId && (
-                      <Check className="h-4 w-4 text-primary shrink-0 ml-2" />
-                    )}
-                  </DropdownMenuItem>
-                ))
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {canvasData?.canvas?.title || 'Canvas Chat'}
+              </span>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                >
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 sm:w-64">
+                {canvasesWithChats === undefined ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                ) : canvasesWithChats.length <= 1 ? (
+                  <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                    No other canvases with chats
+                  </div>
+                ) : (
+                  canvasesWithChats.map((canvas) => (
+                    <DropdownMenuItem
+                      key={canvas._id}
+                      onClick={() => {
+                        if (canvas._id !== canvasId) {
+                          navigate({
+                            to: '/canvas/$canvasId/chat',
+                            params: { canvasId: canvas._id },
+                          })
+                        }
+                      }}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="truncate">{canvas.title}</span>
+                      {canvas._id === canvasId && (
+                        <Check className="h-4 w-4 text-primary shrink-0 ml-2" />
+                      )}
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
