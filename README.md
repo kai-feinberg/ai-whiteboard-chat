@@ -107,6 +107,7 @@ DATA FLOW:
 ### Multi-Tenant Organizations
 
 **Everything is scoped to organizations:**
+
 - Users can have personal org + be invited to team orgs
 - Teams share canvases and can continue each other's chats
 - All data (canvases, nodes, threads) belongs to `organizationId` + `canvasId`
@@ -114,10 +115,12 @@ DATA FLOW:
 ### Node Architecture
 
 **Two-table pattern:**
+
 1. `canvas_nodes` - Stores position, size, type, notes
 2. Type-specific table - Stores actual content (e.g., `youtube_nodes`, `text_nodes`)
 
 **Node Types:**
+
 - **Text** - Markdown notes
 - **Chat** - AI conversations with thread management
 - **YouTube** - Video transcripts (via Firecrawl)
@@ -146,6 +149,7 @@ When user chats, all connected nodes' context is gathered and sent to AI.
 ### Chat System
 
 **Reusable component pattern:**
+
 - Chat component takes `size` prop (node vs full-screen)
 - Same thread works as canvas node AND dedicated page
 - Supports multiple AI models and custom agents
@@ -154,21 +158,22 @@ When user chats, all connected nodes' context is gathered and sent to AI.
 ### Content Reusability
 
 Add processed nodes across canvases without re-processing:
+
 - YouTube transcript fetched once, reused everywhere
 - Scraped websites stored once, referenced multiple times
 - Reduces costs and improves performance
 
 ## Tech Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Frontend** | Tanstack Start | React meta-framework with file-based routing |
-| **Canvas** | @xyflow/react | Infinite canvas with drag-drop nodes |
-| **Database** | Convex | Real-time serverless database |
-| **Auth** | Clerk | Authentication with Organizations |
-| **AI** | Convex Agent | Thread management, usage tracking |
-| **Scraping** | Firecrawl | YouTube, websites, social media |
-| **UI** | Radix UI + TailwindCSS | Accessible components + utility styling |
+| Layer        | Technology             | Purpose                                      |
+| ------------ | ---------------------- | -------------------------------------------- |
+| **Frontend** | Tanstack Start         | React meta-framework with file-based routing |
+| **Canvas**   | @xyflow/react          | Infinite canvas with drag-drop nodes         |
+| **Database** | Convex                 | Real-time serverless database                |
+| **Auth**     | Clerk                  | Authentication with Organizations            |
+| **AI**       | Convex Agent           | Thread management, usage tracking            |
+| **Scraping** | Firecrawl              | YouTube, websites, social media              |
+| **UI**       | Radix UI + TailwindCSS | Accessible components + utility styling      |
 
 ## Getting Started
 
@@ -223,6 +228,9 @@ OPENAI_API_KEY=sk-...
 # Start dev server (web + Convex)
 pnpm dev
 
+# Start dev server with browser automation
+pnpm dev:browser
+
 # Build for production
 pnpm build
 ```
@@ -274,6 +282,7 @@ Navigate to home page → Click "New Canvas" → Name your workspace
 ### 2. Add Nodes
 
 **From toolbar:**
+
 - Text node - Quick notes
 - YouTube - Paste URL, auto-fetches transcript
 - Website - Scrape any webpage
@@ -336,6 +345,7 @@ MIT
 ## Support
 
 For issues or questions:
+
 - GitHub Issues
 - Documentation in `CLAUDE.md`
 - Feature READMEs in `/features/`

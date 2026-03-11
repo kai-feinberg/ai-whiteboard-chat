@@ -1,110 +1,152 @@
 // src/features/chat/components/Chat.tsx
-"use client";
+'use client'
 
 import {
   Conversation,
   ConversationContent,
   ConversationEmptyState,
   ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import { Message, MessageContent } from "@/components/ai-elements/message";
-import { Response } from "@/components/ai-elements/response";
+} from '@/components/ai-elements/conversation'
+import { Message, MessageContent } from '@/components/ai-elements/message'
+import { Response } from '@/components/ai-elements/response'
 import {
   PromptInput,
   PromptInputTextarea,
   PromptInputSubmit,
-} from "@/components/ai-elements/prompt-input";
-import { ReadLinkTool, type ToolState } from "@/components/ai-elements/read-link-tool";
-import { TikTokSearchTool, type TikTokSearchToolOutput } from "@/components/ai-elements/tiktok-results";
-import { WebSearchTool, type WebSearchToolOutput } from "@/components/ai-elements/web-search-results";
-import { Tool, ToolHeader, ToolInput, ToolOutput } from "@/components/ai-elements/tool";
-import { MessageSquare, Loader2, Copy, Check } from "lucide-react";
-import { useState } from "react";
-import { useSmoothText, type UIMessage } from "@convex-dev/agent/react";
-import { cn } from "@/lib/utils";
-import { AgentSelector } from "@/features/agents/components/AgentSelector";
-import { ModelSelector } from "@/features/models/components/ModelSelector";
+} from '@/components/ai-elements/prompt-input'
+import {
+  ReadLinkTool,
+  type ToolState,
+} from '@/components/ai-elements/read-link-tool'
+import {
+  TikTokSearchTool,
+  type TikTokSearchToolOutput,
+} from '@/components/ai-elements/tiktok-results'
+import {
+  RedditSearchTool,
+  type RedditSearchToolOutput,
+} from '@/components/ai-elements/reddit-results'
+import {
+  WebSearchTool,
+  type WebSearchToolOutput,
+} from '@/components/ai-elements/web-search-results'
+import {
+  Tool,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from '@/components/ai-elements/tool'
+import { MessageSquare, Loader2, Copy, Check } from 'lucide-react'
+import { useState } from 'react'
+import { useSmoothText, type UIMessage } from '@convex-dev/agent/react'
+import { cn } from '@/lib/utils'
+import { AgentSelector } from '@/features/agents/components/AgentSelector'
+import { ModelSelector } from '@/features/models/components/ModelSelector'
 
 export interface ChatProps {
-  messages: UIMessage[];
-  onSendMessage: (message: string, agentId?: string, modelId?: string) => Promise<void>;
-  isStreaming?: boolean;
-  streams?: any[];
-  variant?: "fullscreen" | "compact";
-  className?: string;
-  selectedAgentId?: string | null;
-  onAgentChange?: (agentId: string) => void;
-  selectedModelId?: string | null;
-  onModelChange?: (modelId: string) => void;
+  messages: UIMessage[]
+  onSendMessage: (
+    message: string,
+    agentId?: string,
+    modelId?: string,
+  ) => Promise<void>
+  isStreaming?: boolean
+  streams?: any[]
+  variant?: 'fullscreen' | 'compact'
+  className?: string
+  selectedAgentId?: string | null
+  onAgentChange?: (agentId: string) => void
+  selectedModelId?: string | null
+  onModelChange?: (modelId: string) => void
 }
 
 // Tool part type
 interface ToolPartType {
-  type: string;
-  toolCallId: string;
-  state: ToolState;
-  input?: unknown;
-  output?: unknown;
-  errorText?: string;
+  type: string
+  toolCallId: string
+  state: ToolState
+  input?: unknown
+  output?: unknown
+  errorText?: string
 }
 
 // Type guard for tool parts
 function isToolPart(part: unknown): part is ToolPartType {
   return (
-    typeof part === "object" &&
+    typeof part === 'object' &&
     part !== null &&
-    "type" in part &&
-    typeof (part as { type: string }).type === "string" &&
-    (part as { type: string }).type.startsWith("tool-")
-  );
+    'type' in part &&
+    typeof (part as { type: string }).type === 'string' &&
+    (part as { type: string }).type.startsWith('tool-')
+  )
 }
 
 // Extract tool name from part type (e.g., "tool-readLink" -> "readLink")
 function getToolNameFromType(type: string): string {
-  return type.replace(/^tool-/, "");
+  return type.replace(/^tool-/, '')
 }
 
 // Known tool names with custom UI rendering
-const KNOWN_TOOLS = new Set(["readLink", "searchTikTok", "filteredWebSearch"]);
+const KNOWN_TOOLS = new Set([
+  'readLink',
+  'searchTikTok',
+  'filteredWebSearch',
+  'searchReddit',
+  'fetchRedditPost',
+])
 
 // Component for rendering a message with smooth text streaming
 function StreamingMessage({ message }: { message: UIMessage }) {
   const [visibleText] = useSmoothText(message.text, {
-    startStreaming: message.status === "streaming",
-  });
-  const [copied, setCopied] = useState(false);
+    startStreaming: message.status === 'streaming',
+  })
+  const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
-    if (!message.text) return;
+    if (!message.text) return
 
     try {
-      await navigator.clipboard.writeText(message.text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(message.text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch (error) {
-      console.error("Failed to copy text:", error);
+      console.error('Failed to copy text:', error)
     }
-  };
+  }
 
   // Extract tool parts from message.parts
   const toolParts: ToolPartType[] = (message.parts || [])
     .filter(isToolPart)
-    .map((part) => part as ToolPartType);
+    .map((part) => part as ToolPartType)
 
   // Group by tool name
-  const readLinkParts = toolParts.filter((part) => getToolNameFromType(part.type) === "readLink");
-  const tiktokParts = toolParts.filter((part) => getToolNameFromType(part.type) === "searchTikTok");
-  const webSearchParts = toolParts.filter((part) => getToolNameFromType(part.type) === "filteredWebSearch");
+  const readLinkParts = toolParts.filter(
+    (part) => getToolNameFromType(part.type) === 'readLink',
+  )
+  const tiktokParts = toolParts.filter(
+    (part) => getToolNameFromType(part.type) === 'searchTikTok',
+  )
+  const webSearchParts = toolParts.filter(
+    (part) => getToolNameFromType(part.type) === 'filteredWebSearch',
+  )
+  const redditSearchParts = toolParts.filter(
+    (part) => getToolNameFromType(part.type) === 'searchReddit',
+  )
+  const redditPostParts = toolParts.filter(
+    (part) => getToolNameFromType(part.type) === 'fetchRedditPost',
+  )
   // Unknown tools fallback to generic display
-  const unknownToolParts = toolParts.filter((part) => !KNOWN_TOOLS.has(getToolNameFromType(part.type)));
+  const unknownToolParts = toolParts.filter(
+    (part) => !KNOWN_TOOLS.has(getToolNameFromType(part.type)),
+  )
 
-  const hasAnyToolParts = toolParts.length > 0;
+  const hasAnyToolParts = toolParts.length > 0
 
   return (
     <Message from={message.role} key={message.id}>
       <MessageContent>
         {/* Show loading indicator if streaming and no text yet and no tool parts */}
-        {message.status === "streaming" && !visibleText && !hasAnyToolParts && (
+        {message.status === 'streaming' && !visibleText && !hasAnyToolParts && (
           <div className="flex items-center gap-2 text-muted-foreground text-sm">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>AI is thinking...</span>
@@ -120,10 +162,10 @@ function StreamingMessage({ message }: { message: UIMessage }) {
             output={
               part.output as
                 | {
-                    success?: boolean;
-                    platform?: string | null;
-                    content?: Record<string, unknown> | null;
-                    error?: string | null;
+                    success?: boolean
+                    platform?: string | null
+                    content?: Record<string, unknown> | null
+                    error?: string | null
                   }
                 | undefined
             }
@@ -150,6 +192,26 @@ function StreamingMessage({ message }: { message: UIMessage }) {
           />
         ))}
 
+        {/* Render searchReddit tool results */}
+        {redditSearchParts.map((part) => (
+          <RedditSearchTool
+            key={part.toolCallId}
+            state={part.state}
+            input={part.input as { query?: string } | string | undefined}
+            output={part.output as RedditSearchToolOutput | undefined}
+          />
+        ))}
+
+        {/* Render fetchRedditPost tool results */}
+        {redditPostParts.map((part) => (
+          <RedditSearchTool
+            key={part.toolCallId}
+            state={part.state}
+            input={part.input as { url?: string } | string | undefined}
+            output={part.output as RedditSearchToolOutput | undefined}
+          />
+        ))}
+
         {/* Fallback: generic tool display for unknown tools */}
         {unknownToolParts.map((part) => (
           <Tool key={part.toolCallId}>
@@ -166,7 +228,7 @@ function StreamingMessage({ message }: { message: UIMessage }) {
         {visibleText && <Response>{visibleText}</Response>}
 
         {/* Copy button for AI messages only */}
-        {message.role === "assistant" && message.text && (
+        {message.role === 'assistant' && message.text && (
           <button
             onClick={handleCopy}
             className="flex items-center gap-1.5 px-2 py-1 mt-2 text-xs text-muted-foreground hover:text-foreground transition-colors rounded"
@@ -187,7 +249,7 @@ function StreamingMessage({ message }: { message: UIMessage }) {
         )}
       </MessageContent>
     </Message>
-  );
+  )
 }
 
 export function Chat({
@@ -195,33 +257,32 @@ export function Chat({
   onSendMessage,
   isStreaming = false,
   streams: _streams = [],
-  variant: _variant = "fullscreen",
+  variant: _variant = 'fullscreen',
   className,
   selectedAgentId,
   onAgentChange,
   selectedModelId,
   onModelChange,
 }: ChatProps) {
-  void _streams; // Reserved for future streaming UI
-  void _variant; // Reserved for size variants
+  void _streams // Reserved for future streaming UI
+  void _variant // Reserved for size variants
   const handleSubmit = async (message: { text?: string; files?: any[] }) => {
-    if (!message.text?.trim() || isStreaming) return;
+    if (!message.text?.trim() || isStreaming) return
 
     try {
-      await onSendMessage(message.text, selectedAgentId || undefined, selectedModelId || undefined);
+      await onSendMessage(
+        message.text,
+        selectedAgentId || undefined,
+        selectedModelId || undefined,
+      )
     } catch (error) {
-      console.error("[Chat] Error sending message:", error);
-      throw error;
+      console.error('[Chat] Error sending message:', error)
+      throw error
     }
-  };
+  }
 
   return (
-    <div
-      className={cn(
-        "flex flex-col h-full",
-        className
-      )}
-    >
+    <div className={cn('flex flex-col h-full', className)}>
       <Conversation className="flex-1">
         <ConversationContent>
           {messages.length === 0 ? (
@@ -266,7 +327,7 @@ export function Chat({
               disabled={isStreaming}
             />
             <PromptInputSubmit
-              status={isStreaming ? "streaming" : "ready"}
+              status={isStreaming ? 'streaming' : 'ready'}
               className="absolute bottom-2 right-2"
               disabled={isStreaming}
             />
@@ -274,5 +335,5 @@ export function Chat({
         </div>
       </div>
     </div>
-  );
+  )
 }

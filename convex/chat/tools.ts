@@ -16,6 +16,12 @@ const MAX_ARTICLE_LENGTH = 8000
 /** Maximum word count for article text */
 const MAX_ARTICLE_WORDS = 1200
 
+/** Maximum character length for Reddit post selftext */
+const MAX_REDDIT_TEXT_LENGTH = 4000
+
+/** Maximum character length for Reddit comments */
+const MAX_REDDIT_COMMENT_LENGTH = 2000
+
 // ============================================================
 // TYPES - EXA SEARCH
 // ============================================================
@@ -91,6 +97,67 @@ export interface TikTokVideoResult {
   likes: number
   shares: number
   transcript: string
+}
+
+// ============================================================
+// TYPES - REDDIT SEARCH
+// ============================================================
+
+export interface RedditPost {
+  id: string
+  title: string
+  selftext: string
+  author: string
+  subreddit: string
+  subredditNamePrefixed: string
+  score: number
+  upvoteRatio: number
+  numComments: number
+  url: string
+  permalink: string
+  createdUtc: number
+  createdAtIso: string
+  thumbnail?: string
+  isVideo?: boolean
+  over18?: boolean
+  stickied?: boolean
+}
+
+export interface RedditCommentReply {
+  id: string
+  author: string
+  body: string
+  score: number
+  createdUtc: number
+  createdAtIso: string
+  replies: RedditCommentReply[]
+  depth: number
+}
+
+export interface RedditComment {
+  id: string
+  author: string
+  body: string
+  score: number
+  createdUtc: number
+  createdAtIso: string
+  replies: RedditCommentReply[]
+  depth: number
+}
+
+export interface RedditSearchResult {
+  success: boolean
+  posts: RedditPost[]
+  after?: string | null
+}
+
+export interface RedditPostWithComments {
+  post: RedditPost
+  comments: RedditComment[]
+  more?: {
+    hasMore: boolean
+    cursor?: string | null
+  }
 }
 
 // ============================================================
@@ -506,4 +573,231 @@ export async function fetchTikTokSearch(
       transcript: transcripts[index],
     }))
     .filter((video) => video.transcript !== '[No speech detected]')
+}
+
+// ============================================================
+// REDDIT SEARCH
+// ============================================================
+
+/**
+ * Truncate Reddit post text to prevent context overflow
+ *
+ * @param text - Text to truncate
+ * @param maxLength - Maximum length (default: MAX_REDDIT_TEXT_LENGTH)
+ * @returns Truncated text with indicator if truncated
+ */
+function truncateRedditText(
+  text: string,
+  maxLength: number = MAX_REDDIT_TEXT_LENGTH,
+): string {
+  if (!text || text.length <= maxLength) {
+    return text || ''
+  }
+
+  const truncated = text.slice(0, maxLength)
+  // Try to break at a sentence
+  const lastSentence = truncated.lastIndexOf('.')
+  if (lastSentence > maxLength * 0.8) {
+    return truncated.slice(0, lastSentence + 1)
+  }
+  // Or at a word boundary
+  const lastSpace = truncated.lastIndexOf(' ')
+  if (lastSpace > maxLength * 0.8) {
+    return truncated.slice(0, lastSpace)
+  }
+  return truncated
+}
+
+/**
+ * Parse a raw Reddit post from API response to RedditPost interface
+ *
+ * @param rawPost - Raw post data from ScrapeCreators API
+ * @returns Parsed RedditPost
+ */
+function parseRedditPost(rawPost: any): RedditPost {
+  return {
+    id: rawPost.id || '',
+    title: rawPost.title || '',
+    selftext: truncateRedditText(rawPost.selftext || ''),
+    author: rawPost.author || 'unknown',
+    subreddit: rawPost.subreddit || '',
+    subredditNamePrefixed:
+      rawPost.subreddit_name_prefixed || `r/${rawPost.subreddit || ''}`,
+    score: rawPost.score || 0,
+    upvoteRatio: rawPost.upvote_ratio || 0,
+    numComments: rawPost.num_comments || 0,
+    url: rawPost.url || '',
+    permalink: rawPost.permalink
+      ? `https://www.reddit.com${rawPost.permalink}`
+      : '',
+    createdUtc: rawPost.created_utc || 0,
+    createdAtIso: rawPost.created_at_iso || '',
+    thumbnail: rawPost.thumbnail || undefined,
+    isVideo: rawPost.is_video || false,
+    over18: rawPost.over_18 || false,
+    stickied: rawPost.stickied || false,
+  }
+}
+
+/**
+ * Search Reddit for posts via Scrape Creators API
+ *
+ * @param query - Search query string
+ * @param sort - Sort by (relevance, new, top, comment_count) - default: relevance
+ * @param timeframe - Timeframe (all, day, week, month, year) - default: all
+ * @param limit - Maximum number of posts to return (default: 10)
+ * @returns Array of RedditPost with metadata
+ * @throws Error for API key issues or rate limits
+ */
+export async function fetchRedditSearch(
+  query: string,
+  sort: 'relevance' | 'new' | 'top' | 'comment_count' = 'relevance',
+  timeframe: 'all' | 'day' | 'week' | 'month' | 'year' = 'all',
+  limit: number = 10,
+): Promise<RedditPost[]> {
+  const apiKey = process.env.SCRAPE_CREATORS_API_KEY
+  if (!apiKey) {
+    throw new Error('SCRAPE_CREATORS_API_KEY not configured')
+  }
+
+  // Input validation
+  if (!query.trim()) {
+    throw new Error('Search query cannot be empty')
+  }
+
+  const url = new URL('https://api.scrapecreators.com/v1/reddit/search')
+  url.searchParams.set('query', query)
+  url.searchParams.set('trim', 'true')
+  url.searchParams.set('sort', sort)
+  url.searchParams.set('timeframe', timeframe)
+
+  const response = await fetch(url.toString(), {
+    headers: { 'x-api-key': apiKey },
+  })
+
+  if (!response.ok) {
+    const status = response.status
+    if (status === 401) {
+      throw new Error('Invalid Scrape Creators API key')
+    }
+    if (status === 429) {
+      throw new Error('Rate limit exceeded - please try again later')
+    }
+    throw new Error(`Reddit search failed: ${status} ${response.statusText}`)
+  }
+
+  const data = (await response.json()) as RedditSearchResult
+
+  if (!data.success || !data.posts?.length) {
+    return []
+  }
+
+  // Parse and limit results
+  return data.posts.slice(0, limit).map(parseRedditPost)
+}
+
+/**
+ * Parse a raw Reddit comment from API response
+ *
+ * @param rawComment - Raw comment data from ScrapeCreators API
+ * @returns Parsed RedditComment
+ */
+function parseRedditComment(rawComment: any): RedditComment {
+  const replies: RedditCommentReply[] = []
+
+  if (rawComment.replies?.items && Array.isArray(rawComment.replies.items)) {
+    for (const rawReply of rawComment.replies.items) {
+      replies.push({
+        id: rawReply.id || '',
+        author: rawReply.author || 'unknown',
+        body: truncateRedditText(
+          rawReply.body || '',
+          MAX_REDDIT_COMMENT_LENGTH,
+        ),
+        score: rawReply.score || 0,
+        createdUtc: rawReply.created_utc || 0,
+        createdAtIso: rawReply.created_at_iso || '',
+        replies: [], // Nested replies handled separately if needed
+        depth: rawReply.depth || 1,
+      })
+    }
+  }
+
+  return {
+    id: rawComment.id || '',
+    author: rawComment.author || 'unknown',
+    body: truncateRedditText(rawComment.body || '', MAX_REDDIT_COMMENT_LENGTH),
+    score: rawComment.score || 0,
+    createdUtc: rawComment.created_utc || 0,
+    createdAtIso: rawComment.created_at_iso || '',
+    replies,
+    depth: rawComment.depth || 0,
+  }
+}
+
+/**
+ * Fetch comments for a Reddit post via Scrape Creators API
+ *
+ * @param postUrl - Full Reddit post URL (e.g., https://www.reddit.com/r/AskReddit/comments/ablzuq/...)
+ * @param cursor - Optional cursor for pagination
+ * @returns RedditPostWithComments with post data and top-level comments
+ * @throws Error for API key issues or rate limits
+ */
+export async function fetchRedditPostComments(
+  postUrl: string,
+  cursor?: string,
+): Promise<RedditPostWithComments> {
+  const apiKey = process.env.SCRAPE_CREATORS_API_KEY
+  if (!apiKey) {
+    throw new Error('SCRAPE_CREATORS_API_KEY not configured')
+  }
+
+  // Input validation
+  if (!postUrl.trim()) {
+    throw new Error('Post URL cannot be empty')
+  }
+
+  const url = new URL('https://api.scrapecreators.com/v1/reddit/post/comments')
+  url.searchParams.set('url', postUrl)
+  url.searchParams.set('trim', 'true')
+  if (cursor) {
+    url.searchParams.set('cursor', cursor)
+  }
+
+  const response = await fetch(url.toString(), {
+    headers: { 'x-api-key': apiKey },
+  })
+
+  if (!response.ok) {
+    const status = response.status
+    if (status === 401) {
+      throw new Error('Invalid Scrape Creators API key')
+    }
+    if (status === 429) {
+      throw new Error('Rate limit exceeded - please try again later')
+    }
+    throw new Error(
+      `Reddit comments fetch failed: ${status} ${response.statusText}`,
+    )
+  }
+
+  const data = await response.json()
+
+  if (!data.post) {
+    throw new Error('Post not found or unable to fetch')
+  }
+
+  const post = parseRedditPost(data.post)
+  const comments = (data.comments || []).map(parseRedditComment)
+
+  return {
+    post,
+    comments,
+    more: data.more
+      ? {
+          hasMore: data.more.has_more || false,
+          cursor: data.more.cursor || null,
+        }
+      : undefined,
+  }
 }

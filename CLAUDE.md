@@ -2,7 +2,10 @@ In all interactions, be extremely concise and sacrifice grammar for the sake of 
 
 AI Whiteboard Chat - Claude Development Guide
 
-If you have made changes to the backend then when you are done developing make sure to run pnpm dev which will both start the dev server and run a typecheck on the backend code. After you have confirmed the check passes kill the task. DO NOT run pnpm dev:backend
+If you have made changes to the backend then when you are done developing:
+
+- Run `pnpm dev` for quick dev server start
+- Run `pnpm dev:browser` to start the dev server AND automatically open an agent-browser session with the user already logged in
 
 When you add a new node ALWAYS make sure you add it to the context gathering: getNodeContextInternal
 
@@ -29,15 +32,15 @@ Pricing: Autumn pricing component
 
 File Structure Pattern
 /features/[feature-name]/
-  README.md           # ⚠️ READ THIS FIRST for gotchas
-  components/         # Feature UI components
-  hooks/             # Smart hooks with auth built-in
-  types.ts           # Feature TypeScript types
-  utils.ts           # Pure functions only
+README.md # ⚠️ READ THIS FIRST for gotchas
+components/ # Feature UI components
+hooks/ # Smart hooks with auth built-in
+types.ts # Feature TypeScript types
+utils.ts # Pure functions only
 
 /convex/[feature-name]/
-  functions.ts       # ALL queries/mutations for feature
-  schema.ts          # Table definitions
+functions.ts # ALL queries/mutations for feature
+schema.ts # Table definitions
 
 Core Features Overview
 
@@ -56,6 +59,7 @@ Authentication System 🔐
 AI Whiteboard Chat uses Clerk for authentication with multi-tenant organization support. All data is scoped to organizations and canvases, not individual users.
 
 **Multi-Tenant Model:**
+
 - Users can have personal org + be invited to team orgs
 - Teams share canvases and continue each other's chats
 - All canvases, nodes, and chat threads scoped to organizationId + canvasId
@@ -63,46 +67,49 @@ AI Whiteboard Chat uses Clerk for authentication with multi-tenant organization 
 ## Backend Authentication (Convex Functions)
 
 **Getting User & Organization ID**:
+
 ```typescript
-import { query, mutation } from "../_generated/server";
+import { query, mutation } from '../_generated/server'
 
 export const myQuery = query({
   args: {},
   handler: async (ctx, args) => {
     // Get authenticated user identity
-    const identity = await ctx.auth.getUserIdentity();
+    const identity = await ctx.auth.getUserIdentity()
     if (identity === null) {
-      throw new Error("Not authenticated");
+      throw new Error('Not authenticated')
     }
 
     // Get user ID and organization ID
-    const userId = identity.subject;
-    const organizationId = identity.organizationId;  // ⚠️ CRITICAL: Use 'organizationId' NOT 'orgId'
+    const userId = identity.subject
+    const organizationId = identity.organizationId // ⚠️ CRITICAL: Use 'organizationId' NOT 'orgId'
 
     // ALWAYS verify organization is selected
-    if (!organizationId || typeof organizationId !== "string") {
-      throw new Error("No organization selected. Please select an organization to continue.");
+    if (!organizationId || typeof organizationId !== 'string') {
+      throw new Error(
+        'No organization selected. Please select an organization to continue.',
+      )
     }
 
     // Now you can use userId and organizationId for queries
   },
-});
+})
 ```
 
 **⚠️ COMMON MISTAKE - Property Name**:
 The organization ID property is `identity.organizationId`, **NOT** `identity.orgId`.
-
 
 **Organization Ownership Checks**:
 Always verify that data belongs to the user's current organization:
 
 **Querying by Organization**:
 Use organization indexes for efficient queries:
+
 ```typescript
 const items = await ctx.db
-  .query("items")
-  .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
-  .collect();
+  .query('items')
+  .withIndex('by_organization', (q) => q.eq('organizationId', organizationId))
+  .collect()
 ```
 
 ## Client-Side Authentication
@@ -111,6 +118,7 @@ const items = await ctx.db
 Use Clerk's `<SignedIn>` and `<SignedOut>` components:
 
 **Using Organization Data**:
+
 ```typescript
 import { useOrganization, useAuth } from '@clerk/tanstack-react-start';
 
@@ -130,6 +138,7 @@ function MyComponent() {
 ```
 
 **User Actions (Sign Out, Profile)**:
+
 ```typescript
 import { UserButton, SignOutButton, OrganizationSwitcher } from '@clerk/tanstack-react-start';
 
@@ -155,6 +164,7 @@ Canvas & Node System
 Node Architecture
 
 **Schema Approach:**
+
 - Separate table per node type (youtube_nodes, twitter_nodes, pdf_nodes, etc.)
 - Canvas table stores: node positions + references to node IDs
 - Each node has optional "notes" field users can add
@@ -163,9 +173,11 @@ Node Architecture
 
 **Node Types Priority:**
 Essential:
+
 - Chat nodes (with threads, different agents/models, connect to other nodes)
 - Text nodes
-Priority order:
+  Priority order:
+
 1. YouTube videos (with Firecrawl transcript)
 2. Twitter/X posts
 3. Voice notes
@@ -175,6 +187,7 @@ Priority order:
 Chat Component Architecture
 
 **Reusable Component Pattern:**
+
 - Chat component takes `size` prop to work as canvas node AND full-screen page
 - Pass thread ID to component for consistency
 - DO NOT embed full page as node - recreate with shared component instead
@@ -189,21 +202,21 @@ Pass aggregated context to AI
 
 Route Organization
 Core Routes
-/                          # Canvas list/dashboard
-/canvas/[id]              # Canvas editor (infinite canvas with nodes)
-/canvas/[id]/chat/[threadId]  # Full-screen chat view
-/settings                 # User settings & custom agents
+/ # Canvas list/dashboard
+/canvas/[id] # Canvas editor (infinite canvas with nodes)
+/canvas/[id]/chat/[threadId] # Full-screen chat view
+/settings # User settings & custom agents
 
 Convex Function Patterns
 tsx// All backend logic uses Convex functions, NOT REST APIs
-export const listCanvases = query({...})     # List user's canvases
-export const getCanvas = query({...})        # Get canvas + nodes
-export const createNode = mutation({...})    # Add node to canvas
-export const updateNode = mutation({...})    # Update node position/data
-export const deleteNode = mutation({...})    # Remove node
-export const getNodeContext = query({...})   # Get AI context for node
-export const scrapeContent = action({...})   # Firecrawl for YouTube/social
-export const processUpload = action({...})   # Process PDFs/files
+export const listCanvases = query({...}) # List user's canvases
+export const getCanvas = query({...}) # Get canvas + nodes
+export const createNode = mutation({...}) # Add node to canvas
+export const updateNode = mutation({...}) # Update node position/data
+export const deleteNode = mutation({...}) # Remove node
+export const getNodeContext = query({...}) # Get AI context for node
+export const scrapeContent = action({...}) # Firecrawl for YouTube/social
+export const processUpload = action({...}) # Process PDFs/files
 Use Convex patterns instead of REST:
 
 Queries - Read data from database
@@ -213,6 +226,7 @@ Actions - Interact with external APIs (Firecrawl, AI services, file processing)
 Pricing & Credits System
 
 **Credit Architecture:**
+
 - Organization-scoped credits (not user-scoped)
 - Live deduction using Convex real-time updates
 - Top-up purchases available
@@ -285,12 +299,13 @@ Missing documentation - gaps in this guide that should be filled
 
 Before Implementation
 📚 REQUIRED READING:
+
 - /features/[feature-name]/README.md (if exists)
 - Database schema for related tables
 - Gather context function pattern for nodes
 - Chat component reusability pattern
 - Credit/pricing implications
-Testing Checklist
+  Testing Checklist
 
 Authentication works (logged in/out states)
 Real-time updates sync across tabs
@@ -303,12 +318,12 @@ Loading states handled appropriately
 File uploads and scraping work
 Team collaboration (multiple users on same canvas)
 
-
 Critical Gotchas & Fixes
 
 🚨 Update This Section When You Encounter Issues
 
 **Key Points**:
+
 - All Convex queries/mutations MUST check for `organizationId`
 - Most queries also need `canvasId` for proper scoping
 - All database records MUST include `organizationId` field
@@ -317,7 +332,6 @@ Critical Gotchas & Fixes
 - Every node type needs gather context function to select AI data
 - Chat component must work as canvas node AND full-screen page
 - Show users what context costs before sending to AI
-
 
 **Canvas Gotchas:**
 When adding a new node, make sure you update the fetching of context to properly fetch the context from the new node type as well as making sure the nodes appear immediately by editing the handler functions. ✅ Fix Complete
@@ -332,7 +346,6 @@ All three handlers now follow the same pattern as the working Text node handler
 After the backend action completes, the new node is immediately added to local ReactFlow state using setNodes()
 This ensures instant visual feedback while background processing (transcript fetching, web scraping) continues
 Convex's real-time subscriptions will update the nodes with full data as it becomes available
-
 
 - Node positions stored in canvas table, actual content in node-type tables
 - Groups need gather context to aggregate from multiple child nodes
@@ -353,6 +366,7 @@ Apply senior architect principles - is this over-engineered?
 Remember: Users tolerate manual workarounds for real value. Ship fast, iterate based on feedback! 🚀
 
 ## Pre-development (CRITICAL)
+
 DO NOT kick off a sub agent to explore the codebase until you have done steps 1 and 2. Context gathering should be surgical and precise. You may use subagents but only to explore the codebase for something specific.
 
 1. **Read feature docs** → `convex/[feature]/_FEATURE.md` for functions overview and file touchpoints
@@ -363,6 +377,7 @@ DO NOT kick off a sub agent to explore the codebase until you have done steps 1 
 ## During Development
 
 **Code hygiene:**
+
 - Files under 500 lines - refactor immediately if exceeded
 - Components small and well-named
 
@@ -378,6 +393,7 @@ DO NOT kick off a sub agent to explore the codebase until you have done steps 1 
 | `my` | scoped to authenticated user (e.g., `listMyPosts`) |
 
 **File tags** (add to shared code for discoverability):
+
 ```typescript
 // @feature content-capture
 // @service openai, telegram
@@ -385,14 +401,15 @@ DO NOT kick off a sub agent to explore the codebase until you have done steps 1 
 
 ## Post-Development
 
+**NOTE: The `pnpm dev:browser` command automatically starts the dev server AND opens an agent-browser with the user already logged in. You do NOT need to manually run these steps.**
+
 1. Run `pnpx typecheck` → typechecks front and backend, fix errors
-2. Run the `logic-review` subagent for an initial code review. Fix any errors 
-3. Spin up dev server in the background with `pnpm dev` 
-4. Read the agent-browser skill and run ./scripts/browser-login.sh to start a new session
-5. Test acceptance criteria with the agent-browser
-6. **Update documentation:**
+2. Run the `logic-review` subagent for an initial code review. Fix any errors
+3. Run `pnpm dev:browser` (starts server + auto-opens logged-in browser)
+4. **Test acceptance criteria with the agent-browser** (already running with user logged in)
+5. **Update documentation:**
    - Update `_FEATURE.md` with any flow changes
    - Add mermaid diagram if 3+ step flows
    - Update `ARCHITECTURE.md` if new feature/integration
    - Update this CLAUDE.md if new patterns
-   IT IS VERY IMPORTANT THE FEATURE.MD IS UPDATED WITH DEPENDENCIES, FLOWS, PATTERNS, ETC
+     IT IS VERY IMPORTANT THE FEATURE.MD IS UPDATED WITH DEPENDENCIES, FLOWS, PATTERNS, ETC

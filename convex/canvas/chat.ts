@@ -14,6 +14,7 @@ import {
   fetchExaSearch,
   filterSearchResults,
   fetchTikTokSearch,
+  fetchRedditPostComments,
 } from '../chat/tools'
 
 /**
@@ -605,6 +606,224 @@ const searchTikTokTool = createTool({
 })
 
 /**
+ * Tool for AI to search Reddit using web search with site:reddit.com filter
+ * Uses Exa web search API to find Reddit posts and discussions
+ */
+const searchRedditTool = createTool({
+  description:
+    "Search Reddit for posts and discussions about a topic. Uses web search with site:reddit.com filter to find relevant Reddit content including posts, comments, and discussions. Returns posts with titles, content snippets, and source URLs. Use this when users ask about community opinions, recommendations, advice, or any topic where Reddit users' insights would be valuable. Great for product reviews, travel tips, relationship advice, career questions, and niche topics.",
+  args: z.object({
+    query: z
+      .string()
+      .describe(
+        "Search query (e.g., 'best mechanical keyboards 2024 reddit', 'solo travel Japan tips reddit')",
+      ),
+  }),
+  handler: async (_ctx, args) => {
+    console.log(`[searchReddit] Searching for: ${args.query}`)
+
+    const startTime = Date.now()
+
+    try {
+      // Add site:reddit.com filter if not already present
+      const searchQuery = args.query.toLowerCase().includes('site:reddit.com')
+        ? args.query
+        : `${args.query} site:reddit.com`
+
+      // Fetch only 5 results
+      const results = await fetchExaSearch(searchQuery, 5)
+      const searchTime = Date.now() - startTime
+
+      console.log(`[searchReddit] Found ${results.length} Reddit results`)
+
+      if (results.length === 0) {
+        return {
+          success: true,
+          query: args.query,
+          accepted: [],
+          rejected: [],
+          totalFound: 0,
+          totalAccepted: 0,
+          totalRejected: 0,
+          searchTime,
+          filterTime: 0,
+          message: `No Reddit results found for "${args.query}"`,
+        }
+      }
+
+      // Fetch top comments for each post (up to 5 comments per post)
+      console.log(
+        `[searchReddit] Fetching comments for ${results.length} posts...`,
+      )
+      const postsWithComments = await Promise.all(
+        results.map(async (result) => {
+          try {
+            // Only fetch comments for reddit.com URLs
+            if (!result.url.includes('reddit.com')) {
+              return {
+                ...result,
+                topComments: [] as any[],
+                numComments: 0,
+              }
+            }
+
+            const postData = await fetchRedditPostComments(result.url)
+
+            // Get top 5 comments sorted by score
+            const topComments = [...postData.comments]
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 5)
+              .map((c) => ({
+                id: c.id,
+                author: c.author,
+                body: c.body,
+                score: c.score,
+                replies: c.replies
+                  .sort((ra, rb) => rb.score - ra.score)
+                  .slice(0, 2) // Top 2 replies per comment
+                  .map((r) => ({
+                    id: r.id,
+                    author: r.author,
+                    body: r.body,
+                    score: r.score,
+                  })),
+              }))
+
+            return {
+              ...result,
+              topComments,
+              numComments: postData.comments.length,
+            }
+          } catch (error) {
+            console.error(
+              `[searchReddit] Error fetching comments for ${result.url}:`,
+              error,
+            )
+            return {
+              ...result,
+              topComments: [],
+              numComments: 0,
+            }
+          }
+        }),
+      )
+
+      // Map to accepted format with comments
+      const accepted = postsWithComments.map((result) => ({
+        id: result.id || '',
+        title: result.title || 'Untitled',
+        url: result.url,
+        text: result.text || '',
+        publishedDate: result.publishedDate,
+        author: result.author,
+        image: result.image,
+        favicon: result.favicon,
+        topComments: result.topComments || [],
+        numComments: result.numComments || 0,
+      }))
+
+      const filterTime = Date.now() - startTime - searchTime
+
+      return {
+        success: true,
+        query: args.query,
+        accepted,
+        rejected: [],
+        totalFound: results.length,
+        totalAccepted: accepted.length,
+        totalRejected: 0,
+        searchTime,
+        filterTime,
+      }
+    } catch (error: any) {
+      console.error('[searchReddit] Error:', error)
+      return {
+        success: false,
+        query: args.query,
+        accepted: [],
+        rejected: [],
+        error: error?.message || 'Unknown error occurred',
+      }
+    }
+  },
+})
+
+/**
+ * Tool for AI to fetch detailed comments from a specific Reddit post
+ * Use this when the user wants to see the top comments from a specific Reddit post
+ */
+const fetchRedditPostTool = createTool({
+  description:
+    'Fetch the top 10 highest upvoted comments from a specific Reddit post URL. Returns the post details and the most upvoted comments sorted by score. Use this when the user asks to see comments from a specific Reddit post, wants to read the discussion, or provides a Reddit post URL.',
+  args: z.object({
+    url: z
+      .string()
+      .describe(
+        'Full Reddit post URL (e.g., https://www.reddit.com/r/AskReddit/comments/ablzuq/...)',
+      ),
+  }),
+  handler: async (_ctx, args) => {
+    console.log(`[fetchRedditPost] Fetching post: ${args.url}`)
+
+    try {
+      const postData = await fetchRedditPostComments(args.url)
+
+      console.log(
+        `[fetchRedditPost] Fetched ${postData.comments.length} comments`,
+      )
+
+      // Sort comments by score (upvotes) descending and take top 10
+      const topComments = [...postData.comments]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10)
+        .map((c) => ({
+          id: c.id,
+          author: c.author,
+          body: c.body,
+          score: c.score,
+          depth: c.depth,
+          replies: c.replies
+            .sort((ra, rb) => rb.score - ra.score)
+            .slice(0, 3) // Include top 3 replies per comment
+            .map((r) => ({
+              id: r.id,
+              author: r.author,
+              body: r.body,
+              score: r.score,
+              depth: r.depth,
+            })),
+        }))
+
+      return {
+        success: true,
+        post: {
+          id: postData.post.id,
+          title: postData.post.title,
+          selftext: postData.post.selftext,
+          author: postData.post.author,
+          subreddit: postData.post.subredditNamePrefixed,
+          score: postData.post.score,
+          upvoteRatio: postData.post.upvoteRatio,
+          numComments: postData.post.numComments,
+          url: postData.post.url,
+          permalink: postData.post.permalink,
+          createdAtIso: postData.post.createdAtIso,
+        },
+        topComments,
+        totalComments: postData.comments.length,
+        hasMore: postData.more?.hasMore || false,
+      }
+    } catch (error: any) {
+      console.error('[fetchRedditPost] Error:', error)
+      return {
+        success: false,
+        error: error?.message || 'Unknown error occurred',
+      }
+    }
+  },
+})
+
+/**
  * Tool for AI to generate images on the canvas
  */
 const generateImageTool = createTool({
@@ -742,6 +961,8 @@ function createCanvasChatAgent(
       readLink: readLinkTool,
       filteredWebSearch: filteredWebSearchTool,
       searchTikTok: searchTikTokTool,
+      searchReddit: searchRedditTool,
+      fetchRedditPost: fetchRedditPostTool,
     },
     usageHandler: async (ctx, args) => {
       const {
